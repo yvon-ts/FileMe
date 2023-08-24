@@ -4,3 +4,7 @@ spring:
     url: jdbc:mysql://localhost:3306/4test
     username: root
     password:
+# 預設檔案上傳路徑
+file:
+  upload:
+    dir: /Users/yvon/ideaUploads

@@ -13,7 +13,7 @@ public class File extends BasePojo{
     private Long userId;
     private String fileName;
     private String ext;
-    private Integer size;
+    private Long size;
     private Long folderId;
     private Integer accessLevel;
     private LocalDateTime deleteEta;

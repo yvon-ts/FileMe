@@ -8,11 +8,5 @@ import java.util.Map;
  */
 public interface ContentsService {
 
-    /**
-     * Get folders and files by folderId
-     * @param userId
-     * @param folderId
-     * @return
-     */
     Map<String, List<Object>> getContents(Long userId, Long folderId);
 }

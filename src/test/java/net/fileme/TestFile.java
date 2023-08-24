@@ -20,7 +20,7 @@ public class TestFile {
         file.setUserId(0L);
         file.setFileName("A測試檔案");
         file.setExt("png");
-        file.setSize(123);
+        file.setSize(123L);
         fileMapper.insert(file);
         List<Map<String, Object>> maps = fileMapper.selectMaps(null);
         System.out.println(maps);
