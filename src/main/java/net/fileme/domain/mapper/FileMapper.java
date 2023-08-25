@@ -1,7 +1,7 @@
-package net.fileme.mapper;
+package net.fileme.domain.mapper;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
-import net.fileme.pojo.File;
+import net.fileme.domain.pojo.File;
 import org.apache.ibatis.annotations.Mapper;
 
 @Mapper

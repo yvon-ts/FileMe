@@ -1,4 +1,4 @@
-package net.fileme.pojo;
+package net.fileme.domain.pojo;
 
 import com.baomidou.mybatisplus.annotation.TableId;
 import lombok.AllArgsConstructor;

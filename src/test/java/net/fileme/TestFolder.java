@@ -1,7 +1,7 @@
 package net.fileme;
 
-import net.fileme.mapper.FolderMapper;
-import net.fileme.pojo.Folder;
+import net.fileme.domain.mapper.FolderMapper;
+import net.fileme.domain.pojo.Folder;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;

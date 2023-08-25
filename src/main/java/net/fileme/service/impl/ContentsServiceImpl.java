@@ -1,10 +1,10 @@
 package net.fileme.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import net.fileme.mapper.FileMapper;
-import net.fileme.mapper.FolderMapper;
-import net.fileme.pojo.File;
-import net.fileme.pojo.Folder;
+import net.fileme.domain.mapper.FileMapper;
+import net.fileme.domain.mapper.FolderMapper;
+import net.fileme.domain.pojo.File;
+import net.fileme.domain.pojo.Folder;
 import net.fileme.service.ContentsService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;

@@ -1,6 +1,6 @@
 package net.fileme.service;
 
-import net.fileme.pojo.File;
+import net.fileme.domain.pojo.File;
 import org.springframework.web.multipart.MultipartFile;
 
 public interface ClientFileService {
