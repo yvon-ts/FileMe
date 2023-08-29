@@ -7,7 +7,8 @@ public enum ExceptionEnum {
 
     SUCCESS(200, "success")
     // 一般異常
-    , EMPTY_PARAM(600, "參數為空值")
+    , PARAM_EMPTY(600, "參數為空值")
+    , PARAM_ERROR(610, "參數異常")
     // 檔案異常
     , DUPLICATED(800, "該檔案或目錄已存在")
     , DUPLICATED_DB(801, "DB已有資料")

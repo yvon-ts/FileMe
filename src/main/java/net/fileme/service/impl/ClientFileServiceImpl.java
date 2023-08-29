@@ -1,5 +1,6 @@
 package net.fileme.service.impl;
 
+import net.fileme.domain.Result;
 import net.fileme.domain.pojo.File;
 
 import net.fileme.exception.BizException;
@@ -17,12 +18,21 @@ public class ClientFileServiceImpl implements ClientFileService {
     private String uploadServerPath;
 
     @Override
-    public File createFile(MultipartFile clientFile) throws BizException{
+    public File createFile(MultipartFile clientFile, String strUserId, String strFolderId, String strAccessLevel) throws BizException{
 
         File file = new File();
         String tmpFullName = clientFile.getOriginalFilename();
 
         try {
+
+            // 是否應檢查userId, folderId是否存在？
+            Long userId = (long) Integer.parseInt(strUserId);
+            Long folderId = (long) Integer.parseInt(strFolderId);
+            Integer accessLevel = Integer.parseInt(strAccessLevel);
+            file.setUserId(userId);
+            file.setFolderId(folderId);
+            file.setAccessLevel(accessLevel);
+
             String tmpName = tmpFullName.substring(0, tmpFullName.lastIndexOf("."));
             // 檔名卡控待補充，是否要正則表達式
             if (StringUtils.isBlank(tmpName) || ".".equals(tmpName)) {
@@ -39,14 +49,17 @@ public class ClientFileServiceImpl implements ClientFileService {
             file.setExt(tmpExt);
 
             long tmpSize = clientFile.getSize();
-
+            // 檔案太大也要擋
             if (tmpSize <= 0) {
                 throw new BizException(ExceptionEnum.FILE_SIZE_ERROR);
             }
             file.setSize(tmpSize);
 
-        }catch(BizException bizException){
+
+        }catch(BizException bizException) {
             throw bizException;
+        }catch(IllegalArgumentException e){
+            throw new BizException(ExceptionEnum.PARAM_ERROR);
         }catch(Exception e){
             //這邊要做log紀錄真正的異常，前端看enum就可以
             throw new BizException(ExceptionEnum.UPLOAD_DB_FAIL);
@@ -55,29 +68,25 @@ public class ClientFileServiceImpl implements ClientFileService {
     }
 
     @Override
-    public String upload(MultipartFile clientFile
-            , Long userId
-            , Long fileId
-            , boolean toRemote){
+    public Result<String> upload(MultipartFile clientFile, File file, boolean toRemote) throws BizException{
 
         if(!toRemote){
-            String clientFileName = clientFile.getOriginalFilename();
-            String ext = clientFileName.substring(clientFileName.lastIndexOf("."));
-            java.io.File tmpFile = new java.io.File(uploadServerPath + "/" + userId + "/" + fileId + ext);
+            java.io.File tmpFile = new java.io.File(uploadServerPath + "/" + file.getUserId() + "/" + file.getId() + "." + file.getExt());
             if(!tmpFile.getParentFile().exists()){
                 tmpFile.getParentFile().mkdirs();
             }
             if(tmpFile.exists()){
-                //應該直接exception丟出來
-                return "檔案已存在server"; // 之後要封裝 - errcode: server已有資料
+                throw new BizException(ExceptionEnum.DUPLICATED_SVR);
             }
-            try{
+            try {
                 clientFile.transferTo(tmpFile);
+            }catch(BizException bizException){
+                throw bizException;
             }catch(Exception e){
-                return "檔案寫入異常"; // 之後要封裝 - errcode: 檔案寫入異常
+                throw new BizException(ExceptionEnum.UPLOAD_SVR_FAIL);
             }
-            return "上傳成功";
+            return Result.success("upload completed.");
         }
-        return null;
+        return Result.error(ExceptionEnum.UPLOAD_SVR_FAIL);
     }
 }

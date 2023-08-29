@@ -1,5 +1,6 @@
 package net.fileme.controller;
 
+import net.fileme.domain.Result;
 import net.fileme.domain.mapper.FileMapper;
 import net.fileme.domain.mapper.FolderMapper;
 import net.fileme.domain.pojo.File;
@@ -33,32 +34,19 @@ public class ClientFileController {
      * @return
      */
     @PostMapping("/drive/upload")
-    public String upload(@RequestPart("file") MultipartFile clientFile
+    public Result<String> upload(@RequestPart("file") MultipartFile clientFile
             , @RequestPart("userId") String userId
-            , @RequestPart("folderId") String folderId){
+            , @RequestPart("folderId") String folderId
+            , @RequestPart("accessLevel") String accessLevel){
 
-        if(clientFile.isEmpty() || StringUtils.isBlank(userId) || StringUtils.isBlank(folderId)){
-            throw new BizException(ExceptionEnum.EMPTY_PARAM);
+        if(clientFile.isEmpty() || StringUtils.isBlank(userId)
+                || StringUtils.isBlank(folderId) || StringUtils.isBlank(accessLevel)){
+            throw new BizException(ExceptionEnum.PARAM_EMPTY);
         }
-        Long userIdLong = (long) Integer.parseInt(userId); //卡控轉型失敗?
-        File file = clientFileService.createFile(clientFile);
-        //這邊要卡控
-        file.setUserId(userIdLong);
-        file.setFolderId((long) Integer.parseInt(folderId));
 
-
-            fileMapper.insert(file);
-//        }catch(DuplicateKeyException e){
-//            System.out.println(file.getFileName());
-//            System.out.println(file.getExt());
-//            e.printStackTrace();
-//            return "檔案已存在rrr"; // 之後要封裝 - errcode: 資料庫已有資料
-
-
-        clientFileService.upload(clientFile, userIdLong, file.getId(),false);
-        //一樣要try-catch - errcode: server已有資料但沒有被資料庫catch
-
-        return "上傳成功";
+        File file = clientFileService.createFile(clientFile, userId, folderId, accessLevel);
+        fileMapper.insert(file);
+        return clientFileService.upload(clientFile, file,false);
     }
 
 }
