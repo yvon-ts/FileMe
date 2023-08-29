@@ -3,10 +3,13 @@ package net.fileme.service.impl;
 import net.fileme.domain.Result;
 import net.fileme.domain.pojo.File;
 
+import net.fileme.domain.pojo.Folder;
 import net.fileme.exception.BizException;
 import net.fileme.exception.ExceptionEnum;
+import net.fileme.service.CheckExistService;
 import net.fileme.service.ClientFileService;
 import org.junit.platform.commons.util.StringUtils;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -17,18 +20,20 @@ public class ClientFileServiceImpl implements ClientFileService {
     @Value("${file.upload.dir}")
     private String uploadServerPath;
 
+    @Autowired
+    private CheckExistService checkExistService;
+//
+//    @Autowired
+//    private FolderMapper folderMapper;
+
     @Override
-    public File createFile(MultipartFile clientFile, String strUserId, String strFolderId, String strAccessLevel) throws BizException{
+    public File createFile(MultipartFile clientFile, Long userId, Long folderId, Integer accessLevel) throws BizException{
 
         File file = new File();
         String tmpFullName = clientFile.getOriginalFilename();
 
         try {
-
-            // 是否應檢查userId, folderId是否存在？
-            Long userId = (long) Integer.parseInt(strUserId);
-            Long folderId = (long) Integer.parseInt(strFolderId);
-            Integer accessLevel = Integer.parseInt(strAccessLevel);
+            // userId有FK擋，folderId不存在時視為在根目錄
             file.setUserId(userId);
             file.setFolderId(folderId);
             file.setAccessLevel(accessLevel);
@@ -58,8 +63,6 @@ public class ClientFileServiceImpl implements ClientFileService {
 
         }catch(BizException bizException) {
             throw bizException;
-        }catch(IllegalArgumentException e){
-            throw new BizException(ExceptionEnum.PARAM_ERROR);
         }catch(Exception e){
             //這邊要做log紀錄真正的異常，前端看enum就可以
             throw new BizException(ExceptionEnum.UPLOAD_DB_FAIL);
@@ -88,5 +91,27 @@ public class ClientFileServiceImpl implements ClientFileService {
             return Result.success("upload completed.");
         }
         return Result.error(ExceptionEnum.UPLOAD_SVR_FAIL);
+    }
+
+    @Override
+    public Folder createFolder(Long userId, Long parentId, String folderName){
+        // parentId = 0 means at root folder
+        if(parentId != 0){
+            int check = checkExistService.checkExistFolder(parentId);
+            if(check != 1){
+                throw new BizException(ExceptionEnum.PARAM_ERROR);
+            }
+        }
+
+        //需要過濾folderName?
+        if(".".equals(folderName)){
+            throw new BizException(ExceptionEnum.FOLDER_NAME_ERROR);
+        }
+
+        Folder folder = new Folder();
+        folder.setUserId(userId);
+        folder.setFolderName(folderName);
+        folder.setParentId(parentId);
+        return folder;
     }
 }

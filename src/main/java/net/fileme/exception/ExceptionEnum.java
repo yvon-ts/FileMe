@@ -9,6 +9,9 @@ public enum ExceptionEnum {
     // 一般異常
     , PARAM_EMPTY(600, "參數為空值")
     , PARAM_ERROR(610, "參數異常")
+    , VIOLATE_KEY(620, "鍵值衝突，請檢查ID是否存在")
+    // 會員異常
+    , USER_NOT_EXISTS(700, "會員不存在")
     // 檔案異常
     , DUPLICATED(800, "該檔案或目錄已存在")
     , DUPLICATED_DB(801, "DB已有資料")
@@ -18,7 +21,10 @@ public enum ExceptionEnum {
     , UPLOAD_SVR_FAIL(812, "檔案寫入Server異常")
     , FILE_ERROR(820,"檔案異常")
     , FILE_NAME_ERROR(821, "檔名異常")
-    , FILE_SIZE_ERROR(822,"檔案大小異常");
+    , FILE_SIZE_ERROR(822,"檔案大小異常")
+    , FOLDER_ERROR(830, "目錄異常")
+    , FOLDER_NAME_ERROR(831, "目錄名稱異常")
+    , FOLDER_SIZE_ERROR(832, "目錄大小異常");
 
     private final Integer code;
     private final String desc;
