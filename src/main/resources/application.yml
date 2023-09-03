@@ -8,3 +8,11 @@ spring:
 file:
   upload:
     dir: /Users/yvon/ideaUploads
+log4j:
+  logger:
+    org:
+      mybatis:
+        example: DEBUG
+mybatis-plus:
+  configuration:
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl

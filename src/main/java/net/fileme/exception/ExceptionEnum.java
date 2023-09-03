@@ -10,6 +10,7 @@ public enum ExceptionEnum {
     , PARAM_EMPTY(600, "參數為空值")
     , PARAM_ERROR(610, "參數異常")
     , VIOLATE_KEY(620, "鍵值衝突，請檢查ID是否存在")
+    , UPDATE_DB_FAIL(630, "操作DB失敗，請檢查ID是否存在")
     // 會員異常
     , USER_NOT_EXISTS(700, "會員不存在")
     // 檔案異常

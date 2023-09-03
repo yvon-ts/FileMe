@@ -6,6 +6,8 @@ import net.fileme.exception.ExceptionEnum;
 import org.springframework.beans.TypeMismatchException;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.dao.DuplicateKeyException;
+import org.springframework.jdbc.BadSqlGrammarException;
+import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -32,6 +34,17 @@ public class GlobalExceptionHandler {
     // when param type is not correct
     @ExceptionHandler(TypeMismatchException.class)
     public Result handleTypeMismatchException(){
+        return Result.error(ExceptionEnum.PARAM_ERROR);
+    }
+
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    public Result handleValidException(){
+        return Result.error(ExceptionEnum.PARAM_ERROR);
+    }
+
+    // e.g. update command without setting any values
+    @ExceptionHandler(BadSqlGrammarException.class)
+    public Result handleBadSql(){
         return Result.error(ExceptionEnum.PARAM_ERROR);
     }
 

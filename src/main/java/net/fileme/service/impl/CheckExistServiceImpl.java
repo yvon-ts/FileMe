@@ -30,9 +30,9 @@ public class CheckExistServiceImpl implements CheckExistService {
     }
 
     @Override
-    public int checkExistFolder(Long folderId) {
+    public int checkExistFolder(Long userId, Long folderId) {
         LambdaQueryWrapper<Folder> lqw = new LambdaQueryWrapper<>();
-        lqw.eq(Folder::getId, folderId);
+        lqw.eq(Folder::getUserId, userId).eq(Folder::getId, folderId);
         return folderMapper.selectCount(lqw);
     }
 

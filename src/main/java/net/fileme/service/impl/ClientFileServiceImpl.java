@@ -8,6 +8,7 @@ import net.fileme.exception.BizException;
 import net.fileme.exception.ExceptionEnum;
 import net.fileme.service.CheckExistService;
 import net.fileme.service.ClientFileService;
+import net.fileme.service.FolderService;
 import org.junit.platform.commons.util.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -22,6 +23,8 @@ public class ClientFileServiceImpl implements ClientFileService {
 
     @Autowired
     private CheckExistService checkExistService;
+    @Autowired
+    private FolderService folderService;
 //
 //    @Autowired
 //    private FolderMapper folderMapper;
@@ -88,30 +91,33 @@ public class ClientFileServiceImpl implements ClientFileService {
             }catch(Exception e){
                 throw new BizException(ExceptionEnum.UPLOAD_SVR_FAIL);
             }
-            return Result.success("upload completed.");
+            return Result.success();
         }
         return Result.error(ExceptionEnum.UPLOAD_SVR_FAIL);
     }
 
     @Override
-    public Folder createFolder(Long userId, Long parentId, String folderName){
-        // parentId = 0 means at root folder
-        if(parentId != 0){
-            int check = checkExistService.checkExistFolder(parentId);
-            if(check != 1){
+    public boolean saveOrUpdateFolder(Folder folder){
+        // check to prevent nested structure
+        if(folder.getId() != null){
+            if(folder.getId().equals(folder.getParentId())){
                 throw new BizException(ExceptionEnum.PARAM_ERROR);
             }
         }
 
-        //需要過濾folderName?
-        if(".".equals(folderName)){
-            throw new BizException(ExceptionEnum.FOLDER_NAME_ERROR);
-        }
+        Long tmpUserId = folder.getUserId();
+        Long tmpParentId = folder.getParentId();
 
-        Folder folder = new Folder();
-        folder.setUserId(userId);
-        folder.setFolderName(folderName);
-        folder.setParentId(parentId);
-        return folder;
+        // parentId should be either 0 or existing folderId (with same userId)
+        if(tmpParentId != 0){
+            int check = checkExistService.checkExistFolder(tmpUserId, tmpParentId);
+            if(check != 1){
+                throw new BizException(ExceptionEnum.PARAM_ERROR);
+            }else{
+                return folderService.saveOrUpdate(folder);
+            }
+        }else{
+            return folderService.saveOrUpdate(folder);
+        }
     }
 }
