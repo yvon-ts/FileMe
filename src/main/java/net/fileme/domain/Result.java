@@ -32,4 +32,7 @@ public class Result<T> implements Serializable {
     public static Result error(ExceptionEnum error){
         return new Result(error.getCode(), error.getDesc());
     }
+    public static<T> Result<T> error(ExceptionEnum error, T data){
+        return new Result(error.getCode(), error.getDesc(), data);
+    }
 }

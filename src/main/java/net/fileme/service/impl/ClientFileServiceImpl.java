@@ -1,5 +1,6 @@
 package net.fileme.service.impl;
 
+import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import net.fileme.domain.Result;
 import net.fileme.domain.pojo.File;
 
@@ -8,12 +9,15 @@ import net.fileme.exception.BizException;
 import net.fileme.exception.ExceptionEnum;
 import net.fileme.service.CheckExistService;
 import net.fileme.service.ClientFileService;
+import net.fileme.service.FileService;
 import net.fileme.service.FolderService;
 import org.junit.platform.commons.util.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
+
+import java.util.*;
 
 @Service
 public class ClientFileServiceImpl implements ClientFileService {
@@ -25,9 +29,8 @@ public class ClientFileServiceImpl implements ClientFileService {
     private CheckExistService checkExistService;
     @Autowired
     private FolderService folderService;
-//
-//    @Autowired
-//    private FolderMapper folderMapper;
+    @Autowired
+    private FileService fileService;
 
     @Override
     public File createFile(MultipartFile clientFile, Long userId, Long folderId, Integer accessLevel) throws BizException{
@@ -119,5 +122,37 @@ public class ClientFileServiceImpl implements ClientFileService {
         }else{
             return folderService.saveOrUpdate(folder);
         }
+    }
+
+    @Override
+    public boolean relocateFolders(Long userId, Long parentId, List<Long> folderIds) {
+        folderIds.forEach(folderId -> {
+            LambdaUpdateWrapper<Folder> luw = new LambdaUpdateWrapper<>();
+            luw.set(Folder::getParentId, parentId).eq(Folder::getUserId, userId).eq(Folder::getId, folderId);
+            // 這邊看怎樣加transaction
+            folderService.update(luw);
+        });
+        // 暫時先都返回true
+        return true;
+    }
+    @Override
+    public boolean relocateFiles(Long userId, Long folderId, List<Long> fileIds) {
+        fileIds.forEach(fileId -> {
+            LambdaUpdateWrapper<File> luw = new LambdaUpdateWrapper<>();
+            luw.set(File::getFolderId, folderId).eq(File::getUserId, userId).eq(File::getId, fileId);
+            // 這邊看怎樣加transaction
+            fileService.update(luw);
+        });
+        // 暫時先都返回true
+        return true;
+    }
+    @Override
+    public boolean relocateBatch(Long userId, Long destinationId, Map<String, List<Long>> dataIds) {
+        List<Long> folderIds = dataIds.get("folderIds");
+        List<Long> fileIds = dataIds.get("fileIds");
+        relocateFolders(userId, destinationId, folderIds);
+        relocateFiles(userId, destinationId, fileIds);
+        // 這邊看怎樣加transaction
+        return true;
     }
 }
