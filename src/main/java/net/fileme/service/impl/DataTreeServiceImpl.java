@@ -7,8 +7,11 @@ import net.fileme.service.DataTreeService;
 import net.fileme.service.FileService;
 import net.fileme.service.FolderService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -18,6 +21,8 @@ public class DataTreeServiceImpl implements DataTreeService {
     private FolderService folderService;
     @Autowired
     private FileService fileService;
+    @Value("${file.upload.dir}") // 名字可以再換
+    private String remotePathPrefix;
 
     // 考慮到根目錄=0, 目前都要傳userId
     @Override
@@ -96,5 +101,17 @@ public class DataTreeServiceImpl implements DataTreeService {
                 .eq(File::getFolderId, rootFolderId);
         List<File> subFiles = fileService.list(lqw);
         return subFiles;
+    }
+    @Override
+    public List<Path> findRemotePaths(Long userId, List<Long> fileIds){
+        List<String> strPaths = new ArrayList<>();
+        List<File> files = fileService.listByIds(fileIds);
+        files.forEach(file -> {
+            StringBuilder builder = new StringBuilder();
+            builder.append(remotePathPrefix).append("/").append(userId).append("/").append(file.getId()).append(".").append(file.getExt());
+            strPaths.add(builder.toString());
+        });
+        List<Path> paths = strPaths.stream().map(Paths::get).collect(Collectors.toList());
+        return paths;
     }
 }

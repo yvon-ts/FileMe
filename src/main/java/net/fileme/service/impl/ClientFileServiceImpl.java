@@ -1,5 +1,6 @@
 package net.fileme.service.impl;
 
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import net.fileme.domain.Result;
 import net.fileme.domain.pojo.File;
@@ -7,24 +8,28 @@ import net.fileme.domain.pojo.File;
 import net.fileme.domain.pojo.Folder;
 import net.fileme.exception.BizException;
 import net.fileme.exception.ExceptionEnum;
-import net.fileme.service.CheckExistService;
-import net.fileme.service.ClientFileService;
-import net.fileme.service.FileService;
-import net.fileme.service.FolderService;
+import net.fileme.service.*;
 import org.junit.platform.commons.util.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import org.springframework.util.FileSystemUtils;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
+import java.nio.file.Path;
 import java.util.*;
 
 @Service
 public class ClientFileServiceImpl implements ClientFileService {
 
-    @Value("${file.upload.dir}")
-    private String uploadServerPath;
+    @Value("${file.upload.dir}") // 名字可以再換
+    private String remotePathPrefix;
+    @Value("${file.trash.folderId}")
+    private Long softDelId;
 
+    @Autowired
+    private DataTreeService dataTreeService;
     @Autowired
     private CheckExistService checkExistService;
     @Autowired
@@ -76,11 +81,11 @@ public class ClientFileServiceImpl implements ClientFileService {
         return file;
     }
 
-    @Override
+    @Override //toRemote可能要改int
     public Result<String> upload(MultipartFile clientFile, File file, boolean toRemote) throws BizException{
 
         if(!toRemote){
-            java.io.File tmpFile = new java.io.File(uploadServerPath + "/" + file.getUserId() + "/" + file.getId() + "." + file.getExt());
+            java.io.File tmpFile = new java.io.File(remotePathPrefix + "/" + file.getUserId() + "/" + file.getId() + "." + file.getExt());
             if(!tmpFile.getParentFile().exists()){
                 tmpFile.getParentFile().mkdirs();
             }
@@ -124,35 +129,99 @@ public class ClientFileServiceImpl implements ClientFileService {
         }
     }
 
+    public void hardDelEntrance(Long userId, Long folderId){ // 先單個，在controller處理0不能進來hardDel
+        if(folderId.equals(0L)){
+            return; //這邊看怎麼報錯
+        }
+        //先找子folder
+        Map<String, List<Long>> tree = dataTreeService.findTreeIds(userId, folderId);
+        List<Long> subFolders = tree.get("subFolders");
+        List<Long> subFiles = tree.get("subFiles");
+
+        //先刪remote確認之後才刪db
+        hardDelRemoteFiles(userId, subFiles);
+
+        //是否要先刪file避免孤兒file
+        hardDelFile(subFiles);
+
+        //是否要確認File底下沒有@folderIds的資料才能刪除folder
+
+        //刪除會員才要刪remote folder
+    }
     @Override
-    public boolean relocateFolders(Long userId, Long parentId, List<Long> folderIds) {
+    public void hardDelFolder(List<Long> folderIds) throws BizException{
+        LambdaQueryWrapper<File> lqw = new LambdaQueryWrapper<>();
+        lqw.in(File::getFolderId, folderIds);
+        List<File> list = fileService.list(lqw);
+        if(!list.isEmpty()){
+            throw new BizException(ExceptionEnum.FOLDER_NOT_EMPTY);
+        }else{
+            folderService.removeByIds(folderIds);
+        }
+    }
+    @Override
+    public void hardDelFile(List<Long> fileIds){
+        fileService.removeByIds(fileIds);
+    }
+    @Override
+    public void hardDelRemoteFiles(Long userId, List<Long> fileIds) throws BizException{
+        List<Path> paths = dataTreeService.findRemotePaths(userId, fileIds);
+        System.out.println(paths);
+            paths.forEach(path -> {
+                try {
+                    boolean success = FileSystemUtils.deleteRecursively(path);
+                    // 先不處理
+//                    if(!success){
+//                        throw new BizException(ExceptionEnum.DATA_NOT_EXISTS);
+//                    }
+                } catch (IOException e) {
+                    throw new BizException(ExceptionEnum.DATA_DELETE_FAIL);
+                }
+            });
+    }
+    public void hardDelRemoteFolder(){};    //刪除會員才會用到
+
+    @Override
+    public void softDelFolders(Long userId, List<Long> folderIds){
+        relocateFolders(userId, softDelId, folderIds);
+    }
+
+    @Override
+    public void softDelFiles(Long userId, List<Long> fileIds) {
+        relocateFiles(userId, softDelId ,fileIds);
+    }
+
+    @Override
+    public void softDelBatch(Long userId, Map<String, List<Long>> dataIds) {
+        List<Long> folderIds = dataIds.get("folderIds");
+        List<Long> fileIds = dataIds.get("fileIds");
+        relocateFolders(userId, softDelId, folderIds);
+        relocateFiles(userId, softDelId, fileIds);
+    }
+
+    @Override
+    public void relocateFolders(Long userId, Long parentId, List<Long> folderIds) {
         folderIds.forEach(folderId -> {
             LambdaUpdateWrapper<Folder> luw = new LambdaUpdateWrapper<>();
             luw.set(Folder::getParentId, parentId).eq(Folder::getUserId, userId).eq(Folder::getId, folderId);
             // 這邊看怎樣加transaction
             folderService.update(luw);
         });
-        // 暫時先都返回true
-        return true;
     }
     @Override
-    public boolean relocateFiles(Long userId, Long folderId, List<Long> fileIds) {
+    public void relocateFiles(Long userId, Long folderId, List<Long> fileIds) {
         fileIds.forEach(fileId -> {
             LambdaUpdateWrapper<File> luw = new LambdaUpdateWrapper<>();
             luw.set(File::getFolderId, folderId).eq(File::getUserId, userId).eq(File::getId, fileId);
             // 這邊看怎樣加transaction
             fileService.update(luw);
         });
-        // 暫時先都返回true
-        return true;
     }
     @Override
-    public boolean relocateBatch(Long userId, Long destinationId, Map<String, List<Long>> dataIds) {
+    public void relocateBatch(Long userId, Long destinationId, Map<String, List<Long>> dataIds) {
         List<Long> folderIds = dataIds.get("folderIds");
         List<Long> fileIds = dataIds.get("fileIds");
         relocateFolders(userId, destinationId, folderIds);
         relocateFiles(userId, destinationId, fileIds);
-        // 這邊看怎樣加transaction
-        return true;
     }
 }

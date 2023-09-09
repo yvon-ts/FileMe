@@ -33,7 +33,9 @@ public class TestContents {
         Map<String, List<Long>> data = new HashMap<>();
         data.put("folderIds", folders);
         data.put("fileIds", files);
-        clientFileService.relocateBatch(1L, 999L, data);
+//        clientFileService.relocateBatch(1L, 999L, data);
+//        clientFileService.hardDelRemoteFiles(1L, files);
+        clientFileService.hardDelFile(files);
 
     }
 }

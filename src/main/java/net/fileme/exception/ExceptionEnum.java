@@ -26,8 +26,9 @@ public enum ExceptionEnum {
     , FOLDER_ERROR(830, "目錄異常")
     , FOLDER_NAME_ERROR(831, "目錄名稱異常")
     , FOLDER_SIZE_ERROR(832, "目錄大小異常")
-    , FOLDER_DELETE_FAIL(840, "目錄刪除失敗")
-    , FOLDER_NOT_EMPTY(841,"目錄底下尚有資料，請清空後再刪除");
+    , DATA_DELETE_FAIL(840, "資料刪除失敗")
+    , DATA_NOT_EXISTS(841,"目標資料不存在，無法刪除")
+    , FOLDER_NOT_EMPTY(842,"目錄底下尚有資料，請清空後再刪除");
 
     private final Integer code;
     private final String desc;

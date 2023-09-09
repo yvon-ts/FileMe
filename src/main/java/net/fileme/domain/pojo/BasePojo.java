@@ -10,5 +10,5 @@ import java.time.LocalDateTime;
 public class BasePojo {
     private LocalDateTime createTime;
     private LocalDateTime updateTime;
-    private Integer isDeleted;
+    private Integer state;
 }

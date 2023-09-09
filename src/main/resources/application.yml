@@ -4,10 +4,6 @@ spring:
     url: jdbc:mysql://localhost:3306/4test
     username: root
     password:
-# 預設檔案上傳路徑
-file:
-  upload:
-    dir: /Users/yvon/ideaUploads
 log4j:
   logger:
     org:
@@ -16,3 +12,10 @@ log4j:
 mybatis-plus:
   configuration:
     log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+# 預設檔案上傳路徑
+file:
+  upload:
+    dir: /Users/yvon/ideaUploads
+# 預設垃圾桶目錄id
+  trash:
+    folderId: 999

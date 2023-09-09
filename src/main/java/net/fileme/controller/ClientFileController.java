@@ -39,6 +39,12 @@ public class ClientFileController {
     @Autowired
     private FileService fileService;
 
+    @PostMapping("/testtest")
+    public Result testtest(@RequestParam Long userId, @RequestBody List<Long> folderIds){
+       clientFileService.hardDelFolder(folderIds);
+        return Result.success();
+    }
+
     @PostMapping("/drive/batch/relocate")
     public Result testPost(@RequestBody Map<String, List<Long>> map){
         Long userId = map.get("userId").get(0); //這行之後應該可以移除

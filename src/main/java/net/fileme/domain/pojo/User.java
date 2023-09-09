@@ -14,5 +14,4 @@ public class User extends BasePojo{
     private String pwd;
     private String email;
     private Integer membership;
-    private Integer state;
 }
