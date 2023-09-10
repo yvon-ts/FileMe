@@ -8,7 +8,7 @@ import java.time.LocalDateTime;
 @Getter
 @Setter
 public class BasePojo {
+    private Integer state;
     private LocalDateTime createTime;
     private LocalDateTime updateTime;
-    private Integer state;
 }

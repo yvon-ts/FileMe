@@ -38,8 +38,7 @@ public class ContentsServiceImpl implements ContentsService {
 
         LambdaQueryWrapper<File> wrapperFile = new LambdaQueryWrapper<>();
         wrapperFile.eq(File::getUserId, userId)
-                .eq(File::getFolderId, folderId)
-                .eq(File::getIsDeleted, 0); // existing file
+                .eq(File::getFolderId, folderId); // existing file
         List<File> files = fileMapper.selectList(wrapperFile);
 
         map.put("files", new ArrayList<Object>(files));

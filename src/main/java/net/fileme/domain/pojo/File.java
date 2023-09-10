@@ -4,7 +4,6 @@ import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.Data;
 
-import java.time.LocalDateTime;
 @TableName("file_data")
 @Data
 public class File extends BasePojo{
@@ -16,7 +15,7 @@ public class File extends BasePojo{
     private Long size;
     private Long folderId;
     private Integer accessLevel;
-    private LocalDateTime deleteEta;
+    private Integer location;
 
     @Override
     public String toString() {
@@ -28,6 +27,8 @@ public class File extends BasePojo{
                 ", size=" + size +
                 ", folderId=" + folderId +
                 ", accessLevel=" + accessLevel +
+                ", location=" + location +
+                ", state=" + super.getState() +
                 ", createTime=" + super.getCreateTime() +
                 ", updateTime=" + super.getUpdateTime() +
                 '}';

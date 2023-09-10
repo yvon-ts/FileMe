@@ -10,6 +10,7 @@ log4j:
       mybatis:
         example: DEBUG
 mybatis-plus:
+  mapper-locations: classpath:net/fileme/domain/mapper/*.xml
   configuration:
     log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
 # 預設檔案上傳路徑
