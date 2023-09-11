@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="net.fileme.domain.mapper.FolderTrashMapper">
+
+    <insert id="create">
+        insert into folder_trash(folder_id, origin)
+        select folder_id, parent_id
+        from folder
+        where folder_id in
+        <foreach collection="folderIds" item="folderId" open="(" separator="," close=")">
+            #{folderId,jdbcType=BIGINT}
+        </foreach>
+    </insert>
+</mapper>

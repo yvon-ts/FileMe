@@ -6,16 +6,15 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.time.LocalDateTime;
+
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-@TableName("remove_list")
-public class RemoveList extends BasePojo {
-    @TableId("row_id")
+@TableName("folder_trash")
+public class FolderTrash {
+    @TableId("folder_id")
     private Long id;
-    private Long fileId;
-    private Long userId;
-    private String filePath;
-    private Integer location;
-    private Integer state;
+    private Long origin;
+    private LocalDateTime createTime;
 }

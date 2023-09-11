@@ -2,13 +2,13 @@
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="net.fileme.domain.mapper.RemoveListMapper">
 
-    <insert id="insertFromFiles">
+    <insert id="create">
         insert into remove_list(file_id, user_id, file_path, location)
         select file_id, user_id, concat('/', user_id, '/', file_id, '.', ext), location
         from file_data
         where file_id in
         <foreach collection="fileIds" item="fileId" open="(" separator="," close=")">
-            #{fileId,jdbcType=BIGINT}
+            #{fileId,jdbcType}
         </foreach>
     </insert>
 

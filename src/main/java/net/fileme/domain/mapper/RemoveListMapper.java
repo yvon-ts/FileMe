@@ -9,5 +9,5 @@ import java.util.List;
 
 @Mapper
 public interface RemoveListMapper extends BaseMapper<RemoveList> {
-    void insertFromFiles(@Param("fileIds") List<Long> fileIds);
+    void create(@Param("fileIds") List<Long> fileIds);
 }
