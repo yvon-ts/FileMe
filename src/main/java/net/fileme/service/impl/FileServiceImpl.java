@@ -7,18 +7,27 @@ import net.fileme.domain.mapper.FileMapper;
 import net.fileme.domain.mapper.FileTrashMapper;
 import net.fileme.domain.mapper.RemoveListMapper;
 import net.fileme.domain.pojo.File;
+import net.fileme.domain.pojo.RemoveList;
+import net.fileme.exception.BizException;
+import net.fileme.exception.ExceptionEnum;
 import net.fileme.service.FileService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import org.springframework.util.FileSystemUtils;
 
+import java.io.IOException;
+import java.nio.file.Paths;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 @Service
 public class FileServiceImpl extends ServiceImpl<FileMapper, File>
         implements FileService {
 
+    @Value("${file.upload.dir}") // 名字可以再換
+    private String remotePathPrefix;
     @Value("${file.trash.folderId}")
     private Long trashId;
     @Autowired
@@ -54,22 +63,35 @@ public class FileServiceImpl extends ServiceImpl<FileMapper, File>
         fileTrashMapper.deleteBatchIds(dataIds);
     }
 
-    @Override // 從垃圾桶指定刪除
-    public void clearByIds(List<Long> dataIds) {
+    @Override
+    public void softDelete(List<Long> dataIds){
         removeListMapper.create(dataIds);
         fileTrashMapper.deleteBatchIds(dataIds);
         removeByIds(dataIds);
     }
+    @Override // 可以再評估一下PK要流水號 or FileID, 以下尚未考慮location
+    public void hardDelete(List<Long> fileIds) throws BizException{
+        // get remote path
+        LambdaQueryWrapper<RemoveList> lqw = new LambdaQueryWrapper<>();
+        lqw.select(RemoveList::getFilePath).in(RemoveList::getFileId, fileIds);
+        List<Object> tmp = removeListMapper.selectObjs(lqw);
+        if(tmp.isEmpty()){
+            throw new BizException(ExceptionEnum.DATA_NOT_EXISTS);
+        }
+        List<String> strPaths = tmp.stream().map(Objects::toString).collect(Collectors.toList());
 
-    @Override // 清空垃圾桶
-    public void clearAll(Long userId) {
-        List<Long> trashIds = getTrashIds(userId);
-        clearByIds(trashIds);
-    }
-
-    @Override // 不經過垃圾桶直接刪除
-    public void softDelete(List<Long> dataIds){
-        removeListMapper.create(dataIds);
-        removeByIds(dataIds);
+        // loop to delete remote file
+        strPaths.forEach(strPath -> {
+            try {
+                FileSystemUtils.deleteRecursively(Paths.get(remotePathPrefix + strPath));
+            } catch (IOException e) {
+                LambdaUpdateWrapper<RemoveList> luw = new LambdaUpdateWrapper<>();
+                luw.set(RemoveList::getState, 1).in(RemoveList::getFileId, fileIds);
+                removeListMapper.update(null, luw);
+                throw new BizException(ExceptionEnum.DATA_DELETE_FAIL);
+            }
+        });
+        // delete from db
+        removeListMapper.deleteBatchIds(fileIds);
     }
 }

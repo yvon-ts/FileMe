@@ -8,10 +8,7 @@ import net.fileme.domain.pojo.File;
 import net.fileme.domain.pojo.Folder;
 import net.fileme.exception.BizException;
 import net.fileme.exception.ExceptionEnum;
-import net.fileme.service.CheckExistService;
-import net.fileme.service.ClientFileService;
-import net.fileme.service.FileService;
-import net.fileme.service.FolderService;
+import net.fileme.service.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -31,6 +28,8 @@ public class ClientFileController {
     @Autowired
     private CheckExistService checkExistService;
     @Autowired
+    private DataTreeService dataTreeService;
+    @Autowired
     private FileMapper fileMapper;
     @Autowired
     private FolderMapper folderMapper;
@@ -40,10 +39,11 @@ public class ClientFileController {
     private FileService fileService;
 
     @PostMapping("/testtest")
-    public Result testtest(@RequestParam Long userId, @RequestBody List<Long> folderIds){
-       clientFileService.hardDelFolder(folderIds);
-        return Result.success();
+    public String testtest(@RequestBody List<Long> fileIds){
+       fileService.hardDelete(fileIds);
+       return null;
     }
+
 
     @PostMapping("/drive/batch/relocate")
     public Result testPost(@RequestBody Map<String, List<Long>> map){

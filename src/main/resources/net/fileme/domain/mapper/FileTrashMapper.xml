@@ -5,10 +5,10 @@
     <insert id="create">
         insert into file_trash(file_id, origin)
         select file_id, folder_id
-        from file
+        from file_data
         where file_id in
         <foreach collection="fileIds" item="fileId" open="(" separator="," close=")">
-            #{fileId,jdbcType=BIGINT}
+            #{fileId}
         </foreach>
     </insert>
 
@@ -17,7 +17,7 @@
         set f.folder_id = t.origin
         where f.file_id in
         <foreach collection="fileIds" item="fileId" open="(" separator="," close=")">
-            #{fileId,jdbcType=BIGINT}
+            #{fileId}
         </foreach>
     </update>
 

@@ -8,7 +8,17 @@
         from folder
         where folder_id in
         <foreach collection="folderIds" item="folderId" open="(" separator="," close=")">
-            #{folderId,jdbcType=BIGINT}
+            #{folderId}
         </foreach>
     </insert>
+
+    <update id="recover">
+        update folder f join folder_trash t on f.folder_id = t.folder_id
+        set f.parend_id = t.origin
+        where f.folder_id in
+        <foreach collection="folderIds" item="folderId" open="(" separator="," close=")">
+            #{folderId}
+        </foreach>
+    </update>
+
 </mapper>

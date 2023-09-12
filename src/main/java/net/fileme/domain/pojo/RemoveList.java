@@ -11,8 +11,7 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @TableName("remove_list")
 public class RemoveList extends BasePojo {
-    @TableId("row_id")
-    private Long id;
+    @TableId
     private Long fileId;
     private Long userId;
     private String filePath;

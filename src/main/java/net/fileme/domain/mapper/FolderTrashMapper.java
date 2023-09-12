@@ -9,4 +9,5 @@ import java.util.List;
 @Mapper
 public interface FolderTrashMapper extends BaseMapper<Folder> {
     void create(List<Long> folderIds);
+    void recover(List<Long> folderIds);
 }
