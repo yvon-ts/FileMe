@@ -8,5 +8,5 @@ import java.util.List;
 
 @Mapper
 public interface FolderMapper extends BaseMapper<Folder> {
-    List<Object> getSuperFolders(Long folderId);
+    List<Folder> findSuperFolders(Long folderId);
 }

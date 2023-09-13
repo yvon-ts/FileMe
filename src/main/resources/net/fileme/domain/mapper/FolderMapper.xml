@@ -2,7 +2,15 @@
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="net.fileme.domain.mapper.FolderMapper">
 
-    <select id="getSuperFolders">
+    <resultMap id="superFolders" type="net.fileme.domain.pojo.Folder">
+        <id column="folder_id" jdbcType="BIGINT" property="id"/>
+        <result column="user_id" jdbcType="BIGINT" property="userId"/>
+        <result column="folder_name" jdbcType="VARCHAR" property="folderName"/>
+        <result column="parent_id" jdbcType="BIGINT" property="parentId"/>
+        <result column="sort" jdbcType="TINYINT" property="sort"/>
+    </resultMap>
+
+    <select id="findSuperFolders" resultMap="superFolders">
         with recursive cte as(
         select folder_id, user_id, folder_name, parent_id, 0 as sort from folder where folder_id = #{folder_id}
         union
@@ -10,7 +18,7 @@
         from folder f
         join cte on cte.parent_id = f.folder_id
         )
-        select * from cte order by sort
+        select folder_id, user_id, folder_name, parent_id from cte
     </select>
 
 </mapper>

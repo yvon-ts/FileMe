@@ -15,9 +15,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.validation.Valid;
-import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 
 @Validated
@@ -43,39 +41,6 @@ public class ClientFileController {
        fileService.hardDelete(fileIds);
        return null;
     }
-
-
-    @PostMapping("/drive/batch/relocate")
-    public Result testPost(@RequestBody Map<String, List<Long>> map){
-        Long userId = map.get("userId").get(0); //這行之後應該可以移除
-        List<Long> destId = map.get("destId");
-        List<Long> folderIds = map.get("folders");
-        List<Long> fileIds = map.get("files");
-
-        if(destId.isEmpty() || destId.size() != 1){
-            throw new BizException(ExceptionEnum.PARAM_ERROR);
-        }
-        if(folderIds.isEmpty() && fileIds.isEmpty()){
-            throw new BizException(ExceptionEnum.PARAM_ERROR);
-        }
-
-
-        if(destId.equals(999)){
-            // do delete
-            folderIds.forEach(folderId -> {
-                Result resultFolder = deleteFolder(userId, folderId); //需要改寫batch delete嗎
-            });
-
-        }else{
-            Result resultFolder = relocateFolder(destId.get(0), folderIds);
-            //do relocate files
-            //判斷兩個都relocate成功才丟最終result
-        }
-
-        return Result.success();
-    }
-
-    // 檢查跟delete要拆開！！！！！
     /**
      *
      * @param clientFile
@@ -103,55 +68,6 @@ public class ClientFileController {
         return Result.success();
     }
 
-    /**
-     * 右鍵刪除？
-     * @param folderId
-     * @return
-     */
-    @DeleteMapping("/drive/folder")
-    public Result deleteFolder(@RequestParam Long userId, @RequestParam Long folderId){
-        Map<String, Integer> contents = checkExistService.checkContents(userId, folderId);
-        if(!contents.isEmpty()){
-            return Result.error(ExceptionEnum.FOLDER_NOT_EMPTY, contents);
-        }
-        boolean success = folderService.removeById(folderId);
-        if(!success){
-            throw new BizException(ExceptionEnum.UPDATE_DB_FAIL);
-        }
-        return Result.success();
-    }
-
-//    @DeleteMapping("/drive/folder")
-//    public Result deleteBatch(){
-//        return Result.success();
-//    }
-    @PostMapping("drive/relocate/folder")
-    public Result relocateFolder(@RequestParam("destId") Long parentId, @RequestBody List<Long> folderIds){
-
-        // check to prevent nested structure
-        if(folderIds.contains(parentId)){
-            throw new BizException(ExceptionEnum.PARAM_ERROR);
-        }
-
-        LambdaQueryWrapper<Folder> lqw = new LambdaQueryWrapper<>();
-        List<Folder> folders = new ArrayList<>();
-        folderIds.forEach(folderId -> {
-            Folder folder = new Folder();
-            folder.setId(folderId);
-            folder.setParentId(parentId);
-            folders.add(folder);
-        });
-
-        boolean success = folderService.updateBatchById(folders);
-        if(!success){
-            throw new BizException(ExceptionEnum.UPDATE_DB_FAIL);
-        }
-
-        return Result.success();
-    }
-
-
-
     @PostMapping("drive/display/folder")
     public List<Folder> displayFolder(@RequestParam Long userId, @RequestParam("currentFolderId") Long parentId){
         LambdaQueryWrapper<Folder> lqw = new LambdaQueryWrapper<>();
@@ -167,7 +83,5 @@ public class ClientFileController {
         List<File> files = fileService.list(lqw);
         return files;
     }
-
-
 
 }

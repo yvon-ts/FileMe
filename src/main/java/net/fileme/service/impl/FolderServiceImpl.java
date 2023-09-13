@@ -1,11 +1,11 @@
 package net.fileme.service.impl;
 
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import net.fileme.domain.mapper.FolderMapper;
 import net.fileme.domain.mapper.FolderTrashMapper;
 import net.fileme.domain.pojo.Folder;
-import net.fileme.service.DataTreeService;
 import net.fileme.service.FileService;
 import net.fileme.service.FolderService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -13,6 +13,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 public class FolderServiceImpl extends ServiceImpl<FolderMapper, Folder>
@@ -25,11 +26,14 @@ public class FolderServiceImpl extends ServiceImpl<FolderMapper, Folder>
     private FolderTrashMapper folderTrashMapper;
     @Autowired
     private FileService fileService;
-    @Autowired
-    private DataTreeService dataTreeService;
+
     @Override
     public List<Long> getTrashIds(Long userId) {
-        return null;
+        LambdaQueryWrapper<Folder> lqw = new LambdaQueryWrapper<>();
+        lqw.select((Folder::getId)).eq(Folder::getUserId, userId).eq(Folder::getParentId, trashId);
+        List<String> tmp = listObjs(lqw, Object::toString);
+        List<Long> trashIds = tmp.stream().map(Long::valueOf).collect(Collectors.toList());
+        return trashIds;
     }
 
     @Override

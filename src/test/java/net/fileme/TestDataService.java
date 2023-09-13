@@ -19,11 +19,6 @@ public class TestDataService {
     @Autowired
     private FolderMapper folderMapper;
 
-    @Test
-    void testRecursive(){
-        List<Object> superFolders = folderMapper.getSuperFolders(1697549876074434562L);
-        System.out.println(superFolders);
-    }
 
     @Test
     void test(){

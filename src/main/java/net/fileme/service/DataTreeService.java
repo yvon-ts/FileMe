@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.Map;
 
 public interface DataTreeService {
+    List<Folder> findSuperFolders(Long folderId);
     List<Long> findSubFolderIds(Long userId, Long rootFolderId);
     List<Long> findSubFileIds(Long userId, Long rootFolderId);
     Map<String, List<Long>> findSubIds(Long userId, Long rootFolderId);

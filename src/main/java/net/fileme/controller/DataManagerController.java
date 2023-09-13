@@ -1,13 +1,12 @@
 package net.fileme.controller;
 
+import net.fileme.domain.Result;
+import net.fileme.domain.pojo.Folder;
 import net.fileme.exception.BizException;
 import net.fileme.exception.ExceptionEnum;
 import net.fileme.service.*;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -24,9 +23,29 @@ public class DataManagerController {
     @Autowired
     private FileService fileService;
 
-    @PostMapping("/drive/relocate")
-    public void relocate(@RequestBody Map<String, List<Long>> map){
+    @GetMapping("/drive/relocate/super")
+    public Result getRelocateSuper(@RequestParam Long folderId){
+        List<Folder> superFolders = dataTreeService.findSuperFolders(folderId);
+        return Result.success(superFolders);
+    }
 
+    @GetMapping("/drive/relocate/sub")
+    public Result getRelocateSub(@RequestParam Long userId, @RequestParam Long folderId){
+        List<Folder> subFolders = dataTreeService.findSubFolders(userId, folderId);
+        return Result.success(subFolders);
+    }
+
+    @PostMapping("/drive/relocate")
+    public void relocate(@RequestParam Long folderId, @RequestBody Map<String, List<Long>> map){
+        List<Long> folderIds = map.get("folders");
+        List<Long> fileIds = map.get("files");
+
+        if(folderIds.isEmpty() && fileIds.isEmpty()){
+            throw new BizException(ExceptionEnum.PARAM_ERROR);
+        }
+
+        folderService.relocate(folderId, folderIds);
+        fileService.relocate(folderId, fileIds);
     }
 
     @PostMapping("/drive/clean") // 清空垃圾桶

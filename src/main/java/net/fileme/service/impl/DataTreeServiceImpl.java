@@ -1,6 +1,7 @@
 package net.fileme.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import net.fileme.domain.mapper.FolderMapper;
 import net.fileme.domain.pojo.File;
 import net.fileme.domain.pojo.Folder;
 import net.fileme.service.DataTreeService;
@@ -17,12 +18,23 @@ import java.util.stream.Collectors;
 
 @Service
 public class DataTreeServiceImpl implements DataTreeService {
+
+    @Value("${file.upload.dir}") // 名字可以再換
+    private String remotePathPrefix;
+
     @Autowired
     private FolderService folderService;
     @Autowired
     private FileService fileService;
-    @Value("${file.upload.dir}") // 名字可以再換
-    private String remotePathPrefix;
+    @Autowired
+    private FolderMapper folderMapper;
+
+    @Override
+    public List<Folder> findSuperFolders(Long folderId){
+        List<Folder> superFolders = folderMapper.findSuperFolders(folderId);
+        Collections.reverse(superFolders);
+        return superFolders;
+    }
 
     // 考慮到根目錄=0, 目前都要傳userId
     @Override
