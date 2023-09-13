@@ -26,6 +26,12 @@ public class FolderServiceImpl extends ServiceImpl<FolderMapper, Folder>
     private FolderTrashMapper folderTrashMapper;
     @Autowired
     private FileService fileService;
+    @Override
+    public void rename(Long dataId, String newName){
+        LambdaUpdateWrapper<Folder> luw = new LambdaUpdateWrapper<>();
+        luw.set(Folder::getFolderName, newName).eq(Folder::getId, dataId);
+        update(luw);
+    }
 
     @Override
     public List<Long> getTrashIds(Long userId) {
@@ -44,7 +50,7 @@ public class FolderServiceImpl extends ServiceImpl<FolderMapper, Folder>
     }
 
     @Override
-    public void gotoTrash(Long parentId, List<Long> dataIds) {
+    public void gotoTrash(List<Long> dataIds) {
         folderTrashMapper.create(dataIds);
         relocate(trashId, dataIds);
     }

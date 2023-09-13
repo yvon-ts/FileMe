@@ -11,10 +11,12 @@ import net.fileme.domain.pojo.RemoveList;
 import net.fileme.exception.BizException;
 import net.fileme.exception.ExceptionEnum;
 import net.fileme.service.FileService;
+import org.junit.platform.commons.util.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.util.FileSystemUtils;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.nio.file.Paths;
@@ -36,6 +38,69 @@ public class FileServiceImpl extends ServiceImpl<FileMapper, File>
     private RemoveListMapper removeListMapper;
 
     @Override
+    public File createFile(Long userId, String tmpFullName, Long fileSize, Long folderId) throws BizException{
+        File file = new File();
+
+        file.setUserId(userId);
+        file.setFolderId(folderId);
+
+        String tmpName = tmpFullName.substring(0, tmpFullName.lastIndexOf("."));
+        // 檔名卡控待補充，是否要正則表達式
+        if (StringUtils.isBlank(tmpName) || ".".equals(tmpName)) {
+            throw new BizException(ExceptionEnum.FILE_NAME_ERROR);
+        }
+
+        String tmpExt = tmpFullName.substring(tmpFullName.lastIndexOf(".") + 1);
+
+        if (StringUtils.isBlank(tmpExt) || tmpExt.length() <= 1) {
+            throw new BizException(ExceptionEnum.FILE_NAME_ERROR);
+        }
+
+        file.setFileName(tmpName);
+        file.setExt(tmpExt);
+
+        // 檔案太大也要擋
+        if (fileSize <= 0) {
+            throw new BizException(ExceptionEnum.FILE_SIZE_ERROR);
+        }
+        file.setSize(fileSize);
+
+        save(file);
+
+        return file;
+    }
+
+    @Override // 未來可能overloading增加toRemote的flag
+    public void upload(MultipartFile part, File file) throws BizException{
+        StringBuilder builder = new StringBuilder();
+        builder.append(remotePathPrefix).append("/").append(file.getUserId()).append("/").append(file.getId()).append(".").append(file.getExt());
+        String path = builder.toString();
+        System.out.println(path);
+        java.io.File tmpFile = new java.io.File(path);
+
+        if(!tmpFile.getParentFile().exists()){
+            tmpFile.getParentFile().mkdirs();
+        }
+        if(tmpFile.exists()){
+            throw new BizException(ExceptionEnum.DUPLICATED_SVR);
+        }
+        try {
+            part.transferTo(tmpFile);
+        }catch(BizException bizException){
+            throw bizException;
+        }catch(Exception e){
+            throw new BizException(ExceptionEnum.UPLOAD_SVR_FAIL);
+        }
+    }
+
+    @Override
+    public void rename(Long dataId, String newName){
+        LambdaUpdateWrapper<File> luw = new LambdaUpdateWrapper<>();
+        luw.set(File::getFileName, newName).eq(File::getId, dataId);
+        update(luw);
+    }
+
+    @Override
     public List<Long> getTrashIds(Long userId) {
         LambdaQueryWrapper<File> lqw = new LambdaQueryWrapper<>();
         lqw.select(File::getId).eq(File::getUserId, userId).eq(File::getFolderId, trashId);
@@ -52,7 +117,7 @@ public class FileServiceImpl extends ServiceImpl<FileMapper, File>
     }
 
     @Override
-    public void gotoTrash(Long parentId, List<Long> dataIds) {
+    public void gotoTrash(List<Long> dataIds) {
         fileTrashMapper.create(dataIds);
         relocate(trashId, dataIds);
     }

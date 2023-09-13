@@ -27,6 +27,19 @@ public class CheckExistServiceImpl implements CheckExistService {
     private FileMapper fileMapper;
 
     @Override
+    public boolean checkValidFolder(Long userId, Long folderId){
+        boolean isValid = false;
+        int count = checkExistFolder(userId, folderId);
+
+        if(folderId.equals(0L)){
+            isValid = true;
+        }else if(count == 1){
+            isValid = true;
+        }
+        return isValid;
+    }
+
+    @Override
     public int checkExistUser(Long userId) throws BizException{
         LambdaQueryWrapper<User> lqw = new LambdaQueryWrapper<>();
         lqw.eq(User::getId, userId);

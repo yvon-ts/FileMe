@@ -3,6 +3,7 @@ package net.fileme.service;
 import java.util.Map;
 
 public interface CheckExistService {
+    boolean checkValidFolder(Long userId, Long folderId);
     int checkExistUser(Long userId);
     int checkExistFolder(Long userId, Long folderId);
     int checkExistFile(Long fileId);
