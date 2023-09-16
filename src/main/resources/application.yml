@@ -4,6 +4,10 @@ spring:
     url: jdbc:mysql://localhost:3306/4test
     username: root
     password:
+  servlet:
+    multipart:
+      max-file-size: 100MB
+      max-request-size: 1000MB
 log4j:
   logger:
     org:
@@ -20,3 +24,6 @@ file:
 # 預設垃圾桶目錄id
   trash:
     folderId: 999
+# 預設根目錄id
+  root:
+    folderId: 0

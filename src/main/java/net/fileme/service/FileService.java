@@ -7,7 +7,8 @@ import org.springframework.web.multipart.MultipartFile;
 import java.util.List;
 
 public interface FileService extends IService<File>, DataManagerService {
-    File createFile(Long userId, String fileName, Long fileSize, Long folderId);
+
+    File handlePartFile(MultipartFile multipartFile);
     void upload(MultipartFile multipartFile, File file);
     void hardDelete(List<Long> fileIds);
 }

@@ -11,8 +11,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -115,15 +113,21 @@ public class DataTreeServiceImpl implements DataTreeService {
         return subFiles;
     }
     @Override
-    public List<Path> findRemotePaths(Long userId, List<Long> fileIds){
-        List<String> strPaths = new ArrayList<>();
-        List<File> files = fileService.listByIds(fileIds);
-        files.forEach(file -> {
-            StringBuilder builder = new StringBuilder();
-            builder.append(remotePathPrefix).append("/").append(userId).append("/").append(file.getId()).append(".").append(file.getExt());
-            strPaths.add(builder.toString());
-        });
-        List<Path> paths = strPaths.stream().map(Paths::get).collect(Collectors.toList());
-        return paths;
+    public String findFilePath(Long userId, Long fileId){
+        File file = fileService.getById(fileId);
+        StringBuilder builder = new StringBuilder();
+        builder.append(remotePathPrefix).append("/").append(userId).append("/").append(file.getId()).append(".").append(file.getExt());
+        return builder.toString();
     }
+//    public List<Path> findBatchPath(Long userId, List<Long> fileIds){
+//        List<String> strPaths = new ArrayList<>();
+//        List<File> files = fileService.listByIds(fileIds);
+//        files.forEach(file -> {
+//            StringBuilder builder = new StringBuilder();
+//            builder.append(remotePathPrefix).append("/").append(userId).append("/").append(file.getId()).append(".").append(file.getExt());
+//            strPaths.add(builder.toString());
+//        });
+//        List<Path> paths = strPaths.stream().map(Paths::get).collect(Collectors.toList());
+//        return paths;
+//    }
 }

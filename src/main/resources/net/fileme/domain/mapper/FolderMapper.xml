@@ -7,7 +7,6 @@
         <result column="user_id" jdbcType="BIGINT" property="userId"/>
         <result column="folder_name" jdbcType="VARCHAR" property="folderName"/>
         <result column="parent_id" jdbcType="BIGINT" property="parentId"/>
-        <result column="sort" jdbcType="TINYINT" property="sort"/>
     </resultMap>
 
     <select id="findSuperFolders" resultMap="superFolders">

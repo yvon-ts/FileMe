@@ -2,7 +2,7 @@ package net.fileme.handler;
 
 import net.fileme.domain.Result;
 import net.fileme.exception.BizException;
-import net.fileme.exception.ExceptionEnum;
+import net.fileme.utils.enums.ExceptionEnum;
 import org.springframework.beans.TypeMismatchException;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.dao.DuplicateKeyException;
@@ -11,6 +11,7 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.multipart.MaxUploadSizeExceededException;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
@@ -18,7 +19,11 @@ public class GlobalExceptionHandler {
     public Result handleBizException(BizException bizException){
         return Result.error(bizException.getExceptionEnum());
     }
-
+    @ExceptionHandler(MaxUploadSizeExceededException.class)
+    public Result handleMaxUploadSize(){
+        return Result.error(ExceptionEnum.FILE_SIZE_ERROR);
+    }
+    // -------------------------- SQL -------------------------- //
     // when violate sql unique constraint
     @ExceptionHandler(DuplicateKeyException.class)
     public Result handleDuplicateException(){
@@ -30,7 +35,7 @@ public class GlobalExceptionHandler {
     public Result handleIntegrityException(){
         return Result.error(ExceptionEnum.VIOLATE_KEY);
     }
-
+    // -------------------------- parameter -------------------------- //
     // when param type is not correct
     @ExceptionHandler(TypeMismatchException.class)
     public Result handleTypeMismatchException(){

@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="net.fileme.domain.mapper.DriveDataMapper">
+
+    <resultMap id="driveData" type="net.fileme.domain.pojo.DriveData">
+        <id column="id" jdbcType="BIGINT" property="id"/>
+        <result column="data_name" jdbcType="VARCHAR" property="dataName"/>
+        <result column="data_type" jdbcType="TINYINT" property="dataType"/>
+    </resultMap>
+
+    <select id="getDriveData" resultMap="driveData">
+        select folder_id id, folder_name data_name, 0 data_type
+        from folder where user_id = #{userId} and parent_id = #{folderId}
+        union
+        select file_id, concat(file_name, '.', ext), 1
+        from file_data where user_id = #{userId} and folder_id = #{folderId}
+    </select>
+
+</mapper>

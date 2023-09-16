@@ -1,4 +1,4 @@
-package net.fileme.exception;
+package net.fileme.utils.enums;
 
 import lombok.Getter;
 
@@ -23,6 +23,7 @@ public enum ExceptionEnum {
     , FILE_ERROR(820,"檔案異常")
     , FILE_NAME_ERROR(821, "檔名異常")
     , FILE_SIZE_ERROR(822,"檔案大小異常")
+    , FILE_TYPE_ERROR(823,"檔案格式異常")
     , FOLDER_ERROR(830, "目錄異常")
     , FOLDER_NAME_ERROR(831, "目錄名稱異常")
     , FOLDER_SIZE_ERROR(832, "目錄大小異常")

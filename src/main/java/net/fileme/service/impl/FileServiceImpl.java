@@ -9,13 +9,19 @@ import net.fileme.domain.mapper.RemoveListMapper;
 import net.fileme.domain.pojo.File;
 import net.fileme.domain.pojo.RemoveList;
 import net.fileme.exception.BizException;
-import net.fileme.exception.ExceptionEnum;
+import net.fileme.utils.enums.ExceptionEnum;
 import net.fileme.service.FileService;
+import net.fileme.utils.enums.MimeEnum;
+import org.apache.tika.Tika;
+import org.apache.tika.io.TikaInputStream;
+import org.apache.tika.mime.MimeTypeException;
+import org.apache.tika.mime.MimeTypes;
 import org.junit.platform.commons.util.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.util.FileSystemUtils;
+import org.springframework.util.ObjectUtils;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
@@ -38,35 +44,44 @@ public class FileServiceImpl extends ServiceImpl<FileMapper, File>
     private RemoveListMapper removeListMapper;
 
     @Override
-    public File createFile(Long userId, String tmpFullName, Long fileSize, Long folderId) throws BizException{
+    public File handlePartFile(MultipartFile multipartFile) throws BizException {
         File file = new File();
 
-        file.setUserId(userId);
-        file.setFolderId(folderId);
+        try {
+            // handle mime type
+            Tika tika = new Tika();
+            byte[] bytes = multipartFile.getBytes();
+            String mime = tika.detect(TikaInputStream.get(bytes));
 
-        String tmpName = tmpFullName.substring(0, tmpFullName.lastIndexOf("."));
-        // 檔名卡控待補充，是否要正則表達式
-        if (StringUtils.isBlank(tmpName) || ".".equals(tmpName)) {
-            throw new BizException(ExceptionEnum.FILE_NAME_ERROR);
+            MimeTypes allTypes = MimeTypes.getDefaultMimeTypes();
+            String tmpExt = allTypes.forName(mime).getExtension();
+
+            String ext = tmpExt.substring(tmpExt.lastIndexOf(".") + 1);
+            boolean isValidMime = ObjectUtils.containsConstant(MimeEnum.values(), ext);
+
+            if(!isValidMime){
+                throw new BizException(ExceptionEnum.FILE_TYPE_ERROR);
+            }else{
+                file.setExt(ext);
+            }
+
+            // handle file name
+            String tmpFullName = multipartFile.getOriginalFilename();
+            String fileName = tmpFullName.substring(0, tmpFullName.lastIndexOf("."));
+            // 檔名卡控待補充，是否要正則表達式
+            if (StringUtils.isBlank(fileName) || ".".equals(fileName)) {
+                throw new BizException(ExceptionEnum.FILE_NAME_ERROR);
+            }
+            file.setFileName(fileName);
+
+            // handle file size
+            file.setSize(multipartFile.getSize());
+
+        }catch(MimeTypeException e){
+            throw new BizException(ExceptionEnum.FILE_TYPE_ERROR);
+        }catch(IOException e){
+            throw new BizException(ExceptionEnum.FILE_TYPE_ERROR);
         }
-
-        String tmpExt = tmpFullName.substring(tmpFullName.lastIndexOf(".") + 1);
-
-        if (StringUtils.isBlank(tmpExt) || tmpExt.length() <= 1) {
-            throw new BizException(ExceptionEnum.FILE_NAME_ERROR);
-        }
-
-        file.setFileName(tmpName);
-        file.setExt(tmpExt);
-
-        // 檔案太大也要擋
-        if (fileSize <= 0) {
-            throw new BizException(ExceptionEnum.FILE_SIZE_ERROR);
-        }
-        file.setSize(fileSize);
-
-        save(file);
-
         return file;
     }
 
@@ -75,7 +90,7 @@ public class FileServiceImpl extends ServiceImpl<FileMapper, File>
         StringBuilder builder = new StringBuilder();
         builder.append(remotePathPrefix).append("/").append(file.getUserId()).append("/").append(file.getId()).append(".").append(file.getExt());
         String path = builder.toString();
-        System.out.println(path);
+
         java.io.File tmpFile = new java.io.File(path);
 
         if(!tmpFile.getParentFile().exists()){
