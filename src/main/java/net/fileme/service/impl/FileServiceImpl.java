@@ -101,18 +101,19 @@ public class FileServiceImpl extends ServiceImpl<FileMapper, File>
         }
         try {
             part.transferTo(tmpFile);
-        }catch(BizException bizException){
-            throw bizException;
         }catch(Exception e){
             throw new BizException(ExceptionEnum.UPLOAD_SVR_FAIL);
         }
     }
 
     @Override
-    public void rename(Long dataId, String newName){
+    public void rename(Long dataId, String newName) throws BizException{
         LambdaUpdateWrapper<File> luw = new LambdaUpdateWrapper<>();
         luw.set(File::getFileName, newName).eq(File::getId, dataId);
-        update(luw);
+        boolean success = update(luw);
+        if(!success){
+            throw new BizException(ExceptionEnum.FILE_NOT_EXISTS);
+        }
     }
 
     @Override

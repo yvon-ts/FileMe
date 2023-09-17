@@ -1,8 +1,8 @@
 package net.fileme.controller;
 
 import net.fileme.domain.Result;
-import net.fileme.domain.mapper.DriveDataMapper;
-import net.fileme.domain.pojo.DriveData;
+import net.fileme.domain.mapper.DriveDtoMapper;
+import net.fileme.domain.DriveDto;
 import net.fileme.domain.pojo.File;
 import net.fileme.domain.pojo.Folder;
 import net.fileme.exception.BizException;
@@ -12,6 +12,7 @@ import net.fileme.utils.enums.MimeEnum;
 import org.apache.tika.Tika;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.util.FileCopyUtils;
@@ -36,7 +37,7 @@ public class DataManagerController {
     @Autowired
     private FileService fileService;
     @Autowired
-    private DriveDataMapper driveDataMapper;
+    private DriveDtoMapper driveDtoMapper;
 
 
     // ----------------------------------Create---------------------------------- //
@@ -78,14 +79,14 @@ public class DataManagerController {
     // ----------------------------------Read---------------------------------- //
     @GetMapping("/drive/my-drive")
     public Result myDrive(@RequestParam Long userId){
-        List<DriveData> driveData = driveDataMapper.getDriveData(userId, rootId);
-        return Result.success(driveData);
+        List<DriveDto> driveDto = driveDtoMapper.getDriveDto(userId, rootId);
+        return Result.success(driveDto);
     }
 
     @GetMapping("/drive/data")
-    public Result driveData(@RequestParam Long userId, @RequestParam Long folderId){
-        List<DriveData> driveData = driveDataMapper.getDriveData(userId, folderId);
-        return Result.success(driveData);
+    public Result DriveDto(@RequestParam Long userId, @RequestParam Long folderId){
+        List<DriveDto> driveDto = driveDtoMapper.getDriveDto(userId, folderId);
+        return Result.success(driveDto);
     }
 
     @GetMapping("/drive/preview")
@@ -116,25 +117,25 @@ public class DataManagerController {
                 throw new BizException(ExceptionEnum.FILE_ERROR);
             }
         }
-       return ResponseEntity.ok().body("該檔案不支援預覽");
+        // 這邊應該修成void, 丟error就好?
+       return ResponseEntity
+               .status(HttpStatus.BAD_REQUEST)
+               .body(Result.error(ExceptionEnum.PREVIEW_NOT_ALLOWED));
     }
 
     // ----------------------------------Update: rename---------------------------------- //
     @PostMapping("/drive/rename")
-    public Result rename(@RequestBody Map<String, String> data){
-        int type = Integer.parseInt(data.get("type"));
-        Long id = Long.valueOf(data.get("id"));
-        String name = data.get("name");
+    public ResponseEntity<?> rename(@RequestBody DriveDto dto){
+        int type = dto.getDataType();
         if(type == 0){
-            folderService.rename(id, name);
+            folderService.rename(dto.getId(), dto.getDataName());
         }else if(type == 1){
-            fileService.rename(id, name);
+            fileService.rename(dto.getId(), dto.getDataName());
         }else{
             throw new BizException(ExceptionEnum.PARAM_ERROR);
         }
-        return Result.success();
+        return ResponseEntity.ok().build();
     }
-
     // ----------------------------------Update: relocate---------------------------------- //
 
     @GetMapping("/drive/relocate/super")
@@ -150,16 +151,19 @@ public class DataManagerController {
     }
 
     @PostMapping("/drive/relocate")
-    public Result relocate(@RequestParam Long folderId, @RequestBody Map<String, List<Long>> map){
+    public Result relocate(@RequestParam Long destId, @RequestBody Map<String, List<Long>> map){
         List<Long> folderIds = map.get("folders");
         List<Long> fileIds = map.get("files");
 
         if(folderIds.isEmpty() && fileIds.isEmpty()){
             throw new BizException(ExceptionEnum.PARAM_ERROR);
         }
-
-        folderService.relocate(folderId, folderIds);
-        fileService.relocate(folderId, fileIds);
+        if(!folderIds.isEmpty()){
+            folderService.relocate(destId, folderIds);
+        }
+        if(!fileIds.isEmpty()){
+            fileService.relocate(destId, fileIds);
+        }
 
         return Result.success();
     }

@@ -1,13 +1,13 @@
-package net.fileme.domain.pojo;
+package net.fileme.domain;
 
 import com.baomidou.mybatisplus.annotation.TableId;
 import lombok.Data;
 
 @Data
-public class DriveData {
+public class DriveDto {
 
     @TableId
     private Long id;
-    private String DataName;
+    private String dataName;
     private Integer dataType;
 }

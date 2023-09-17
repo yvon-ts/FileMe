@@ -6,8 +6,10 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import net.fileme.domain.mapper.FolderMapper;
 import net.fileme.domain.mapper.FolderTrashMapper;
 import net.fileme.domain.pojo.Folder;
+import net.fileme.exception.BizException;
 import net.fileme.service.FileService;
 import net.fileme.service.FolderService;
+import net.fileme.utils.enums.ExceptionEnum;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -30,7 +32,10 @@ public class FolderServiceImpl extends ServiceImpl<FolderMapper, Folder>
     public void rename(Long dataId, String newName){
         LambdaUpdateWrapper<Folder> luw = new LambdaUpdateWrapper<>();
         luw.set(Folder::getFolderName, newName).eq(Folder::getId, dataId);
-        update(luw);
+        boolean success = update(luw);
+        if(!success){
+            throw new BizException(ExceptionEnum.FOLDER_NOT_EXISTS);
+        }
     }
 
     @Override
