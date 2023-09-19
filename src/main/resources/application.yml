@@ -13,6 +13,8 @@ log4j:
     org:
       mybatis:
         example: DEBUG
+logging:
+  config: classpath:logback.xml
 mybatis-plus:
   mapper-locations: classpath:net/fileme/domain/mapper/*.xml
   configuration:

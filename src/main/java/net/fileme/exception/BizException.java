@@ -14,14 +14,4 @@ public class BizException extends RuntimeException{
         this.exceptionEnum = exceptionEnum;
     }
 
-    /**
-     * transform 3rd party exception into customized enum
-     * @param exceptionEnum
-     * @param cause
-     */
-    public BizException(ExceptionEnum exceptionEnum, Throwable cause){
-        super(cause);
-        this.exceptionEnum = exceptionEnum;
-    }
-
 }

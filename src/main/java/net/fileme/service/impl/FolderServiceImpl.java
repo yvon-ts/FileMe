@@ -6,7 +6,7 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import net.fileme.domain.mapper.FolderMapper;
 import net.fileme.domain.mapper.FolderTrashMapper;
 import net.fileme.domain.pojo.Folder;
-import net.fileme.exception.BizException;
+import net.fileme.exception.NotFoundException;
 import net.fileme.service.FileService;
 import net.fileme.service.FolderService;
 import net.fileme.utils.enums.ExceptionEnum;
@@ -34,7 +34,7 @@ public class FolderServiceImpl extends ServiceImpl<FolderMapper, Folder>
         luw.set(Folder::getFolderName, newName).eq(Folder::getId, dataId);
         boolean success = update(luw);
         if(!success){
-            throw new BizException(ExceptionEnum.FOLDER_NOT_EXISTS);
+            throw new NotFoundException(ExceptionEnum.FOLDER_NOT_EXISTS);
         }
     }
 

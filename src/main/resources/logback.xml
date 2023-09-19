@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<configuration>
+    <!--  %m輸出訊息, %p日誌等級, %t執行緒名稱, %d日期, %c類別全名, %i索引  -->
+    <!--  appender負責寫log  -->
+    <!--  ConsoleAppender：把log輸出到console  -->
+    <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>%d %p (%file:%line\)- %m%n</pattern>
+            <charset>UTF-8</charset>
+        </encoder>
+    </appender>
+<!--  RollingFileAppender：先log至指定檔案，滿足某條件時會log到其他檔案  -->
+<!--  下列代表1.先按照日期紀錄log，日期改變時將前一天的log命名為xxx%日期%索引，新的日期一樣是sys.log  -->
+<!--  2.如果當天log大小超過10KB，則對log進行分割、重新命名  -->
+    <appender name="syslog" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <File>log/sys.log</File>
+<!--   TimeBasedRollingPolicy是最常使用的rolling policy     -->
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+<!--    檔案名稱:log/sys.2023-09-20.0.log        -->
+            <fileNamePattern>sys.%d.%i.log</fileNamePattern>
+<!--    檔案保存期限30天        -->
+            <maxHistory>30</maxHistory>
+            <timeBasedFileNamingAndTriggeringPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedFNATP">
+<!--    預設10MB            -->
+                <maxFileSize>10KB</maxFileSize>
+            </timeBasedFileNamingAndTriggeringPolicy>
+        </rollingPolicy>
+        <encoder>
+            <pattern>%d %p (%file:%line\)- %m%n</pattern>
+            <charset>UTF-8</charset>
+        </encoder>
+    </appender>
+<!--  console輸出log等級  -->
+    <root level="info">
+        <appender-ref ref="STDOUT"/>
+    </root>
+<!--  指定某package的log等級  -->
+<!--  等級從高到低依序為：FATAL > ERROR > WARN > INFO > DEBUG > TRACE  -->
+    <logger name="net.fileme.controller" level="DEBUG">
+        <appender-ref ref="syslog"/>
+    </logger>
+    <logger name="net.fileme.logging" level="DEBUG">
+        <appender-ref ref="syslog"/>
+    </logger>
+</configuration>

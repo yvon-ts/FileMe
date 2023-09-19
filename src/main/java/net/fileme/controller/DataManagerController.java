@@ -5,11 +5,14 @@ import net.fileme.domain.mapper.DriveDtoMapper;
 import net.fileme.domain.DriveDto;
 import net.fileme.domain.pojo.File;
 import net.fileme.domain.pojo.Folder;
+import net.fileme.exception.BadRequestException;
 import net.fileme.exception.BizException;
 import net.fileme.utils.enums.ExceptionEnum;
 import net.fileme.service.*;
 import net.fileme.utils.enums.MimeEnum;
 import org.apache.tika.Tika;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
@@ -19,11 +22,14 @@ import org.springframework.util.FileCopyUtils;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import javax.validation.Valid;
 import java.io.IOException;
 import java.util.*;
 
 @RestController
 public class DataManagerController {
+
+    private Logger logger = LoggerFactory.getLogger(DataManagerController.class);
 
     @Value("${file.root.folderId}")
     private Long rootId;
@@ -125,16 +131,17 @@ public class DataManagerController {
 
     // ----------------------------------Update: rename---------------------------------- //
     @PostMapping("/drive/rename")
-    public ResponseEntity<?> rename(@RequestBody DriveDto dto){
-        int type = dto.getDataType();
-        if(type == 0){
+    public ResponseEntity rename(@Valid @RequestBody DriveDto dto){
+        int dataType = dto.getDataType();
+        if(dataType == 0){
             folderService.rename(dto.getId(), dto.getDataName());
-        }else if(type == 1){
+        }else if(dataType == 1){
             fileService.rename(dto.getId(), dto.getDataName());
         }else{
-            throw new BizException(ExceptionEnum.PARAM_ERROR);
+            logger.error("dataType參數異常：" + dataType);
+            throw new BadRequestException(ExceptionEnum.PARAM_ERROR);
         }
-        return ResponseEntity.ok().build();
+        return ResponseEntity.ok().body(Result.success());
     }
     // ----------------------------------Update: relocate---------------------------------- //
 
@@ -155,7 +162,7 @@ public class DataManagerController {
         List<Long> folderIds = map.get("folders");
         List<Long> fileIds = map.get("files");
 
-        if(folderIds.isEmpty() && fileIds.isEmpty()){
+        if(folderIds == null && fileIds == null){
             throw new BizException(ExceptionEnum.PARAM_ERROR);
         }
         if(!folderIds.isEmpty()){

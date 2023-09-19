@@ -9,6 +9,7 @@ import net.fileme.domain.mapper.RemoveListMapper;
 import net.fileme.domain.pojo.File;
 import net.fileme.domain.pojo.RemoveList;
 import net.fileme.exception.BizException;
+import net.fileme.exception.NotFoundException;
 import net.fileme.utils.enums.ExceptionEnum;
 import net.fileme.service.FileService;
 import net.fileme.utils.enums.MimeEnum;
@@ -107,12 +108,12 @@ public class FileServiceImpl extends ServiceImpl<FileMapper, File>
     }
 
     @Override
-    public void rename(Long dataId, String newName) throws BizException{
+    public void rename(Long dataId, String newName){
         LambdaUpdateWrapper<File> luw = new LambdaUpdateWrapper<>();
         luw.set(File::getFileName, newName).eq(File::getId, dataId);
         boolean success = update(luw);
         if(!success){
-            throw new BizException(ExceptionEnum.FILE_NOT_EXISTS);
+            throw new NotFoundException(ExceptionEnum.FILE_NOT_EXISTS);
         }
     }
 
