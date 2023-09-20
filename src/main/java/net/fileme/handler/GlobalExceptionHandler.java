@@ -70,11 +70,13 @@ public class GlobalExceptionHandler {
     // when param type is not correct
     @ExceptionHandler(TypeMismatchException.class)
     public Result handleTypeMismatchException(TypeMismatchException typeMismatchException){
+        System.out.println("typemismatch");
         return Result.error(ExceptionEnum.PARAM_ERROR);
     }
 
+    // when violate Spring Validation
     @ExceptionHandler(MethodArgumentNotValidException.class)
-    public ResponseEntity handleValidException(MethodArgumentNotValidException ex){
+    public ResponseEntity handleArgsNotValid(MethodArgumentNotValidException ex){
         //之後看看如何加上UserID，目前只有路由
         logError(ex, ExceptionEnum.PARAM_ERROR);
 
@@ -91,15 +93,24 @@ public class GlobalExceptionHandler {
                 .body(Result.error(ExceptionEnum.PARAM_ERROR));
     }
 
-    // e.g. update command without setting any values
-    @ExceptionHandler(BadSqlGrammarException.class)
-    public Result handleBadSql(BadSqlGrammarException badSqlGrammarException){
-        return Result.error(ExceptionEnum.PARAM_ERROR);
+    // when missing RequestParam
+    @ExceptionHandler(MissingServletRequestParameterException.class)
+    public ResponseEntity handleMissingRequestParam(MissingServletRequestParameterException ex){
+        //之後看看如何加上UserID，目前只有路由
+        logError(ex, ExceptionEnum.PARAM_ERROR);
+        return ResponseEntity
+                .status(HttpStatus.BAD_REQUEST)
+                .body(Result.error(ExceptionEnum.PARAM_ERROR));
     }
 
-    @ExceptionHandler(MissingServletRequestParameterException.class)
-    public Result handleMissingParamException(){
-        return Result.error(ExceptionEnum.PARAM_EMPTY);
+    // e.g. update command without setting any values
+    @ExceptionHandler(BadSqlGrammarException.class)
+    public ResponseEntity handleBadSql(BadSqlGrammarException ex){
+        logError(ex, ExceptionEnum.PARAM_ERROR);
+        log.error(ex.getSQLException().toString());
+        return ResponseEntity
+                .status(HttpStatus.BAD_REQUEST)
+                .body(Result.error(ExceptionEnum.PARAM_ERROR));
     }
 
     private void logError(Exception ex, ExceptionEnum exceptionEnum){

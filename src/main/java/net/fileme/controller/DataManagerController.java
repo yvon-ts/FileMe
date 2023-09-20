@@ -1,11 +1,11 @@
 package net.fileme.controller;
 
+import net.fileme.domain.FileFolderDto;
 import net.fileme.domain.Result;
 import net.fileme.domain.mapper.DriveDtoMapper;
 import net.fileme.domain.DriveDto;
 import net.fileme.domain.pojo.File;
 import net.fileme.domain.pojo.Folder;
-import net.fileme.exception.BadRequestException;
 import net.fileme.exception.BizException;
 import net.fileme.utils.enums.ExceptionEnum;
 import net.fileme.service.*;
@@ -23,6 +23,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.validation.Valid;
+import javax.validation.constraints.NotNull;
 import java.io.IOException;
 import java.util.*;
 
@@ -42,6 +43,8 @@ public class DataManagerController {
     private FolderService folderService;
     @Autowired
     private FileService fileService;
+    @Autowired
+    private DtoService dtoService;
     @Autowired
     private DriveDtoMapper driveDtoMapper;
 
@@ -132,46 +135,27 @@ public class DataManagerController {
     // ----------------------------------Update: rename---------------------------------- //
     @PostMapping("/drive/rename")
     public ResponseEntity rename(@Valid @RequestBody DriveDto dto){
-        int dataType = dto.getDataType();
-        if(dataType == 0){
-            folderService.rename(dto.getId(), dto.getDataName());
-        }else if(dataType == 1){
-            fileService.rename(dto.getId(), dto.getDataName());
-        }else{
-            throw new BadRequestException(ExceptionEnum.PARAM_ERROR);
-        }
+        dtoService.rename(dto);
         return ResponseEntity.ok().body(Result.success());
     }
     // ----------------------------------Update: relocate---------------------------------- //
 
     @GetMapping("/drive/relocate/super")
-    public Result getRelocateSuper(@RequestParam Long folderId){
+    public ResponseEntity getRelocateSuper(@NotNull @RequestParam Long folderId){
         List<Folder> superFolders = dataTreeService.findSuperFolders(folderId);
-        return Result.success(superFolders);
+        return ResponseEntity.ok().body(Result.success(superFolders));
     }
 
     @GetMapping("/drive/relocate/sub")
-    public Result getRelocateSub(@RequestParam Long userId, @RequestParam Long folderId){
+    public ResponseEntity getRelocateSub(@NotNull @RequestParam Long userId, @NotNull @RequestParam Long folderId){
         List<Folder> subFolders = dataTreeService.findSubFolders(userId, folderId);
-        return Result.success(subFolders);
+        return ResponseEntity.ok().body(Result.success(subFolders));
     }
 
     @PostMapping("/drive/relocate")
-    public Result relocate(@RequestParam Long destId, @RequestBody Map<String, List<Long>> map){
-        List<Long> folderIds = map.get("folders");
-        List<Long> fileIds = map.get("files");
-
-        if(folderIds == null && fileIds == null){
-            throw new BizException(ExceptionEnum.PARAM_ERROR);
-        }
-        if(!folderIds.isEmpty()){
-            folderService.relocate(destId, folderIds);
-        }
-        if(!fileIds.isEmpty()){
-            fileService.relocate(destId, fileIds);
-        }
-
-        return Result.success();
+    public ResponseEntity relocate(@NotNull @RequestParam Long destId, @NotNull @RequestBody FileFolderDto dto){
+        dtoService.relocate(destId, dto);
+        return ResponseEntity.ok().body(Result.success());
     }
 
     // ----------------------------------Delete: clean & recover---------------------------------- //

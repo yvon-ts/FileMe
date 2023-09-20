@@ -18,7 +18,10 @@ logging:
 mybatis-plus:
   mapper-locations: classpath:net/fileme/domain/mapper/*.xml
   configuration:
+# 將MyBatis sql command輸出至console
     log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+# 將MyBatis sql command輸出至log
+#    log-impl: org.apache.ibatis.logging.slf4j.Slf4jImpl
 # 預設檔案上傳路徑
 file:
   upload:

@@ -45,4 +45,8 @@
     <logger name="net.fileme.handler" level="DEBUG">
         <appender-ref ref="syslog"/>
     </logger>
+<!--  MyBatis Sql command要指定mapper所在的package  -->
+<!--    <logger name="net.fileme.domain.mapper" level="DEBUG">-->
+<!--        <appender-ref ref="syslog"/>-->
+<!--    </logger>-->
 </configuration>

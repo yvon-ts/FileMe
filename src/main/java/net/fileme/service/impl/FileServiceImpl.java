@@ -130,7 +130,10 @@ public class FileServiceImpl extends ServiceImpl<FileMapper, File>
     public void relocate(Long parentId, List<Long> dataIds) {
         LambdaUpdateWrapper<File> luw = new LambdaUpdateWrapper<>();
         luw.set(File::getFolderId, parentId).in(File::getId, dataIds);
-        update(luw);
+        boolean success = update(luw);
+        if(!success){
+            throw new NotFoundException(ExceptionEnum.UPDATE_DB_FAIL);
+        }
     }
 
     @Override

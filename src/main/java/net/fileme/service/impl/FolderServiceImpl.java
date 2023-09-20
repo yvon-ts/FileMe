@@ -51,7 +51,10 @@ public class FolderServiceImpl extends ServiceImpl<FolderMapper, Folder>
     public void relocate(Long parentId, List<Long> dataIds) {
         LambdaUpdateWrapper<Folder> luw = new LambdaUpdateWrapper<>();
         luw.set(Folder::getParentId, parentId).in(Folder::getId, dataIds);
-        update(luw);
+        boolean success = update(luw);
+        if(!success){
+            throw new NotFoundException(ExceptionEnum.UPDATE_DB_FAIL);
+        }
     }
 
     @Override
