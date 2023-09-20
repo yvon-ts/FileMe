@@ -1,6 +1,5 @@
 package net.fileme.logging;
 
-import org.aspectj.lang.JoinPoint;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.Signature;
 import org.aspectj.lang.annotation.*;
@@ -30,13 +29,13 @@ public class RequestLogAspect {
     @Pointcut("execution(public * net.fileme.controller.*.*(..))")
     public void reqLog(){}
 
-    @Before("reqLog()")
-    public void doBefore(JoinPoint jointPoint) throws Throwable{
-    }
-
-    @AfterReturning(value = "reqLog()", returning = "ret")
-    public void doAfterReturning(Object ret) throws Throwable{
-    }
+//    @Before("reqLog()")
+//    public void doBefore(JoinPoint jointPoint) throws Throwable{
+//    }
+//
+//    @AfterReturning(value = "reqLog()", returning = "ret")
+//    public void doAfterReturning(Object ret) throws Throwable{
+//    }
 
     @Around("reqLog()")
     public Object doAround(ProceedingJoinPoint joinPoint) throws Throwable{
@@ -56,6 +55,7 @@ public class RequestLogAspect {
 
         return result;
     }
+    // 取得方法參數名稱&數值
     private Object getParameter(Method method, Object[] args){
         List<Object> argList = new ArrayList<>();
         Parameter[] params = method.getParameters();

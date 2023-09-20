@@ -18,27 +18,31 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.context.request.RequestContextHolder;
+import org.springframework.web.context.request.ServletRequestAttributes;
 import org.springframework.web.multipart.MaxUploadSizeExceededException;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
-    private static Logger logger = LoggerFactory.getLogger(GlobalExceptionHandler.class);
+    private static Logger log = LoggerFactory.getLogger(GlobalExceptionHandler.class);
     @ExceptionHandler(BizException.class)
-    public Result handleBizException(BizException bizException){
-        return Result.error(bizException.getExceptionEnum());
+    public Result handleBizException(BizException ex){
+        log.error(ex.toString());
+        return Result.error(ex.getExceptionEnum());
     }
     @ExceptionHandler(BadRequestException.class)
-    public ResponseEntity handleBadRequest(BadRequestException badRequestException){
-        logger.error(String.valueOf(badRequestException.getClass()));
+    public ResponseEntity handleBadRequest(BadRequestException ex){
+        logError(ex, ex.getExceptionEnum());
         return ResponseEntity
                 .status(HttpStatus.BAD_REQUEST)
-                .body(Result.error(badRequestException.getExceptionEnum()));
+                .body(Result.error(ex.getExceptionEnum()));
     }
     @ExceptionHandler(NotFoundException.class)
-    public ResponseEntity handleNotFound(NotFoundException notFoundException){
+    public ResponseEntity handleNotFound(NotFoundException ex){
+        logError(ex, ex.getExceptionEnum());
         return ResponseEntity
                 .status(HttpStatus.NOT_FOUND)
-                .body(Result.error(notFoundException.getExceptionEnum()));
+                .body(Result.error(ex.getExceptionEnum()));
     }
     @ExceptionHandler(InternalErrorException.class)
     public ResponseEntity handleInternalError(InternalErrorException internalErrorException){
@@ -70,7 +74,18 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
-    public ResponseEntity handleValidException(MethodArgumentNotValidException methodArgumentNotValidException){
+    public ResponseEntity handleValidException(MethodArgumentNotValidException ex){
+        //之後看看如何加上UserID，目前只有路由
+        logError(ex, ExceptionEnum.PARAM_ERROR);
+
+        if(ex.getBindingResult().hasErrors()){
+            ex.getBindingResult().getFieldErrors()
+                    .forEach(error -> {
+                        log.debug("Invalid {} value submitted for {}",
+                                error.getRejectedValue(), error.getField());
+                        log.debug(error.toString());
+                    });
+        }
         return ResponseEntity
                 .status(HttpStatus.BAD_REQUEST)
                 .body(Result.error(ExceptionEnum.PARAM_ERROR));
@@ -85,5 +100,16 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(MissingServletRequestParameterException.class)
     public Result handleMissingParamException(){
         return Result.error(ExceptionEnum.PARAM_EMPTY);
+    }
+
+    private void logError(Exception ex, ExceptionEnum exceptionEnum){
+        ServletRequestAttributes attributes = (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
+        String uri = attributes.getRequest().getRequestURI();
+        StringBuilder builder = new StringBuilder();
+
+        builder.append(ex.getClass().getSimpleName()).append(": ").append(uri);
+        log.error(builder.toString());
+
+        log.error(exceptionEnum.toStringDetails());
     }
 }

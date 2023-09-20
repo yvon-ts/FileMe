@@ -17,7 +17,7 @@
 <!--   TimeBasedRollingPolicy是最常使用的rolling policy     -->
         <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
 <!--    檔案名稱:log/sys.2023-09-20.0.log        -->
-            <fileNamePattern>sys.%d.%i.log</fileNamePattern>
+            <fileNamePattern>log/sys.%d.%i.log</fileNamePattern>
 <!--    檔案保存期限30天        -->
             <maxHistory>30</maxHistory>
             <timeBasedFileNamingAndTriggeringPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedFNATP">
@@ -40,6 +40,9 @@
         <appender-ref ref="syslog"/>
     </logger>
     <logger name="net.fileme.logging" level="DEBUG">
+        <appender-ref ref="syslog"/>
+    </logger>
+    <logger name="net.fileme.handler" level="DEBUG">
         <appender-ref ref="syslog"/>
     </logger>
 </configuration>

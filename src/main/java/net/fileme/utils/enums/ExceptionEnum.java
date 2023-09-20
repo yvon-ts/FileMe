@@ -43,4 +43,8 @@ public enum ExceptionEnum {
         this.code = code;
         this.desc = desc;
     }
+
+    public String toStringDetails() {
+        return toString() + ": 錯誤代碼 " + getCode() + ", " + getDesc();
+    }
 }

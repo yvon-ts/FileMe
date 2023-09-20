@@ -138,7 +138,6 @@ public class DataManagerController {
         }else if(dataType == 1){
             fileService.rename(dto.getId(), dto.getDataName());
         }else{
-            logger.error("dataType參數異常：" + dataType);
             throw new BadRequestException(ExceptionEnum.PARAM_ERROR);
         }
         return ResponseEntity.ok().body(Result.success());
