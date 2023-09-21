@@ -13,6 +13,7 @@ import net.fileme.utils.enums.ExceptionEnum;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -58,18 +59,21 @@ public class FolderServiceImpl extends ServiceImpl<FolderMapper, Folder>
     }
 
     @Override
+    @Transactional
     public void gotoTrash(List<Long> dataIds) {
         folderTrashMapper.create(dataIds);
         relocate(trashId, dataIds);
     }
 
     @Override
+    @Transactional
     public void recover(List<Long> dataIds) {
         folderTrashMapper.recover(dataIds);
         folderTrashMapper.deleteBatchIds(dataIds);
     }
 
     @Override
+    @Transactional
     public void softDelete(List<Long> dataIds) {
         folderTrashMapper.deleteBatchIds(dataIds);
         removeByIds(dataIds);

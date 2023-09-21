@@ -8,7 +8,7 @@
         from file_data
         where file_id in
         <foreach collection="fileIds" item="fileId" open="(" separator="," close=")">
-            #{fileId,jdbcType}
+            #{fileId}
         </foreach>
     </insert>
 

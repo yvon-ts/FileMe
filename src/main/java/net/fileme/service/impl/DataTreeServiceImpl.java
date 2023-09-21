@@ -1,6 +1,7 @@
 package net.fileme.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import net.fileme.domain.FileFolderDto;
 import net.fileme.domain.mapper.FolderMapper;
 import net.fileme.domain.pojo.File;
 import net.fileme.domain.pojo.Folder;
@@ -58,21 +59,22 @@ public class DataTreeServiceImpl implements DataTreeService {
     }
 
     @Override
-    public Map<String, List<Long>> findSubIds(Long userId, Long rootFolderId) {
-        Map<String, List<Long>> subIds = new HashMap<>();
-        List<Long> subFolders = findSubFolderIds(userId, rootFolderId);
-        List<Long> subFiles = findSubFileIds(userId, rootFolderId);
-        subIds.put("subFolders", subFolders);
-        subIds.put("subFiles", subFiles);
-        return subIds;
+    public FileFolderDto findSubIds(Long userId, Long rootFolderId) {
+        FileFolderDto dto = new FileFolderDto();
+        List<Long> subFolderIds = findSubFolderIds(userId, rootFolderId);
+        List<Long> subFileIds = findSubFileIds(userId, rootFolderId);
+        dto.setFolderIds(subFolderIds);
+        dto.setFileIds(subFileIds);
+        return dto;
     }
 
     @Override
-    public Map<String, List<Long>> findTreeIds(Long userId, Long rootFolderId) {
-        Map<String, List<Long>> subIds = new HashMap<>();
-        List<Long> subFolders = new ArrayList<>();
-        List<Long> subFiles = new ArrayList<>();
+    public FileFolderDto findTreeIds(Long userId, Long rootFolderId) {
+        FileFolderDto dto = new FileFolderDto();
+        List<Long> listFolderIds = new ArrayList<>();
+        List<Long> listFileIds = new ArrayList<>();
         List<Long> tmpList = new ArrayList<>();
+
         tmpList.add(rootFolderId); // init
         Iterator<Long> it = tmpList.iterator();
 
@@ -81,18 +83,19 @@ public class DataTreeServiceImpl implements DataTreeService {
             it.remove();
 
             List<Long> subFolderIds = findSubFolderIds(userId, tmpId);
-            subFolders.addAll(subFolderIds);
+            listFolderIds.addAll(subFolderIds);
 
             List<Long> subFileIds = findSubFileIds(userId, tmpId);
-            subFiles.addAll(subFileIds);
+            listFileIds.addAll(subFileIds);
 
+            // update loop condition
             tmpList.addAll(subFolderIds);
             it = tmpList.iterator();
         }
-        subIds.put("subFolders", subFolders);
-        subIds.put("subFiles", subFiles);
+        dto.setFolderIds(listFolderIds);
+        dto.setFileIds(listFileIds);
 
-        return subIds;
+        return dto;
     }
 
     @Override

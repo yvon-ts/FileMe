@@ -20,7 +20,9 @@ import org.apache.tika.mime.MimeTypes;
 import org.junit.platform.commons.util.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.ApplicationContext;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.FileSystemUtils;
 import org.springframework.util.ObjectUtils;
 import org.springframework.web.multipart.MultipartFile;
@@ -43,6 +45,8 @@ public class FileServiceImpl extends ServiceImpl<FileMapper, File>
     private FileTrashMapper fileTrashMapper;
     @Autowired
     private RemoveListMapper removeListMapper;
+    @Autowired
+    private ApplicationContext applicationContext;
 
     @Override
     public File handlePartFile(MultipartFile multipartFile) throws BizException {
@@ -137,25 +141,29 @@ public class FileServiceImpl extends ServiceImpl<FileMapper, File>
     }
 
     @Override
+    @Transactional
     public void gotoTrash(List<Long> dataIds) {
         fileTrashMapper.create(dataIds);
         relocate(trashId, dataIds);
     }
 
     @Override
+    @Transactional
     public void recover(List<Long> dataIds) {
         fileTrashMapper.recover(dataIds);
         fileTrashMapper.deleteBatchIds(dataIds);
     }
 
     @Override
+    @Transactional
     public void softDelete(List<Long> dataIds){
         removeListMapper.create(dataIds);
         fileTrashMapper.deleteBatchIds(dataIds);
         removeByIds(dataIds);
     }
     @Override // 可以再評估一下PK要流水號 or FileID, 以下尚未考慮location
-    public void hardDelete(List<Long> fileIds) throws BizException{
+    @Transactional // 尚未測試
+    public void hardDelete(List<Long> fileIds){
         // get remote path
         LambdaQueryWrapper<RemoveList> lqw = new LambdaQueryWrapper<>();
         lqw.select(RemoveList::getFilePath).in(RemoveList::getFileId, fileIds);

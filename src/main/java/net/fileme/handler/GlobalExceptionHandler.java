@@ -57,14 +57,22 @@ public class GlobalExceptionHandler {
     // -------------------------- SQL -------------------------- //
     // when violate sql unique constraint
     @ExceptionHandler(DuplicateKeyException.class)
-    public Result handleDuplicateException(){
-        return Result.error(ExceptionEnum.DUPLICATED_DB);
+    public ResponseEntity handleDuplicateKey(DuplicateKeyException ex){
+        logError(ex, ExceptionEnum.DUPLICATED_DB);
+        log.error(ex.getCause().toString());
+        return ResponseEntity
+                .status(HttpStatus.CONFLICT)
+                .body(Result.error(ExceptionEnum.DUPLICATED_DB));
     }
 
     // when violate sql foreign key constraint
     @ExceptionHandler(DataIntegrityViolationException.class)
-    public Result handleIntegrityException(){
-        return Result.error(ExceptionEnum.VIOLATE_KEY);
+    public ResponseEntity handleIntegrityViolation(DataIntegrityViolationException ex){
+        logError(ex, ExceptionEnum.VIOLATE_KEY);
+        System.out.println(ex.getMessage());
+        return ResponseEntity
+                .status(HttpStatus.CONFLICT)
+                .body(Result.error(ExceptionEnum.VIOLATE_KEY));
     }
     // -------------------------- parameter -------------------------- //
     // when param type is not correct
