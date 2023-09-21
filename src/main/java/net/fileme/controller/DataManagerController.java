@@ -4,13 +4,8 @@ import net.fileme.domain.FileFolderDto;
 import net.fileme.domain.Result;
 import net.fileme.domain.mapper.DriveDtoMapper;
 import net.fileme.domain.DriveDto;
-import net.fileme.domain.pojo.File;
 import net.fileme.domain.pojo.Folder;
-import net.fileme.exception.BizException;
-import net.fileme.utils.enums.ExceptionEnum;
 import net.fileme.service.*;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
@@ -24,15 +19,11 @@ import java.util.*;
 @RestController
 public class DataManagerController {
 
-    private Logger logger = LoggerFactory.getLogger(DataManagerController.class);
-
     @Value("${file.root.folderId}")
     private Long rootId;
 
     @Autowired
     private DataTreeService dataTreeService;
-    @Autowired
-    private CheckExistService checkExistService;
     @Autowired
     private FolderService folderService;
     @Autowired
@@ -44,39 +35,17 @@ public class DataManagerController {
 
 
     // ----------------------------------Create---------------------------------- //
-    @PostMapping("/drive/upload")
-    public Result upload(@RequestPart("file") MultipartFile part
-            , @RequestParam Long userId
-            , @RequestParam Long folderId) {
-
-        boolean isValidFolder = checkExistService.checkValidFolder(userId, folderId);
-        if(!isValidFolder){
-            throw new BizException(ExceptionEnum.FOLDER_ERROR);
-        }
-        File file = fileService.handlePartFile(part);
-        file.setUserId(userId);
-        file.setFolderId(folderId);
-        fileService.save(file);
-        fileService.upload(part, file);
-
+    @PostMapping("/drive/file")
+    public Result createFile(@NotNull @RequestPart("file") MultipartFile part
+            , @NotNull @RequestParam Long userId
+            , @NotNull @RequestParam Long folderId) {
+        fileService.createFile(part, userId, folderId);
         return Result.success();
     }
     @PostMapping("/drive/folder")
-    public Result createFolder(@RequestBody Map<String, String> data){
-        Long userId = Long.valueOf(data.get("userId"));
-        String name = data.get("name");
-        Long parentId = Long.valueOf(data.get("parentId"));
-
-        boolean isValid = checkExistService.checkValidFolder(userId, parentId);
-
-        if(isValid){
-            Folder folder = new Folder();
-            folder.setUserId(userId);
-            folder.setFolderName(name);
-            folder.setParentId(parentId);
-            folderService.save(folder);
-        }
-        return Result.success();
+    public ResponseEntity createFolder(@Valid @RequestBody Folder folder){
+        folderService.createFolder(folder);
+        return ResponseEntity.ok().body(Result.success());
     }
 
     // ----------------------------------Read---------------------------------- //

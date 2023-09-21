@@ -8,8 +8,11 @@ import net.fileme.domain.mapper.FileTrashMapper;
 import net.fileme.domain.mapper.RemoveListMapper;
 import net.fileme.domain.pojo.File;
 import net.fileme.domain.pojo.RemoveList;
+import net.fileme.exception.BadRequestException;
 import net.fileme.exception.BizException;
+import net.fileme.exception.InternalErrorException;
 import net.fileme.exception.NotFoundException;
+import net.fileme.service.CheckExistService;
 import net.fileme.utils.enums.ExceptionEnum;
 import net.fileme.service.FileService;
 import net.fileme.utils.enums.MimeEnum;
@@ -47,9 +50,11 @@ public class FileServiceImpl extends ServiceImpl<FileMapper, File>
     private RemoveListMapper removeListMapper;
     @Autowired
     private ApplicationContext applicationContext;
+    @Autowired
+    private CheckExistService checkExistService;
 
     @Override
-    public File handlePartFile(MultipartFile multipartFile) throws BizException {
+    public File handlePartFile(MultipartFile multipartFile){
         File file = new File();
 
         try {
@@ -65,17 +70,16 @@ public class FileServiceImpl extends ServiceImpl<FileMapper, File>
             boolean isValidMime = ObjectUtils.containsConstant(MimeEnum.values(), ext);
 
             if(!isValidMime){
-                throw new BizException(ExceptionEnum.FILE_TYPE_ERROR);
-            }else{
-                file.setExt(ext);
+                throw new BadRequestException(ExceptionEnum.FILE_TYPE_ERROR);
             }
+            file.setExt(ext);
 
             // handle file name
             String tmpFullName = multipartFile.getOriginalFilename();
             String fileName = tmpFullName.substring(0, tmpFullName.lastIndexOf("."));
             // 檔名卡控待補充，是否要正則表達式
             if (StringUtils.isBlank(fileName) || ".".equals(fileName)) {
-                throw new BizException(ExceptionEnum.FILE_NAME_ERROR);
+                throw new BadRequestException(ExceptionEnum.FILE_NAME_ERROR);
             }
             file.setFileName(fileName);
 
@@ -83,15 +87,15 @@ public class FileServiceImpl extends ServiceImpl<FileMapper, File>
             file.setSize(multipartFile.getSize());
 
         }catch(MimeTypeException e){
-            throw new BizException(ExceptionEnum.FILE_TYPE_ERROR);
+            throw new BadRequestException(ExceptionEnum.FILE_TYPE_ERROR);
         }catch(IOException e){
-            throw new BizException(ExceptionEnum.FILE_TYPE_ERROR);
+            throw new BadRequestException(ExceptionEnum.FILE_ERROR);
         }
         return file;
     }
 
     @Override // 未來可能overloading增加toRemote的flag
-    public void upload(MultipartFile part, File file) throws BizException{
+    public void upload(MultipartFile part, File file){
         StringBuilder builder = new StringBuilder();
         builder.append(remotePathPrefix).append("/").append(file.getUserId()).append("/").append(file.getId()).append(".").append(file.getExt());
         String path = builder.toString();
@@ -102,13 +106,27 @@ public class FileServiceImpl extends ServiceImpl<FileMapper, File>
             tmpFile.getParentFile().mkdirs();
         }
         if(tmpFile.exists()){
-            throw new BizException(ExceptionEnum.DUPLICATED_SVR);
+            throw new InternalErrorException(ExceptionEnum.DUPLICATED_SVR);
         }
         try {
             part.transferTo(tmpFile);
         }catch(Exception e){
-            throw new BizException(ExceptionEnum.UPLOAD_SVR_FAIL);
+            throw new InternalErrorException(ExceptionEnum.UPLOAD_SVR_FAIL);
         }
+    }
+
+    @Override
+    @Transactional
+    public void createFile(MultipartFile part, Long userId, Long folderId){
+        boolean isValid = checkExistService.checkValidFolder(userId, folderId);
+        if(!isValid){
+            throw new BadRequestException(ExceptionEnum.FOLDER_ERROR);
+        }
+        File file = handlePartFile(part);
+        file.setUserId(userId);
+        file.setFolderId(folderId);
+        save(file);
+        upload(part, file);
     }
 
     @Override

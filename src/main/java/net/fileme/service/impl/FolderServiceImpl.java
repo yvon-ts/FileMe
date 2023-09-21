@@ -6,7 +6,9 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import net.fileme.domain.mapper.FolderMapper;
 import net.fileme.domain.mapper.FolderTrashMapper;
 import net.fileme.domain.pojo.Folder;
+import net.fileme.exception.BadRequestException;
 import net.fileme.exception.NotFoundException;
+import net.fileme.service.CheckExistService;
 import net.fileme.service.FileService;
 import net.fileme.service.FolderService;
 import net.fileme.utils.enums.ExceptionEnum;
@@ -29,6 +31,25 @@ public class FolderServiceImpl extends ServiceImpl<FolderMapper, Folder>
     private FolderTrashMapper folderTrashMapper;
     @Autowired
     private FileService fileService;
+    @Autowired
+    private CheckExistService checkExistService;
+
+    @Override
+    public void createFolder(Folder fd){
+        Long userId = fd.getUserId();
+        String name = fd.getFolderName();
+        Long parentId = fd.getParentId();
+
+        boolean isValid = checkExistService.checkValidFolder(userId, parentId);
+        if(!isValid) {
+            throw new BadRequestException(ExceptionEnum.FOLDER_ERROR);
+        }
+        Folder folder = new Folder();
+        folder.setUserId(userId);
+        folder.setFolderName(name);
+        folder.setParentId(parentId);
+        save(folder);
+    }
     @Override
     public void rename(Long dataId, String newName){
         LambdaUpdateWrapper<Folder> luw = new LambdaUpdateWrapper<>();

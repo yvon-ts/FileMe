@@ -25,10 +25,25 @@ import org.springframework.web.multipart.MaxUploadSizeExceededException;
 @RestControllerAdvice
 public class GlobalExceptionHandler {
     private static Logger log = LoggerFactory.getLogger(GlobalExceptionHandler.class);
+
+    private void logError(Exception ex, ExceptionEnum exceptionEnum){
+        ServletRequestAttributes attributes = (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
+        String uri = attributes.getRequest().getRequestURI();
+        StringBuilder builder = new StringBuilder();
+
+        builder.append(ex.getClass().getSimpleName()).append(": ").append(uri);
+        log.error(builder.toString());
+
+        log.error(exceptionEnum.toStringDetails());
+    }
+
+    // -------------------------- Customized Exceptions -------------------------- //
     @ExceptionHandler(BizException.class)
-    public Result handleBizException(BizException ex){
-        log.error(ex.toString());
-        return Result.error(ex.getExceptionEnum());
+    public ResponseEntity handleBizException(BizException ex){
+        logError(ex, ex.getExceptionEnum());
+        return ResponseEntity
+                .status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(Result.error(ex.getExceptionEnum()));
     }
     @ExceptionHandler(BadRequestException.class)
     public ResponseEntity handleBadRequest(BadRequestException ex){
@@ -45,16 +60,20 @@ public class GlobalExceptionHandler {
                 .body(Result.error(ex.getExceptionEnum()));
     }
     @ExceptionHandler(InternalErrorException.class)
-    public ResponseEntity handleInternalError(InternalErrorException internalErrorException){
+    public ResponseEntity handleInternalError(InternalErrorException ex){
+        logError(ex, ex.getExceptionEnum());
         return ResponseEntity
                 .status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body(Result.error(internalErrorException.getExceptionEnum()));
+                .body(Result.error(ex.getExceptionEnum()));
     }
+    // -------------------------- Spring Exceptions -------------------------- //
     @ExceptionHandler(MaxUploadSizeExceededException.class)
-    public Result handleMaxUploadSize(){
-        return Result.error(ExceptionEnum.FILE_SIZE_ERROR);
+    public ResponseEntity handleMaxUploadSize(MaxUploadSizeExceededException ex){
+        logError(ex, ExceptionEnum.FILE_SIZE_ERROR);
+        return ResponseEntity
+                .status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(Result.error(ExceptionEnum.FILE_SIZE_ERROR));
     }
-    // -------------------------- SQL -------------------------- //
     // when violate sql unique constraint
     @ExceptionHandler(DuplicateKeyException.class)
     public ResponseEntity handleDuplicateKey(DuplicateKeyException ex){
@@ -74,12 +93,13 @@ public class GlobalExceptionHandler {
                 .status(HttpStatus.CONFLICT)
                 .body(Result.error(ExceptionEnum.VIOLATE_KEY));
     }
-    // -------------------------- parameter -------------------------- //
     // when param type is not correct
     @ExceptionHandler(TypeMismatchException.class)
-    public Result handleTypeMismatchException(TypeMismatchException typeMismatchException){
-        System.out.println("typemismatch");
-        return Result.error(ExceptionEnum.PARAM_ERROR);
+    public ResponseEntity handleTypeMismatch(TypeMismatchException ex){
+        logError(ex, ExceptionEnum.PARAM_ERROR);
+        return ResponseEntity
+                .status(HttpStatus.BAD_REQUEST)
+                .body(Result.error(ExceptionEnum.PARAM_ERROR));
     }
 
     // when violate Spring Validation
@@ -119,16 +139,5 @@ public class GlobalExceptionHandler {
         return ResponseEntity
                 .status(HttpStatus.BAD_REQUEST)
                 .body(Result.error(ExceptionEnum.PARAM_ERROR));
-    }
-
-    private void logError(Exception ex, ExceptionEnum exceptionEnum){
-        ServletRequestAttributes attributes = (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
-        String uri = attributes.getRequest().getRequestURI();
-        StringBuilder builder = new StringBuilder();
-
-        builder.append(ex.getClass().getSimpleName()).append(": ").append(uri);
-        log.error(builder.toString());
-
-        log.error(exceptionEnum.toStringDetails());
     }
 }

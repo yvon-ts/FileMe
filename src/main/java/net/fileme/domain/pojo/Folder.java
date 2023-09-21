@@ -19,7 +19,7 @@ public class Folder{
     @TableId(value = "folder_id")
     private Long id;
 
-//    @NotNull
+    @NotNull
     private Long userId;
 
     @NotBlank
