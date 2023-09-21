@@ -2,13 +2,23 @@ package net.fileme.service;
 
 import net.fileme.domain.DriveDto;
 import net.fileme.domain.FileFolderDto;
+import net.fileme.domain.Result;
 import net.fileme.exception.BadRequestException;
+import net.fileme.exception.InternalErrorException;
+import net.fileme.exception.NotFoundException;
 import net.fileme.utils.enums.ExceptionEnum;
+import net.fileme.utils.enums.MimeEnum;
+import org.apache.tika.Tika;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
+import org.springframework.util.FileCopyUtils;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -21,6 +31,38 @@ public class DtoServiceImpl implements DtoService{
     @Autowired
     private DataTreeService dataTreeService;
 
+    @Override
+    public ResponseEntity preview(Long userId, Long fileId){
+        String path = dataTreeService.findFilePath(userId, fileId);
+        String ext = path.substring(path.lastIndexOf(".") + 1);
+
+        // check if allowed to preview
+        if(MimeEnum.valueOf(ext.toUpperCase()).allowPreview){
+            java.io.File ioFile = new java.io.File(path);
+            if(!ioFile.exists()){
+                throw new NotFoundException(ExceptionEnum.FILE_ERROR);
+            }
+            try{
+                Tika tika = new Tika(); // mimeType library
+                String mimeType = tika.detect(ioFile);
+
+                byte[] bytes = FileCopyUtils.copyToByteArray(ioFile);
+
+                return ResponseEntity
+                        .ok()
+                        .contentType(MediaType.valueOf(mimeType))
+                        .contentLength((int)ioFile.length())
+                        .body(bytes);
+
+            }catch (IOException e){
+                throw new InternalErrorException(ExceptionEnum.FILE_ERROR);
+            }
+        }
+        // preview not allowed
+        return ResponseEntity
+                .status(HttpStatus.FORBIDDEN)
+                .body(Result.error(ExceptionEnum.PREVIEW_NOT_ALLOWED));
+    }
     @Override
     public void rename(DriveDto dto){
         int dataType = dto.getDataType();
@@ -81,6 +123,17 @@ public class DtoServiceImpl implements DtoService{
         if(!CollectionUtils.isEmpty(fileIds)){
             fileService.recover(fileIds);
         }
+    }
+
+    @Override
+    public void clean(Long userId) {
+        List<Long> folderIds = folderService.getTrashIds(userId);
+        List<Long> fileIds = fileService.getTrashIds(userId);
+        FileFolderDto dto = new FileFolderDto();
+        dto.setFolderIds(folderIds);
+        dto.setFileIds(fileIds);
+
+        softDelete(userId, dto);
     }
 
     @Override

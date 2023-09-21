@@ -9,22 +9,16 @@ import net.fileme.domain.pojo.Folder;
 import net.fileme.exception.BizException;
 import net.fileme.utils.enums.ExceptionEnum;
 import net.fileme.service.*;
-import net.fileme.utils.enums.MimeEnum;
-import org.apache.tika.Tika;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.util.FileCopyUtils;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
-import java.io.IOException;
 import java.util.*;
 
 @RestController
@@ -87,49 +81,20 @@ public class DataManagerController {
 
     // ----------------------------------Read---------------------------------- //
     @GetMapping("/drive/my-drive")
-    public Result myDrive(@RequestParam Long userId){
+    public Result myDrive(@NotNull @RequestParam Long userId){
         List<DriveDto> driveDto = driveDtoMapper.getDriveDto(userId, rootId);
         return Result.success(driveDto);
     }
 
     @GetMapping("/drive/data")
-    public Result DriveDto(@RequestParam Long userId, @RequestParam Long folderId){
+    public Result DriveDto(@NotNull @RequestParam Long userId, @NotNull @RequestParam Long folderId){
         List<DriveDto> driveDto = driveDtoMapper.getDriveDto(userId, folderId);
         return Result.success(driveDto);
     }
 
     @GetMapping("/drive/preview")
-    public ResponseEntity<?> preview(@RequestParam Long userId, @RequestParam Long fileId){
-
-        String path = dataTreeService.findFilePath(userId, fileId);
-        String ext = path.substring(path.lastIndexOf(".") + 1);
-
-        // check if allowed to preview
-        if(MimeEnum.valueOf(ext.toUpperCase()).allowPreview){
-            java.io.File ioFile = new java.io.File(path);
-            if(!ioFile.exists()){
-                throw new BizException(ExceptionEnum.FILE_ERROR);
-            }
-            try{
-                Tika tika = new Tika(); // mimeType library
-                String mimeType = tika.detect(ioFile);
-
-                byte[] bytes = FileCopyUtils.copyToByteArray(ioFile);
-
-                return ResponseEntity
-                        .ok()
-                        .contentType(MediaType.valueOf(mimeType))
-                        .contentLength((int)ioFile.length())
-                        .body(bytes);
-
-            }catch (IOException e){
-                throw new BizException(ExceptionEnum.FILE_ERROR);
-            }
-        }
-        // 這邊應該修成void, 丟error就好?
-       return ResponseEntity
-               .status(HttpStatus.BAD_REQUEST)
-               .body(Result.error(ExceptionEnum.PREVIEW_NOT_ALLOWED));
+    public ResponseEntity preview(@NotNull @RequestParam Long userId, @NotNull @RequestParam Long fileId){
+        return dtoService.preview(userId, fileId);
     }
 
     // ----------------------------------Update: rename---------------------------------- //
@@ -161,34 +126,27 @@ public class DataManagerController {
     // ----------------------------------Delete: clean & recover---------------------------------- //
 
     @PostMapping("/drive/trash")
-    public ResponseEntity gotoTrash(@RequestBody FileFolderDto dto){
+    public ResponseEntity gotoTrash(@NotNull @RequestBody FileFolderDto dto){
         dtoService.gotoTrash(dto);
         return ResponseEntity.ok().body(Result.success());
     }
 
     @PostMapping("/drive/recover")
-    public ResponseEntity recover(@RequestBody FileFolderDto dto){
+    public ResponseEntity recover(@NotNull @RequestBody FileFolderDto dto){
         dtoService.recover(dto);
         return ResponseEntity.ok().body(Result.success());
     }
 
     @PostMapping("/drive/clean") // 清空垃圾桶
-    public ResponseEntity clean(Long userId){
-        List<Long> folderIds = folderService.getTrashIds(userId);
-        List<Long> fileIds = fileService.getTrashIds(userId);
-        FileFolderDto dto = new FileFolderDto();
-        dto.setFolderIds(folderIds);
-        dto.setFileIds(fileIds);
-
-        softDelete(userId, dto);
-
+    public ResponseEntity clean(@NotNull @RequestParam Long userId){
+        dtoService.clean(userId);
         return ResponseEntity.ok().body(Result.success());
     }
 
     @PostMapping("/drive/softDelete")
-    public Result softDelete(@RequestParam Long userId, @RequestBody FileFolderDto dto){
+    public ResponseEntity softDelete(@NotNull @RequestParam Long userId, @NotNull @RequestBody FileFolderDto dto){
         dtoService.softDelete(userId, dto);
-        return Result.success();
+        return ResponseEntity.ok().body(Result.success());
     }
 
 }
