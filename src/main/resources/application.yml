@@ -1,9 +1,8 @@
 spring:
+  config:
+    import: "credentials.properties"
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
-    url: jdbc:mysql://localhost:3306/4test
-    username: root
-    password:
   servlet:
     multipart:
       max-file-size: 100MB
@@ -23,12 +22,17 @@ mybatis-plus:
 # 將MyBatis sql command輸出至log
 #    log-impl: org.apache.ibatis.logging.slf4j.Slf4jImpl
 # 預設檔案上傳路徑
-file:
-  upload:
-    dir: /Users/yvon/ideaUploads
+#file:
+#  upload:
+#    dir: /Users/yvon/ideaUploads
 # 預設垃圾桶目錄id
-  trash:
-    folderId: 999
+#  trash:
+#    folderId: 999
 # 預設根目錄id
-  root:
-    folderId: 0
+#  root:
+#    folderId: 0
+# JWT
+jwt:
+  exp: 60 * 60 * 1000L # 毫秒
+  key: fileme
+  issuer: hahaha

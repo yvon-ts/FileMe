@@ -8,6 +8,7 @@ import net.fileme.domain.pojo.Folder;
 import net.fileme.service.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.PropertySource;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -17,6 +18,7 @@ import javax.validation.constraints.NotNull;
 import java.util.*;
 
 @RestController
+@PropertySource("classpath:credentials.properties")
 public class DataManagerController {
 
     @Value("${file.root.folderId}")
@@ -32,7 +34,6 @@ public class DataManagerController {
     private DtoService dtoService;
     @Autowired
     private DriveDtoMapper driveDtoMapper;
-
 
     // ----------------------------------Create---------------------------------- //
     @PostMapping("/drive/file")

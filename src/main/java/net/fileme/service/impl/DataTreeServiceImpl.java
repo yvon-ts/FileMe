@@ -10,12 +10,14 @@ import net.fileme.service.FileService;
 import net.fileme.service.FolderService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.PropertySource;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
+@PropertySource("classpath:credentials.properties")
 public class DataTreeServiceImpl implements DataTreeService {
 
     @Value("${file.upload.dir}") // 名字可以再換

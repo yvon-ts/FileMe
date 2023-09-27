@@ -11,8 +11,10 @@ public enum ExceptionEnum {
     , PARAM_ERROR(610, "參數異常")
     , VIOLATE_KEY(620, "鍵值衝突，請檢查ID是否存在")
     , UPDATE_DB_FAIL(630, "操作DB失敗，請檢查ID是否存在")
+    , CONFIG_ERROR(640, "組態異常")
     // 會員異常
     , USER_NOT_EXISTS(700, "會員不存在")
+    , REGISTER_FAIL(799, "註冊異常")
     // 重複異常
     , DUPLICATED(800, "該檔案或目錄已存在")
     , DUPLICATED_DB(801, "DB已有資料")

@@ -12,8 +12,11 @@ import net.fileme.service.CheckExistService;
 import net.fileme.service.FileService;
 import net.fileme.service.FolderService;
 import net.fileme.utils.enums.ExceptionEnum;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.PropertySource;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -21,6 +24,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 @Service
+@PropertySource("classpath:credentials.properties")
 public class FolderServiceImpl extends ServiceImpl<FolderMapper, Folder>
         implements FolderService {
     @Value("${file.upload.dir}") // 名字可以再換
@@ -34,6 +38,8 @@ public class FolderServiceImpl extends ServiceImpl<FolderMapper, Folder>
     @Autowired
     private CheckExistService checkExistService;
 
+    private Logger log = LoggerFactory.getLogger(FolderService.class);
+
     @Override
     public void createFolder(Folder fd){
         Long userId = fd.getUserId();
@@ -42,7 +48,7 @@ public class FolderServiceImpl extends ServiceImpl<FolderMapper, Folder>
 
         boolean isValid = checkExistService.checkValidFolder(userId, parentId);
         if(!isValid) {
-            throw new BadRequestException(ExceptionEnum.FOLDER_ERROR);
+            throw new BadRequestException(ExceptionEnum.PARAM_ERROR);
         }
         Folder folder = new Folder();
         folder.setUserId(userId);

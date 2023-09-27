@@ -20,15 +20,16 @@ import org.apache.tika.Tika;
 import org.apache.tika.io.TikaInputStream;
 import org.apache.tika.mime.MimeTypeException;
 import org.apache.tika.mime.MimeTypes;
-import org.junit.platform.commons.util.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.ApplicationContext;
+import org.springframework.context.annotation.PropertySource;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.FileSystemUtils;
 import org.springframework.util.ObjectUtils;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.util.StringUtils;
 
 import java.io.IOException;
 import java.nio.file.Paths;
@@ -37,6 +38,7 @@ import java.util.Objects;
 import java.util.stream.Collectors;
 
 @Service
+@PropertySource("classpath:credentials.properties")
 public class FileServiceImpl extends ServiceImpl<FileMapper, File>
         implements FileService {
 
@@ -78,7 +80,7 @@ public class FileServiceImpl extends ServiceImpl<FileMapper, File>
             String tmpFullName = multipartFile.getOriginalFilename();
             String fileName = tmpFullName.substring(0, tmpFullName.lastIndexOf("."));
             // 檔名卡控待補充，是否要正則表達式
-            if (StringUtils.isBlank(fileName) || ".".equals(fileName)) {
+            if (!StringUtils.hasLength(fileName) || ".".equals(fileName)) {
                 throw new BadRequestException(ExceptionEnum.FILE_NAME_ERROR);
             }
             file.setFileName(fileName);
