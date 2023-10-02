@@ -1,4 +1,4 @@
-package net.fileme.service;
+package net.fileme.service.impl;
 
 import net.fileme.domain.DriveDto;
 import net.fileme.domain.FileFolderDto;
@@ -6,8 +6,12 @@ import net.fileme.domain.Result;
 import net.fileme.exception.BadRequestException;
 import net.fileme.exception.InternalErrorException;
 import net.fileme.exception.NotFoundException;
-import net.fileme.utils.enums.ExceptionEnum;
-import net.fileme.utils.enums.MimeEnum;
+import net.fileme.enums.ExceptionEnum;
+import net.fileme.enums.MimeEnum;
+import net.fileme.service.DataTreeService;
+import net.fileme.service.DtoService;
+import net.fileme.service.FileService;
+import net.fileme.service.FolderService;
 import org.apache.tika.Tika;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -23,7 +27,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Service
-public class DtoServiceImpl implements DtoService{
+public class DtoServiceImpl implements DtoService {
     @Autowired
     private FolderService folderService;
     @Autowired

@@ -4,6 +4,8 @@ import com.baomidou.mybatisplus.extension.service.IService;
 import net.fileme.domain.pojo.User;
 
 public interface UserService extends IService<User> {
-    void register(User guest);
-    void resetPwd(User user);
+
+    void setUserVerified();
+    User createUser(User guest);
+    void verifyUser(User user);
 }

@@ -1,4 +1,4 @@
-package net.fileme.utils.enums;
+package net.fileme.enums;
 
 import lombok.Getter;
 

@@ -1,4 +1,4 @@
-package net.fileme.utils.enums;
+package net.fileme.enums;
 
 import lombok.Getter;
 
@@ -12,6 +12,7 @@ public enum ExceptionEnum {
     , VIOLATE_KEY(620, "鍵值衝突，請檢查ID是否存在")
     , UPDATE_DB_FAIL(630, "操作DB失敗，請檢查ID是否存在")
     , CONFIG_ERROR(640, "組態異常")
+    , EMAIL_ERROR(699, "系統發信異常")
     // 會員異常
     , USER_NOT_EXISTS(700, "會員不存在")
     , REGISTER_FAIL(799, "註冊異常")

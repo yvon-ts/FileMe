@@ -1,7 +1,7 @@
 package net.fileme.exception;
 
 import lombok.Getter;
-import net.fileme.utils.enums.ExceptionEnum;
+import net.fileme.enums.ExceptionEnum;
 
 /**
  * Business exception

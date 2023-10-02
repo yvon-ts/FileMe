@@ -2,23 +2,21 @@ package net.fileme.utils;
 
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.SignatureAlgorithm;
-
+import io.jsonwebtoken.security.Keys;
 import io.jsonwebtoken.JwtBuilder;
 import net.fileme.exception.BizException;
-import net.fileme.utils.enums.ExceptionEnum;
+import net.fileme.enums.ExceptionEnum;
 
-import javax.crypto.SecretKey;
-import javax.crypto.spec.SecretKeySpec;
 import java.io.*;
-import java.util.Base64;
+import java.nio.charset.StandardCharsets;
+import java.security.Key;
 import java.util.Date;
 import java.util.Properties;
 import java.util.UUID;
 
 public class JwtUtil {
 
-    public static final Long JWT_EXP; // millisecond
+    public static final Long JWT_EXP; // minute
     public static final String JWT_KEY;
     public static final String JWT_ISSUER;
 
@@ -27,7 +25,7 @@ public class JwtUtil {
         InputStream resource = JwtUtil.class.getClassLoader().getResourceAsStream("credentials.properties");
         try {
             prop.load(resource);
-            JWT_EXP = Long.valueOf(prop.getProperty("jwt.exp")) * 60 * 1000;
+            JWT_EXP = Long.valueOf(prop.getProperty("jwt.exp.default"));
             JWT_KEY = prop.getProperty("jwt.key");
             JWT_ISSUER = prop.getProperty("jwt.issuer");
         } catch (IOException e) {
@@ -35,47 +33,42 @@ public class JwtUtil {
         }
     }
 
-    public static SecretKey getSecretKey(){
-        byte[] encodedKey = Base64.getDecoder().decode(JwtUtil.JWT_KEY);
-        SecretKey key = new SecretKeySpec(encodedKey, 0, encodedKey.length, "AES");
-        return key;
+    public static Key generalKey(){
+//        byte[] encodedKey = Base64.getDecoder().decode(JwtUtil.JWT_KEY);
+//        SecretKey key = new SecretKeySpec(encodedKey, 0, encodedKey.length, "AES");
+        return Keys.hmacShaKeyFor(JWT_KEY.getBytes(StandardCharsets.UTF_8));
     }
-    public static String getUUID(){
-        String uuid = UUID.randomUUID().toString().replaceAll("-", "");
-        return uuid;
-    }
-
     public static String createJWT(String subject){
-        return getJwtBuilder(subject, null, null).compact();
+        return getJwtBuilder(subject, null).compact();
     }
-    private static JwtBuilder getJwtBuilder(String subject, Long duration, String uuid){
-        SignatureAlgorithm algorithm = SignatureAlgorithm.HS256;
-        SecretKey secretKey = getSecretKey();
+    public static String createJWT(String subject, Long duration){
+        return getJwtBuilder(subject, duration).compact();
+    }
+    private static JwtBuilder getJwtBuilder(String subject, Long duration){
+        Key key = generalKey();
         long nowMillis = System.currentTimeMillis();
         Date now = new Date(nowMillis);
         if(duration == null){
-            duration = JwtUtil.JWT_EXP;
+            duration = JWT_EXP;
         }
-        if(uuid == null){
-            uuid = getUUID();
-        }
-        long expMillis = nowMillis + duration;
+        long expMillis = nowMillis + (duration * 60 * 1000); // millisecond
         Date expDate = new Date(expMillis);
+        System.out.println(new Date(expMillis - nowMillis));
         return Jwts.builder()
-                .setId(uuid)
+                .setId(UUID.randomUUID().toString())
                 .setSubject(subject)
                 .setIssuer(JWT_ISSUER)
                 .setIssuedAt(now) // issue time
-                .signWith(algorithm, secretKey)
+                .signWith(key)
                 .setExpiration(expDate);
     }
 
     // --------- JWT parser --------- //
 
     public static Claims parseJWT(String jwt){
-        SecretKey secretKey = getSecretKey();
+        Key key = generalKey();
         return Jwts.parser()
-                .setSigningKey(secretKey)
+                .setSigningKey(key)
                 .parseClaimsJws(jwt)
                 .getBody();
     }

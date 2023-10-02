@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<html lang="zh-Hant-TW" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>設定新密碼</title>
+</head>
+<body>
+<p th:text="|This is my token: ${token}"|></p>
+<form th:action="@{/reset}" method="post">
+  <input type="text" name="np" required>
+  <input type="hidden" name="token" value="${token}">
+  <input type="submit" value="送出">
+</form>
+
+</body>
+</html>

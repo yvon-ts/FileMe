@@ -11,7 +11,7 @@ import net.fileme.exception.NotFoundException;
 import net.fileme.service.CheckExistService;
 import net.fileme.service.FileService;
 import net.fileme.service.FolderService;
-import net.fileme.utils.enums.ExceptionEnum;
+import net.fileme.enums.ExceptionEnum;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;

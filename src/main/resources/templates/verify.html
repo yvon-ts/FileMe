@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="zh-Hant-TW" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <style type="text/css">
+        a{
+            cursor: pointer;
+        }
+        .btn{
+            border: 1px solid black;
+        }
+        .btn a{
+            display: block;
+            padding: 10px;
+        }
+    </style>
+</head>
+<body>
+    <p>您好，</p>
+    <p>感謝您的註冊，請點選以下連結完成信箱驗證</p>
+    <div class="btn">
+        <a th:href="@{http://localhost:8080/verify/{token}(token=${token})}">驗證</a>
+    </div>
+    <a th:href="@{http://localhost:8080/verify/{token}(token=${token})}">
+        <span th:text="|http://localhost:8080/verify/${token}|"></span>
+    </a>
+</body>
+</html>

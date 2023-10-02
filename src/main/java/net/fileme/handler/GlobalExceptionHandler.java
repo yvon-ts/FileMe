@@ -5,7 +5,7 @@ import net.fileme.exception.BadRequestException;
 import net.fileme.exception.BizException;
 import net.fileme.exception.InternalErrorException;
 import net.fileme.exception.NotFoundException;
-import net.fileme.utils.enums.ExceptionEnum;
+import net.fileme.enums.ExceptionEnum;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.TypeMismatchException;

@@ -7,6 +7,8 @@ spring:
     multipart:
       max-file-size: 100MB
       max-request-size: 1000MB
+  thymeleaf:
+    cache: false # true when production
 log4j:
   logger:
     org:
@@ -31,8 +33,3 @@ mybatis-plus:
 # 預設根目錄id
 #  root:
 #    folderId: 0
-# JWT
-jwt:
-  exp: 60 * 60 * 1000L # 毫秒
-  key: fileme
-  issuer: hahaha

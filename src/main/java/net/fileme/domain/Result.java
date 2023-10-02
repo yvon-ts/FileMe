@@ -1,7 +1,7 @@
 package net.fileme.domain;
 
 import lombok.Data;
-import net.fileme.utils.enums.ExceptionEnum;
+import net.fileme.enums.ExceptionEnum;
 
 import java.io.Serializable;
 
