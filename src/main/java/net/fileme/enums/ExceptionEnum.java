@@ -16,6 +16,7 @@ public enum ExceptionEnum {
     // 會員異常
     , USER_NOT_EXISTS(700, "會員不存在")
     , INVALID_TOKEN(780, "驗證失敗，請聯繫客服")
+    , TOKEN_DEL_ERROR(781, "金鑰刪除異常")
     , REGISTER_FAIL(799, "註冊異常")
     // 重複異常
     , DUPLICATED(800, "該檔案或目錄已存在")

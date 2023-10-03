@@ -18,9 +18,11 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
 import org.springframework.web.multipart.MaxUploadSizeExceededException;
+import org.springframework.web.servlet.ModelAndView;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
+
     private static Logger log = LoggerFactory.getLogger(GlobalExceptionHandler.class);
 
     private void logError(Exception ex, ExceptionEnum exceptionEnum){
@@ -50,11 +52,11 @@ public class GlobalExceptionHandler {
                 .body(Result.error(ex.getExceptionEnum()));
     }
     @ExceptionHandler(UnauthorizedException.class)
-    public ResponseEntity handleUnauthorized(UnauthorizedException ex){
+    public ModelAndView handleUnauthorized(UnauthorizedException ex){
         logError(ex, ex.getExceptionEnum());
-        return ResponseEntity
-                .status(HttpStatus.UNAUTHORIZED)
-                .body(Result.error(ex.getExceptionEnum()));
+        ModelAndView view = new ModelAndView("error");
+        view.addObject("errMsg", ExceptionEnum.INVALID_TOKEN.getDesc());
+        return view;
     }
     @ExceptionHandler(NotFoundException.class)
     public ResponseEntity handleNotFound(NotFoundException ex){

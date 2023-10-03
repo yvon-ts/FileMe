@@ -26,9 +26,9 @@ public class UserViewsController {
     public String verifyToken(@NotNull @PathVariable String token){
         String email = userService.verifyToken(token);
         userService.setUserVerified(email);
-        return "tmp";
+        userService.clearToken(token);
+        return "tmp"; // TODO: 換成正式頁面, 看是否可加loading字樣
     }
-
 //    @GetMapping("/reset/{token}")
 //    public String resetLink(@PathVariable String token, Model model){
 //        model.addAttribute("token", token);

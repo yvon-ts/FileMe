@@ -7,6 +7,7 @@ import net.fileme.domain.mapper.UserMapper;
 import net.fileme.domain.token.BaseToken;
 import net.fileme.domain.token.VerifyToken;
 import net.fileme.enums.ExceptionEnum;
+import net.fileme.exception.InternalErrorException;
 import net.fileme.exception.UnauthorizedException;
 import net.fileme.service.EmailService;
 import net.fileme.service.UserService;
@@ -22,6 +23,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.thymeleaf.TemplateEngine;
 import org.thymeleaf.context.Context;
+import org.thymeleaf.util.StringUtils;
 
 import javax.servlet.ServletContext;
 
@@ -97,17 +99,28 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
         if(!hasKey){
            throw new UnauthorizedException(ExceptionEnum.INVALID_TOKEN);
         }else{
-            String email = redisCache.getCacheObject(token).toString();
-            return email;
+            return redisCache.getCacheObject(token).toString();
         }
     }
 
     @Override
     public void setUserVerified(String email){
         LambdaUpdateWrapper<User> luw = new LambdaUpdateWrapper<>();
-        // TODO: eq改成redis value
-        luw.set(User::getState, 1).eq(User::getUsername, "3rd");
+        luw.set(User::getState, 1).eq(User::getEmail, email);
         update(luw);
+        log.info("user verified, email: " + email);
     };
-
+    @Async
+    @Override
+    public void clearToken(String token){
+        String value = redisCache.getCacheObject(token);
+        if(!StringUtils.isEmpty(value)){
+            boolean success = redisCache.deleteObject(token);
+            if(!success){
+                throw new InternalErrorException(ExceptionEnum.TOKEN_DEL_ERROR);
+            }else{
+                log.info("token cleared !");
+            }
+        }
+    }
 }

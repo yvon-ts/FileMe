@@ -11,4 +11,5 @@ public interface UserService extends IService<User> {
     void sendVerifyToken(User user);
     String verifyToken(String token);
     void setUserVerified(String email);
+    void clearToken(String token);
 }
