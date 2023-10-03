@@ -15,6 +15,7 @@ public enum ExceptionEnum {
     , EMAIL_ERROR(699, "系統發信異常")
     // 會員異常
     , USER_NOT_EXISTS(700, "會員不存在")
+    , INVALID_TOKEN(780, "驗證失敗，請聯繫客服")
     , REGISTER_FAIL(799, "註冊異常")
     // 重複異常
     , DUPLICATED(800, "該檔案或目錄已存在")

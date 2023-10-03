@@ -16,15 +16,16 @@ public class UserViewsController {
 
     @PostMapping("/sign-up")
     public String signUp(@NotNull @RequestBody User guest){
+        // TODO: log密碼明文需另外處理
         User user = userService.createUser(guest);
-        userService.verifyUser(user);
+        userService.sendVerifyToken(user);
         return "sent";
     }
 
     @GetMapping("/verify/{token}")
-    public String verifyLink(@PathVariable String token){
-        // TODO: check token
-        userService.setUserVerified();
+    public String verifyToken(@NotNull @PathVariable String token){
+        String email = userService.verifyToken(token);
+        userService.setUserVerified(email);
         return "tmp";
     }
 

@@ -1,10 +1,7 @@
 package net.fileme.handler;
 
 import net.fileme.domain.Result;
-import net.fileme.exception.BadRequestException;
-import net.fileme.exception.BizException;
-import net.fileme.exception.InternalErrorException;
-import net.fileme.exception.NotFoundException;
+import net.fileme.exception.*;
 import net.fileme.enums.ExceptionEnum;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -50,6 +47,13 @@ public class GlobalExceptionHandler {
         logError(ex, ex.getExceptionEnum());
         return ResponseEntity
                 .status(HttpStatus.BAD_REQUEST)
+                .body(Result.error(ex.getExceptionEnum()));
+    }
+    @ExceptionHandler(UnauthorizedException.class)
+    public ResponseEntity handleUnauthorized(UnauthorizedException ex){
+        logError(ex, ex.getExceptionEnum());
+        return ResponseEntity
+                .status(HttpStatus.UNAUTHORIZED)
                 .body(Result.error(ex.getExceptionEnum()));
     }
     @ExceptionHandler(NotFoundException.class)

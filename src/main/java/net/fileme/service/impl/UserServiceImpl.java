@@ -4,11 +4,16 @@ import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import net.fileme.domain.EmailDetails;
 import net.fileme.domain.mapper.UserMapper;
+import net.fileme.domain.token.BaseToken;
+import net.fileme.domain.token.VerifyToken;
+import net.fileme.enums.ExceptionEnum;
+import net.fileme.exception.UnauthorizedException;
 import net.fileme.service.EmailService;
 import net.fileme.service.UserService;
 import net.fileme.domain.pojo.User;
-import net.fileme.utils.RandomUtil;
 import net.fileme.utils.RedisCache;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.PropertySource;
@@ -19,7 +24,6 @@ import org.thymeleaf.TemplateEngine;
 import org.thymeleaf.context.Context;
 
 import javax.servlet.ServletContext;
-import java.util.concurrent.TimeUnit;
 
 @Service
 @PropertySource("classpath:credentials.properties")
@@ -36,11 +40,13 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
     private EmailService emailService;
     @Autowired
     private RedisCache redisCache;
+    @Autowired
+    private VerifyToken verifyToken;
+
+    private Logger log = LoggerFactory.getLogger(UserServiceImpl.class);
 
     @Value("${jwt.exp.verify}")
-    private int tokenExp;
-    @Value("${mail.subject.verify}")
-    private String subjectVerify;
+    private Integer tokenExp;
 
     @Override
     public User createUser(User guest){
@@ -57,28 +63,47 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
         return user;
     }
 
-    @Async
-    @Override
-    public void verifyUser(User user){
-        // generate token
-        String token = RandomUtil.createToken();
-        System.out.println(token);
+    public void createAndSendToken(BaseToken config, String emailReceiver){
+        String description = config.getDescription();
+        String subject = config.getMailSubject();
+
+        String token = redisCache.setUniqueKey(emailReceiver, config.getExp(), config.getTimeUnit());
+        log.info(description + " token generated for " + emailReceiver);
+
         Context thymeleafContext = new Context();
         thymeleafContext.setVariable("token", token);
-        // put into Redis
-        redisCache.setCacheObject(token, user.getEmail(), tokenExp, TimeUnit.MINUTES);
+
         // set emailDetails
         EmailDetails emailDetails = new EmailDetails();
-        emailDetails.setReceiver(user.getEmail());
-        emailDetails.setSubject(subjectVerify);
-        String emailText = templateEngine.process("verify", thymeleafContext);
+        emailDetails.setReceiver(emailReceiver);
+        emailDetails.setSubject(subject);
+        String emailText = templateEngine.process(description, thymeleafContext);
         emailDetails.setText(emailText);
+
         // send
         emailService.sendHtmlMail(emailDetails);
+        log.info("email has been sent to " + emailReceiver + ", subject: " + subject);
+    }
+
+    @Async
+    @Override
+    public void sendVerifyToken(User user){
+       createAndSendToken(verifyToken, user.getEmail());
     }
 
     @Override
-    public void setUserVerified(){
+    public String verifyToken(String token){
+        boolean hasKey = redisCache.hasKey(token);
+        if(!hasKey){
+           throw new UnauthorizedException(ExceptionEnum.INVALID_TOKEN);
+        }else{
+            String email = redisCache.getCacheObject(token).toString();
+            return email;
+        }
+    }
+
+    @Override
+    public void setUserVerified(String email){
         LambdaUpdateWrapper<User> luw = new LambdaUpdateWrapper<>();
         // TODO: eq改成redis value
         luw.set(User::getState, 1).eq(User::getUsername, "3rd");
