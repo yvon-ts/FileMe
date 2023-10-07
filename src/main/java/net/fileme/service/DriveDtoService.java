@@ -4,7 +4,7 @@ import net.fileme.domain.DriveDto;
 import net.fileme.domain.FileFolderDto;
 import org.springframework.http.ResponseEntity;
 
-public interface DtoService {
+public interface DriveDtoService {
     ResponseEntity preview(Long userId, Long fileId);
     void rename(DriveDto dto);
     void relocate(Long destId, FileFolderDto dto);

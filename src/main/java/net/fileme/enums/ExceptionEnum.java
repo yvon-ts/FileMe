@@ -1,8 +1,10 @@
 package net.fileme.enums;
 
+import lombok.AllArgsConstructor;
 import lombok.Getter;
 
 @Getter
+@AllArgsConstructor
 public enum ExceptionEnum {
 
     SUCCESS(200, "success")
@@ -43,11 +45,6 @@ public enum ExceptionEnum {
 
     private final Integer code;
     private final String desc;
-
-    ExceptionEnum(Integer code, String desc){
-        this.code = code;
-        this.desc = desc;
-    }
 
     public String toStringDetails() {
         return toString() + ": 錯誤代碼 " + getCode() + ", " + getDesc();

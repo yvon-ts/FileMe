@@ -2,14 +2,15 @@ package net.fileme.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import net.fileme.domain.EmailDetails;
+import net.fileme.domain.EmailDto;
 import net.fileme.domain.mapper.UserMapper;
-import net.fileme.domain.token.BaseToken;
-import net.fileme.domain.token.VerifyToken;
+import net.fileme.domain.pojo.EmailTemplate;
+import net.fileme.enums.EmailTemplateEnum;
 import net.fileme.enums.ExceptionEnum;
 import net.fileme.exception.InternalErrorException;
 import net.fileme.exception.UnauthorizedException;
 import net.fileme.service.EmailService;
+import net.fileme.service.EmailTemplateService;
 import net.fileme.service.UserService;
 import net.fileme.domain.pojo.User;
 import net.fileme.utils.RedisCache;
@@ -17,7 +18,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.annotation.PropertySource;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -26,9 +26,10 @@ import org.thymeleaf.context.Context;
 import org.thymeleaf.util.StringUtils;
 
 import javax.servlet.ServletContext;
+import java.util.concurrent.TimeUnit;
 
 @Service
-@PropertySource("classpath:credentials.properties")
+//@PropertySource("classpath:credentials.properties")
 public class UserServiceImpl extends ServiceImpl<UserMapper, User>
         implements UserService {
 
@@ -41,14 +42,15 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
     @Autowired
     private EmailService emailService;
     @Autowired
-    private RedisCache redisCache;
+    private EmailTemplateService templateService;
     @Autowired
-    private VerifyToken verifyToken;
+    private RedisCache redisCache;
+    @Value("${mail.token.exp}")
+    private int exp;
+    @Value("${mail.token.time-unit}")
+    private TimeUnit timeUnit;
 
     private Logger log = LoggerFactory.getLogger(UserServiceImpl.class);
-
-    @Value("${jwt.exp.verify}")
-    private Integer tokenExp;
 
     @Override
     public User createUser(User guest){
@@ -64,37 +66,43 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
         save(user);
         return user;
     }
-
-    public void createAndSendToken(BaseToken config, String emailReceiver){
-        String description = config.getDescription();
-        String subject = config.getMailSubject();
-
-        String token = redisCache.setUniqueKey(emailReceiver, config.getExp(), config.getTimeUnit());
-        log.info(description + " token generated for " + emailReceiver);
-
-        Context thymeleafContext = new Context();
-        thymeleafContext.setVariable("token", token);
-
-        // set emailDetails
-        EmailDetails emailDetails = new EmailDetails();
-        emailDetails.setReceiver(emailReceiver);
-        emailDetails.setSubject(subject);
-        String emailText = templateEngine.process(description, thymeleafContext);
-        emailDetails.setText(emailText);
-
-        // send
-        emailService.sendHtmlMail(emailDetails);
-        log.info("email has been sent to " + emailReceiver + ", subject: " + subject);
-    }
-
     @Async
     @Override
-    public void sendVerifyToken(User user){
-       createAndSendToken(verifyToken, user.getEmail());
+    public void prepareTokenEmail(EmailTemplateEnum templateEnum, String emailReceiver){
+        EmailTemplate template = templateService.findTemplate(templateEnum);
+        createAndSendToken(template, emailReceiver);
+    }
+
+    public void createAndSendToken(EmailTemplate template, String emailReceiver){
+        String subject = template.getTitle();
+        String token = redisCache.setUniqueKey(emailReceiver, exp, timeUnit);
+        log.info("token generated for " + emailReceiver);
+
+        Context ctx = new Context();
+        ctx.setVariable("token", token);
+        ctx.setVariable("text", template.getContent());
+        ctx.setVariable("endpoint", template.getEndpoint());
+        String textDto = templateEngine.process("basicEmail", ctx);
+
+        EmailDto dto = new EmailDto();
+        dto.setReceiver(emailReceiver);
+        dto.setSubject(subject);
+        dto.setText(textDto);
+
+        emailService.sendHtmlMail(dto);
+        log.info("email has been sent to " + emailReceiver + ", subject: " + subject);
+    }
+    @Override
+    public void processToken(String token, boolean doClear){
+        String email = lookUpToken(token);
+        resetUserState(email);
+        if(doClear){
+            clearToken(token);
+        }
     }
 
     @Override
-    public String verifyToken(String token){
+    public String lookUpToken(String token){
         boolean hasKey = redisCache.hasKey(token);
         if(!hasKey){
            throw new UnauthorizedException(ExceptionEnum.INVALID_TOKEN);
@@ -103,15 +111,14 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
         }
     }
 
-    @Override
-    public void setUserVerified(String email){
+    public void resetUserState(String email){
         LambdaUpdateWrapper<User> luw = new LambdaUpdateWrapper<>();
-        luw.set(User::getState, 1).eq(User::getEmail, email);
+        luw.set(User::getState, 0).eq(User::getEmail, email);
         update(luw);
-        log.info("user verified, email: " + email);
+        log.info("user state reset by email: " + email);
     };
+    
     @Async
-    @Override
     public void clearToken(String token){
         String value = redisCache.getCacheObject(token);
         if(!StringUtils.isEmpty(value)){

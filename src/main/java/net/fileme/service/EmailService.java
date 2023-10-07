@@ -1,9 +1,9 @@
 package net.fileme.service;
 
-import net.fileme.domain.EmailDetails;
+import net.fileme.domain.EmailDto;
 
 public interface EmailService {
-    boolean sendSimpleMail(EmailDetails details);
-    String sendAttachedMail(EmailDetails details);
-    void sendHtmlMail(EmailDetails details);
+    boolean sendSimpleMail(EmailDto dto);
+    String sendAttachedMail(EmailDto dto);
+    void sendHtmlMail(EmailDto dto);
 }

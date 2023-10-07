@@ -1,8 +1,10 @@
 package net.fileme.enums;
 
+import lombok.AllArgsConstructor;
 import lombok.Getter;
 
 @Getter
+@AllArgsConstructor
 public enum MimeEnum {
 
     // image
@@ -36,8 +38,4 @@ public enum MimeEnum {
     ,PPTX(false);
 
     public final boolean allowPreview;
-    MimeEnum(boolean allowPreview){
-        this.allowPreview = allowPreview;
-    }
-
 }

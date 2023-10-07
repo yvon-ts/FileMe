@@ -31,7 +31,7 @@ public class DataManagerController {
     @Autowired
     private FileService fileService;
     @Autowired
-    private DtoService dtoService;
+    private DriveDtoService dtoService;
     @Autowired
     private DriveDtoMapper driveDtoMapper;
 

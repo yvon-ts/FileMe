@@ -9,7 +9,7 @@ import net.fileme.exception.NotFoundException;
 import net.fileme.enums.ExceptionEnum;
 import net.fileme.enums.MimeEnum;
 import net.fileme.service.DataTreeService;
-import net.fileme.service.DtoService;
+import net.fileme.service.DriveDtoService;
 import net.fileme.service.FileService;
 import net.fileme.service.FolderService;
 import org.apache.tika.Tika;
@@ -27,7 +27,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Service
-public class DtoServiceImpl implements DtoService {
+public class DriveDtoServiceImpl implements DriveDtoService {
     @Autowired
     private FolderService folderService;
     @Autowired

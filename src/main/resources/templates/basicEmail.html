@@ -16,13 +16,6 @@
     </style>
 </head>
 <body>
-    <p>您好，</p>
-    <p>感謝您的註冊，請點選以下連結完成信箱驗證</p>
-    <div class="btn">
-        <a th:href="@{http://localhost:8080/verify/{token}(token=${token})}">驗證</a>
-    </div>
-    <a th:href="@{http://localhost:8080/verify/{token}(token=${token})}">
-        <span th:text="|http://localhost:8080/verify/${token}|"></span>
-    </a>
+<div th:utext="${text}"></div>
 </body>
 </html>
