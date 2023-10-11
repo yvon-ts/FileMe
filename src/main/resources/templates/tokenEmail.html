@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="zh-Hant-TW" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8">
+  <style type="text/css">
+        a{
+            cursor: pointer;
+        }
+        .btn{
+            border: 1px solid black;
+        }
+        .btn a{
+            display: block;
+            padding: 10px;
+        }
+    </style>
+</head>
+<body>
+<div th:utext="${text}"></div>
+<div class="btn">
+  <a th:href="@{http://localhost:8080/{endpoint}/{token}(endpoint=${endpoint},token=${token})}">
+    <span th:text="${btn}"></span></a>
+</div>
+<a th:href="@{http://localhost:8080/{endpoint}/{token}(endpoint=${endpoint},token=${token})}">
+  <span th:text="|http://localhost:8080/${endpoint}/${token}|"></span>
+</a>
+</body>
+</html>

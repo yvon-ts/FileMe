@@ -2,7 +2,7 @@
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="net.fileme.domain.mapper.DriveDtoMapper">
 
-    <resultMap id="driveDto" type="net.fileme.domain.DriveDto">
+    <resultMap id="driveDto" type="net.fileme.domain.dto.DriveDto">
         <id column="id" jdbcType="BIGINT" property="id"/>
         <result column="data_name" jdbcType="VARCHAR" property="dataName"/>
         <result column="data_type" jdbcType="TINYINT" property="dataType"/>

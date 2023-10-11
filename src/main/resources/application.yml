@@ -1,6 +1,6 @@
 spring:
   config:
-    import: credentials.properties,token.properties
+    import: credentials.properties
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
   servlet:

@@ -1,4 +1,4 @@
-package net.fileme.domain;
+package net.fileme.domain.dto;
 
 import lombok.Data;
 

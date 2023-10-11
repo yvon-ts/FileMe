@@ -1,7 +1,7 @@
 package net.fileme.service;
 
-import net.fileme.domain.DriveDto;
-import net.fileme.domain.FileFolderDto;
+import net.fileme.domain.dto.DriveDto;
+import net.fileme.domain.dto.FileFolderDto;
 import org.springframework.http.ResponseEntity;
 
 public interface DriveDtoService {

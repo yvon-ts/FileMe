@@ -6,8 +6,6 @@ import net.fileme.domain.mapper.FolderMapper;
 import net.fileme.domain.mapper.UserMapper;
 import net.fileme.domain.pojo.File;
 import net.fileme.domain.pojo.Folder;
-import net.fileme.domain.pojo.User;
-import net.fileme.exception.BizException;
 import net.fileme.service.CheckExistService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -37,13 +35,6 @@ public class CheckExistServiceImpl implements CheckExistService {
             isValid = true;
         }
         return isValid;
-    }
-
-    @Override
-    public int checkExistUser(Long userId) throws BizException{
-        LambdaQueryWrapper<User> lqw = new LambdaQueryWrapper<>();
-        lqw.eq(User::getId, userId);
-        return userMapper.selectCount(lqw);
     }
 
     @Override

@@ -1,10 +1,9 @@
-package net.fileme.domain;
+package net.fileme.domain.dto;
 
 import lombok.Data;
 
 import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
-import javax.validation.constraints.Pattern;
 
 @Data
 public class DriveDto {

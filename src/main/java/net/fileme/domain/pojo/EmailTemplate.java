@@ -11,6 +11,5 @@ public class EmailTemplate extends BasePojo{
     private String title;
     private String content;
     private String endpoint;
-    private String dest;
-    private String destText;
+    private String btn;
 }

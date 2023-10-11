@@ -1,6 +1,6 @@
 package net.fileme.service;
 
-import net.fileme.domain.FileFolderDto;
+import net.fileme.domain.dto.FileFolderDto;
 import net.fileme.domain.pojo.File;
 import net.fileme.domain.pojo.Folder;
 

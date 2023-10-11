@@ -1,7 +1,7 @@
 package net.fileme.service.impl;
 
-import net.fileme.domain.DriveDto;
-import net.fileme.domain.FileFolderDto;
+import net.fileme.domain.dto.DriveDto;
+import net.fileme.domain.dto.FileFolderDto;
 import net.fileme.domain.Result;
 import net.fileme.exception.BadRequestException;
 import net.fileme.exception.InternalErrorException;

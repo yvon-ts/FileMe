@@ -1,7 +1,7 @@
 package net.fileme.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import net.fileme.domain.FileFolderDto;
+import net.fileme.domain.dto.FileFolderDto;
 import net.fileme.domain.mapper.FolderMapper;
 import net.fileme.domain.pojo.File;
 import net.fileme.domain.pojo.Folder;

@@ -14,16 +14,21 @@ public enum ExceptionEnum {
     , VIOLATE_KEY(620, "鍵值衝突，請檢查ID是否存在")
     , UPDATE_DB_FAIL(630, "操作DB失敗，請檢查ID是否存在")
     , CONFIG_ERROR(640, "組態異常")
+    , UPDATE_FAIL(650, "更新失敗")
     , EMAIL_ERROR(699, "系統發信異常")
     // 會員異常
     , USER_NOT_EXISTS(700, "會員不存在")
+    , USER_STATE_ERROR(710, "會員狀態異常")
     , INVALID_TOKEN(780, "驗證失敗，請聯繫客服")
     , TOKEN_DEL_ERROR(781, "金鑰刪除異常")
     , REGISTER_FAIL(799, "註冊異常")
     // 重複異常
     , DUPLICATED(800, "該檔案或目錄已存在")
-    , DUPLICATED_DB(801, "DB已有資料")
-    , DUPLICATED_SVR(802, "Server已有資料")
+    , DUPLICATED_USERNAME(801, "帳號已被使用")
+    , DUPLICATED_EMAIL(802, "信箱已被使用")
+    , DUPLICATED_DB(803, "DB已有資料")
+    , DUPLICATED_SVR(804, "Server已有資料")
+
     // 檔案異常
     , UPLOAD_FAIL(810, "檔案寫入異常")
     , UPLOAD_DB_FAIL(811, "檔案寫入DB異常")

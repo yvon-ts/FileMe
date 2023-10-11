@@ -1,6 +1,6 @@
 package net.fileme.service.impl;
 
-import net.fileme.domain.EmailDto;
+import net.fileme.domain.dto.EmailDto;
 import net.fileme.enums.ExceptionEnum;
 import net.fileme.exception.BizException;
 import net.fileme.service.EmailService;
@@ -14,7 +14,6 @@ import org.springframework.stereotype.Service;
 import javax.mail.internet.MimeMessage;
 
 @Service
-//@PropertySource("classpath:credentials.properties")
 public class EmailServiceImpl implements EmailService {
 
     @Autowired
@@ -70,7 +69,7 @@ public class EmailServiceImpl implements EmailService {
 
             javaMailSender.send(mimeMessage);
         }catch(Exception e){
-
+            throw new BizException(ExceptionEnum.EMAIL_ERROR);
         }
     }
 }

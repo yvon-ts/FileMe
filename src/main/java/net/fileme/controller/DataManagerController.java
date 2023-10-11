@@ -1,9 +1,9 @@
 package net.fileme.controller;
 
-import net.fileme.domain.FileFolderDto;
+import net.fileme.domain.dto.FileFolderDto;
 import net.fileme.domain.Result;
 import net.fileme.domain.mapper.DriveDtoMapper;
-import net.fileme.domain.DriveDto;
+import net.fileme.domain.dto.DriveDto;
 import net.fileme.domain.pojo.Folder;
 import net.fileme.service.*;
 import org.springframework.beans.factory.annotation.Autowired;

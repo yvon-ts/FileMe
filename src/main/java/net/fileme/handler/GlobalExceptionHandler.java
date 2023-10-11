@@ -65,6 +65,13 @@ public class GlobalExceptionHandler {
                 .status(HttpStatus.NOT_FOUND)
                 .body(Result.error(ex.getExceptionEnum()));
     }
+    @ExceptionHandler(ConflictException.class)
+    public ResponseEntity handleConflict(ConflictException ex){
+        logError(ex, ex.getExceptionEnum());
+        return ResponseEntity
+                .status(HttpStatus.CONFLICT)
+                .body(Result.error(ex.getExceptionEnum()));
+    }
     @ExceptionHandler(InternalErrorException.class)
     public ResponseEntity handleInternalError(InternalErrorException ex){
         logError(ex, ex.getExceptionEnum());
@@ -84,7 +91,6 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(DuplicateKeyException.class)
     public ResponseEntity handleDuplicateKey(DuplicateKeyException ex){
         logError(ex, ExceptionEnum.DUPLICATED_DB);
-        log.error(ex.getCause().toString());
         return ResponseEntity
                 .status(HttpStatus.CONFLICT)
                 .body(Result.error(ExceptionEnum.DUPLICATED_DB));
@@ -94,7 +100,6 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(DataIntegrityViolationException.class)
     public ResponseEntity handleIntegrityViolation(DataIntegrityViolationException ex){
         logError(ex, ExceptionEnum.VIOLATE_KEY);
-        System.out.println(ex.getMessage());
         return ResponseEntity
                 .status(HttpStatus.CONFLICT)
                 .body(Result.error(ExceptionEnum.VIOLATE_KEY));

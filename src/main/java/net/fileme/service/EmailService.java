@@ -1,6 +1,6 @@
 package net.fileme.service;
 
-import net.fileme.domain.EmailDto;
+import net.fileme.domain.dto.EmailDto;
 
 public interface EmailService {
     boolean sendSimpleMail(EmailDto dto);
