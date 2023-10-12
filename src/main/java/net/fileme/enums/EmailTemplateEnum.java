@@ -15,6 +15,9 @@ public enum EmailTemplateEnum {
     , RESET(20, "response", "請至您的信箱進行密碼重置"
             ,"response", "密碼重置成功，請重新登入")
 
+    , RESET_NOTICE(21, null, null
+            ,null, null)
+
     , SET_EMAIL(30, "response", "請至您的信箱進行驗證"
             ,"response", "信箱變更成功，請重新登入")
 

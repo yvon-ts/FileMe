@@ -16,12 +16,13 @@ public class UserController {
     @Autowired
     private UserEmailService userEmailService;
 
+    // ----------------------------Sign Up----------------------------- //
     @PostMapping("/sign-up")
     public String signUp(@NotNull @RequestBody User guest, Model model){
         EmailTemplateEnum templateEnum = EmailTemplateEnum.SIGN_UP;
-        userEmailService.createUser(guest);
         // TODO: log密碼明文需另外處理
-        userEmailService.sendSignUpEmail(templateEnum, guest.getEmail());
+        userEmailService.createUser(guest);
+        userEmailService.sendTokenEmail(templateEnum, guest.getEmail(), null);
         model.addAttribute("viewText", templateEnum.getAsyncViewText());
         return templateEnum.getAsyncView();
     }
@@ -37,13 +38,14 @@ public class UserController {
         return templateEnum.getView();
     }
 
+    // ----------------------------Change Email----------------------------- //
     @PostMapping("/user/setting/email")
-    public String changeEmail(@NotNull @RequestParam Long userId,
+    public String changeEmail(@NotNull @RequestParam String oldEmail,
                               @NotNull @RequestParam String newEmail, Model model){
         EmailTemplateEnum templateEnum = EmailTemplateEnum.SET_EMAIL;
 
-        userEmailService.setUserState(templateEnum,userId);
-        userEmailService.sendChangeEmail(templateEnum, userId, newEmail);
+        userEmailService.setUserState(templateEnum,oldEmail);
+        userEmailService.sendTokenEmail(templateEnum, oldEmail, newEmail);
 
         model.addAttribute("viewText", templateEnum.getAsyncViewText());
         return templateEnum.getAsyncView();
@@ -59,9 +61,13 @@ public class UserController {
         model.addAttribute("viewText", templateEnum.getViewText());
         return templateEnum.getView();
     }
+    // ----------------------------Reset Password----------------------------- //
     @PostMapping("/support/password")
     public String reset(@NotNull @RequestParam String email, Model model){
         EmailTemplateEnum templateEnum = EmailTemplateEnum.RESET;
+
+        userEmailService.setUserState(templateEnum, email);
+        userEmailService.sendTokenEmail(templateEnum, email, null);
 
         model.addAttribute("viewText", templateEnum.getAsyncViewText());
         return templateEnum.getAsyncView();
@@ -74,6 +80,10 @@ public class UserController {
     @PostMapping("/reset")
     public String reset(@NotNull @RequestParam String password, @NotNull @RequestParam String token, Model model){
         EmailTemplateEnum templateEnum = EmailTemplateEnum.RESET;
+
+        TokenDto dto = userEmailService.processResetPwd(password, token);
+        userEmailService.createBasicEmail(EmailTemplateEnum.RESET_NOTICE, dto.getReqEmail());
+        userEmailService.deleteToken(token);
 
         model.addAttribute("viewText", templateEnum.getViewText());
         return templateEnum.getView();

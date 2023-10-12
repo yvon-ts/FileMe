@@ -1,6 +1,5 @@
 package net.fileme.service.impl;
 
-import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import net.fileme.domain.dto.EmailDto;
@@ -66,14 +65,6 @@ public class UserEmailServiceImpl extends ServiceImpl<UserMapper, User>
         save(user);
         return user;
     }
-    @Async
-    @Override // TODO: 看是否可寫成通用
-    public void sendSignUpEmail(EmailTemplateEnum templateEnum, String email){
-        TokenDto dto = createTokenDto(templateEnum.getMapping(), email, null);
-        String token = createToken(dto);
-        EmailTemplate template = emailTemplateService.findTemplate(templateEnum);
-        createTokenEmail(template, email, token);
-    }
     @Override
     public void processSignUp(String token){
         TokenDto dto = lookUpToken(token);
@@ -90,16 +81,6 @@ public class UserEmailServiceImpl extends ServiceImpl<UserMapper, User>
         return update(luw);
     }
     // ----------------------------Change Email----------------------------- //
-    @Async
-    @Override
-    public void sendChangeEmail(EmailTemplateEnum templateEnum, Long userId, String reqEmail){
-        // TODO: 加security後應該就不用撈資料庫
-        String currentEmail = findCurrentEmail(userId);
-        TokenDto dto = createTokenDto(templateEnum.getMapping(), reqEmail, currentEmail);
-        String token = createToken(dto);
-        EmailTemplate template = emailTemplateService.findTemplate(templateEnum);
-        createTokenEmail(template, reqEmail, token);
-    }
     @Override
     public TokenDto processChangeEmail(String token){
         TokenDto dto = lookUpToken(token);
@@ -118,17 +99,45 @@ public class UserEmailServiceImpl extends ServiceImpl<UserMapper, User>
                 .eq(User::getState, dto.getMapping());
         return update(luw);
     }
+    // ----------------------------Reset Password----------------------------- //
+    @Override
+    public TokenDto processResetPwd(String rawPwd, String token){
+        TokenDto dto = lookUpToken(token);
+        String pwd = passwordEncoder.encode(rawPwd);
+        dto.setPending(pwd);
+        boolean success = doResetPwd(dto);
+        if(!success){
+            throw new InternalErrorException(ExceptionEnum.UPDATE_FAIL);
+        }
+        return dto;
+    }
+    public boolean doResetPwd(TokenDto dto){
+        LambdaUpdateWrapper<User> luw = new LambdaUpdateWrapper<>();
+        luw.set(User::getPwd, dto.getPending())
+                .set(User::getState, 0)
+                .eq(User::getEmail, dto.getReqEmail())
+                .eq(User::getState, dto.getMapping());
+        return update(luw);
+    }
     // ----------------------------Util Methods----------------------------- //
 
     @Override
-    public void setUserState(EmailTemplateEnum templateEnum, Long userId){
+    public void setUserState(EmailTemplateEnum templateEnum, String email){
         Integer mapping = emailTemplateService.findTemplate(templateEnum).getMapping();
         LambdaUpdateWrapper<User> luw = new LambdaUpdateWrapper<>();
-        luw.set(User::getState, mapping).eq(User::getId, userId);
+        luw.set(User::getState, mapping).eq(User::getEmail, email);
         boolean success = update(luw);
         if(!success){
             throw new InternalErrorException(ExceptionEnum.USER_STATE_ERROR);
         }
+    }
+    @Async
+    @Override
+    public void sendTokenEmail(EmailTemplateEnum templateEnum, String emailReceiver, String pending){
+        TokenDto dto = createTokenDto(templateEnum.getMapping(), emailReceiver, pending);
+        String token = createToken(dto);
+        EmailTemplate template = emailTemplateService.findTemplate(templateEnum);
+        createTokenEmail(template, emailReceiver, token);
     }
     public<T> TokenDto createTokenDto(Integer mapping, String reqEmail, T pending){
         Integer issueNo = nextIssueNo(reqEmail);
@@ -203,11 +212,6 @@ public class UserEmailServiceImpl extends ServiceImpl<UserMapper, User>
                 throw new UnauthorizedException(ExceptionEnum.INVALID_TOKEN);
             }
         }
-    }
-    public String findCurrentEmail(Long userId){
-        LambdaQueryWrapper<User> lqw = new LambdaQueryWrapper<>();
-        lqw.select(User::getEmail).eq(User::getId, userId);
-        return getObj(lqw, o -> o.toString());
     }
     @Async
     @Override
