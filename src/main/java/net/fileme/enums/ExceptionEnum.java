@@ -21,6 +21,7 @@ public enum ExceptionEnum {
     , USER_NOT_EXISTS(700, "帳號或密碼錯誤")
     , USER_STATE_ERROR(710, "會員狀態異常")
     , INVALID_TOKEN(780, "驗證失敗，請聯繫客服")
+    , EXPIRED_TOKEN(781, "操作逾時，請重新登入")
     , TOKEN_DEL_ERROR(781, "金鑰刪除異常")
     , REGISTER_FAIL(799, "註冊異常")
     // 重複異常

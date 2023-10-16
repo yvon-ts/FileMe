@@ -35,7 +35,6 @@ public class GlobalExceptionHandler {
 
         log.error(exceptionEnum.toStringDetails());
     }
-
     // -------------------------- Customized Exceptions -------------------------- //
     @ExceptionHandler(BizException.class)
     public ResponseEntity handleBizException(BizException ex){

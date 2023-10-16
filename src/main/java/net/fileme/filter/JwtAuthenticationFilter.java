@@ -1,17 +1,22 @@
 package net.fileme.filter;
 
 import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.ExpiredJwtException;
 import net.fileme.domain.MyUserDetails;
 import net.fileme.enums.ExceptionEnum;
 import net.fileme.exception.UnauthorizedException;
 import net.fileme.utils.JwtUtil;
 import net.fileme.utils.RedisUtil;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 import org.springframework.web.filter.OncePerRequestFilter;
+import org.springframework.web.servlet.HandlerExceptionResolver;
 
 import javax.servlet.FilterChain;
 import javax.servlet.ServletException;
@@ -24,6 +29,11 @@ import java.util.Objects;
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
     @Autowired
     private RedisUtil redisUtil;
+    @Autowired
+    @Qualifier("handlerExceptionResolver")
+    private HandlerExceptionResolver resolver;
+
+    private Logger log = LoggerFactory.getLogger(JwtAuthenticationFilter.class);
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
@@ -33,9 +43,17 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             filterChain.doFilter(request, response);
             return;
         }
-        // get userId from JWT token
-        Claims claims = JwtUtil.parseJWT(token);
-        String userId = claims.getSubject();
+        String userId = "";
+        try{
+            // get userId from JWT token
+            Claims claims = JwtUtil.parseJWT(token);
+            userId = claims.getSubject();
+        }catch(ExpiredJwtException ex){
+            log.error(ex.getClass().toString());
+            log.error(ex.getMessage());
+            request.getRequestDispatcher("/error").forward(request, response);
+            return;
+        }
 
         // get userDetails from Redis
         MyUserDetails myUserDetails = redisUtil.getRedisValue("login:" + userId);
