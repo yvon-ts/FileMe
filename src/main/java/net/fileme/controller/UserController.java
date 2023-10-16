@@ -81,7 +81,7 @@ public class UserController {
     public String reset(@NotNull @RequestParam String password, @NotNull @RequestParam String token, Model model){
         EmailTemplateEnum templateEnum = EmailTemplateEnum.RESET;
 
-        TokenDto dto = userEmailService.processResetPwd(password, token);
+        TokenDto dto = userEmailService.processResetPassword(password, token);
         userEmailService.createBasicEmail(EmailTemplateEnum.RESET_NOTICE, dto.getReqEmail());
         userEmailService.deleteToken(token);
 

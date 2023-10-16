@@ -75,12 +75,9 @@ public class RequestLogAspect {
                 argList.add(map);
             }
         }
-        if(argList.isEmpty()){
-            return null;
-        }else if(argList.size() == 1){
-            return argList.get(0);
-        }else{
-            return argList;
-        }
+        if(argList.isEmpty()) return null;
+        if(argList.size() == 1) return argList.get(0);
+
+        return argList;
     }
 }

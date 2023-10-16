@@ -15,9 +15,10 @@ public enum ExceptionEnum {
     , UPDATE_DB_FAIL(630, "操作DB失敗，請檢查ID是否存在")
     , CONFIG_ERROR(640, "組態異常")
     , UPDATE_FAIL(650, "更新失敗")
+    , GUEST_NOT_ALLOWED(690, "不接受訪客操作，請先登入")
     , EMAIL_ERROR(699, "系統發信異常")
     // 會員異常
-    , USER_NOT_EXISTS(700, "會員不存在")
+    , USER_NOT_EXISTS(700, "帳號或密碼錯誤")
     , USER_STATE_ERROR(710, "會員狀態異常")
     , INVALID_TOKEN(780, "驗證失敗，請聯繫客服")
     , TOKEN_DEL_ERROR(781, "金鑰刪除異常")

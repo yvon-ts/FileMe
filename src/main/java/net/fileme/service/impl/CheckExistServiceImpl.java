@@ -26,15 +26,12 @@ public class CheckExistServiceImpl implements CheckExistService {
 
     @Override
     public boolean checkValidFolder(Long userId, Long folderId){
-        boolean isValid = false;
         int count = checkExistFolder(userId, folderId);
 
-        if(folderId.equals(0L)){
-            isValid = true;
-        }else if(count == 1){
-            isValid = true;
-        }
-        return isValid;
+        if(folderId.equals(0L)) return true;
+        if(count == 1) return true;
+
+        return false;
     }
 
     @Override

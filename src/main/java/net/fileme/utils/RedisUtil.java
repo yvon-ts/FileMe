@@ -34,12 +34,9 @@ public class RedisUtil {
     public boolean hasKey(String key){
         return redisTemplate.hasKey(key);
     }
-    public boolean deleteObj(String key){
+    public void deleteObj(String key){
         Boolean success = redisTemplate.delete(key);
-        if(!success){
+        if(!success)
             throw new InternalErrorException(ExceptionEnum.TOKEN_DEL_ERROR);
-        }else{
-            return true;
-        }
     }
 }

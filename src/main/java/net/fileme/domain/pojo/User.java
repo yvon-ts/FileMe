@@ -11,7 +11,7 @@ public class User extends BasePojo{
     @TableId(value = "user_id")
     private Long id;
     private String username;
-    private String pwd;
+    private String password;
     private String email;
     private Integer membership;
 }

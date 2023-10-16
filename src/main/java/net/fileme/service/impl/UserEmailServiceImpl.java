@@ -54,13 +54,13 @@ public class UserEmailServiceImpl extends ServiceImpl<UserMapper, User>
     @Override
     public User createUser(User guest){
         String username = guest.getUsername();
-        String tmpPwd = guest.getPwd();
+        String tmpPassword = guest.getPassword();
         String email = guest.getEmail();
-        String pwd = passwordEncoder.encode(tmpPwd);
+        String password = passwordEncoder.encode(tmpPassword);
 
         User user = new User();
         user.setUsername(username);
-        user.setPwd(pwd);
+        user.setPassword(password);
         user.setEmail(email);
         save(user);
         return user;
@@ -101,19 +101,19 @@ public class UserEmailServiceImpl extends ServiceImpl<UserMapper, User>
     }
     // ----------------------------Reset Password----------------------------- //
     @Override
-    public TokenDto processResetPwd(String rawPwd, String token){
+    public TokenDto processResetPassword(String rawPassword, String token){
         TokenDto dto = lookUpToken(token);
-        String pwd = passwordEncoder.encode(rawPwd);
-        dto.setPending(pwd);
-        boolean success = doResetPwd(dto);
+        String password = passwordEncoder.encode(rawPassword);
+        dto.setPending(password);
+        boolean success = doResetPassword(dto);
         if(!success){
             throw new InternalErrorException(ExceptionEnum.UPDATE_FAIL);
         }
         return dto;
     }
-    public boolean doResetPwd(TokenDto dto){
+    public boolean doResetPassword(TokenDto dto){
         LambdaUpdateWrapper<User> luw = new LambdaUpdateWrapper<>();
-        luw.set(User::getPwd, dto.getPending())
+        luw.set(User::getPassword, dto.getPending())
                 .set(User::getState, 0)
                 .eq(User::getEmail, dto.getReqEmail())
                 .eq(User::getState, dto.getMapping());
