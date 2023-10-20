@@ -3,6 +3,7 @@ package net.fileme.service.impl;
 import net.fileme.domain.dto.DriveDto;
 import net.fileme.domain.dto.FileFolderDto;
 import net.fileme.domain.Result;
+import net.fileme.domain.mapper.DriveDtoMapper;
 import net.fileme.exception.BadRequestException;
 import net.fileme.exception.InternalErrorException;
 import net.fileme.exception.NotFoundException;
@@ -21,6 +22,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.FileCopyUtils;
+import org.springframework.util.StringUtils;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -34,13 +36,43 @@ public class DriveDtoServiceImpl implements DriveDtoService {
     private FileService fileService;
     @Autowired
     private DataTreeService dataTreeService;
+    @Autowired
+    private DriveDtoMapper driveDtoMapper;
 
     @Override
-    public ResponseEntity preview(Long userId, Long fileId){
-        String path = dataTreeService.findFilePath(userId, fileId);
+    public Result publicData(Long folderId){
+        List<DriveDto> publicData = driveDtoMapper.getPublicData(folderId);
+        if(CollectionUtils.isEmpty(publicData)) throw new BadRequestException(ExceptionEnum.NO_SUCH_DATA);
+
+        return Result.success(publicData);
+    }
+    @Override
+    public Result privateData(Long userId, Long folderId){
+        // folderId = 0 免擋
+        // 要擋非本人folder
+        List<DriveDto> privateData = driveDtoMapper.getPrivateData(userId, folderId);
+        if(CollectionUtils.isEmpty(privateData)) throw new BadRequestException(ExceptionEnum.NO_SUCH_DATA);
+
+        return Result.success(privateData);
+    }
+    @Override
+    public ResponseEntity previewPublic(Long fileId){
+        String path = dataTreeService.findPublicFilePath(fileId);
+        return preview(path);
+    }
+    @Override
+    public ResponseEntity previewPersonal(Long userId, Long fileId){
+        String path = dataTreeService.findPersonalFilePath(userId, fileId);
+        return preview(path);
+    }
+    public ResponseEntity preview(String path){
+        if(!StringUtils.hasText(path)) return ResponseEntity
+                                        .status(HttpStatus.NOT_FOUND)
+                                        .body(Result.error(ExceptionEnum.FILE_NOT_EXISTS));
+
         String ext = path.substring(path.lastIndexOf(".") + 1);
 
-        // check if allowed to preview
+        // check mime type if allowed to preview
         if(MimeEnum.valueOf(ext.toUpperCase()).allowPreview){
             java.io.File ioFile = new java.io.File(path);
             if(!ioFile.exists()){

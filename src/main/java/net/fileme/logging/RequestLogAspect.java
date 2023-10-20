@@ -47,6 +47,10 @@ public class RequestLogAspect {
         Method method = methodSignature.getMethod(); // 取得核心方法
 
         RequestLog reqLog = new RequestLog();
+        Object userId = request.getAttribute("parsedJwt");
+        if(userId != null){
+            reqLog.setUserId(Long.valueOf(userId.toString()));
+        }
         reqLog.setRoute(request.getRequestURI());
         reqLog.setParam(getParameter(method, joinPoint.getArgs()));
         log.info(reqLog.toString());

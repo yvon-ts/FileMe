@@ -5,19 +5,28 @@ import net.fileme.domain.Result;
 import net.fileme.domain.dto.UserDto;
 import net.fileme.service.LoginService;
 import net.fileme.utils.JwtUtil;
-import net.fileme.utils.RedisUtil;
+import net.fileme.utils.RedisCache;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
+
+import java.util.concurrent.TimeUnit;
+
 
 @Service
 public class LoginServiceImpl implements LoginService {
     @Autowired
     private AuthenticationManager authenticationManager;
     @Autowired
-    private RedisUtil redisUtil;
+    private RedisCache redisCache;
+    @Value("${user.session.timeout}")
+    private Integer timeout;
+    @Value("${user.session.time-unit}")
+    private TimeUnit timeUnit;
     @Override
     public Result login(UserDto dto) { // TODO: 可再考慮是否要改user還是loginUser
 
@@ -30,9 +39,16 @@ public class LoginServiceImpl implements LoginService {
         String userId = myUserDetails.getUser().getId().toString();
 
         String jwt = JwtUtil.createJWT(userId);
-        // TODO: 是否需要加timeout
-        redisUtil.setObj("login:" + userId, myUserDetails);
-        // TODO: 是否需要寫成token: JWT
+        redisCache.setObj("login:" + userId, myUserDetails, timeout, timeUnit);
+
         return Result.success(jwt);
+    }
+    @Override
+    public Result logout(){
+        UsernamePasswordAuthenticationToken authentication = (UsernamePasswordAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
+        MyUserDetails myUserDetails = (MyUserDetails) authentication.getPrincipal();
+        Long userId = myUserDetails.getUser().getId();
+        redisCache.deleteObj("login:" + userId);
+        return Result.success();
     }
 }

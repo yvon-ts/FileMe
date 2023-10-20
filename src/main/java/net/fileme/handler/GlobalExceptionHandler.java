@@ -54,7 +54,7 @@ public class GlobalExceptionHandler {
     public ModelAndView handleUnauthorized(UnauthorizedException ex){
         logError(ex, ex.getExceptionEnum());
         ModelAndView view = new ModelAndView("error");
-        view.addObject("errMsg", ExceptionEnum.INVALID_TOKEN.getDesc());
+        view.addObject("errMsg", ex.getExceptionEnum().getDesc());
         return view;
     }
     @ExceptionHandler(NotFoundException.class)

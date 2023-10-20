@@ -1,15 +1,20 @@
 package net.fileme.controller;
 
+import net.fileme.domain.MyUserDetails;
 import net.fileme.domain.dto.FileFolderDto;
 import net.fileme.domain.Result;
 import net.fileme.domain.mapper.DriveDtoMapper;
 import net.fileme.domain.dto.DriveDto;
 import net.fileme.domain.pojo.Folder;
+import net.fileme.enums.ExceptionEnum;
+import net.fileme.exception.BadRequestException;
+import net.fileme.exception.UnauthorizedException;
 import net.fileme.service.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.PropertySource;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -31,7 +36,7 @@ public class DataManagerController {
     @Autowired
     private FileService fileService;
     @Autowired
-    private DriveDtoService dtoService;
+    private DriveDtoService driveDtoService;
     @Autowired
     private DriveDtoMapper driveDtoMapper;
 
@@ -51,26 +56,46 @@ public class DataManagerController {
 
     // ----------------------------------Read---------------------------------- //
     @GetMapping("/drive/my-drive")
-    public Result myDrive(@NotNull @RequestParam Long userId){
-        List<DriveDto> driveDto = driveDtoMapper.getDriveDto(userId, rootId);
+    public Result myDrive(@AuthenticationPrincipal MyUserDetails myUserDetails){
+        Long userId = myUserDetails.getUser().getId();
+        List<DriveDto> driveDto = driveDtoMapper.getPrivateData(userId, rootId);
         return Result.success(driveDto);
     }
-
+    @GetMapping("/pub/drive/data") // TODO: 如何避免攻擊?
+    public Result publicData(@NotNull @RequestParam Long folderId){
+        // no public access for user's root folder
+        if(folderId == 0) throw new BadRequestException(ExceptionEnum.PARAM_ERROR);
+        return driveDtoService.publicData(folderId);
+    }
     @GetMapping("/drive/data")
-    public Result DriveDto(@NotNull @RequestParam Long userId, @NotNull @RequestParam Long folderId){
-        List<DriveDto> driveDto = driveDtoMapper.getDriveDto(userId, folderId);
-        return Result.success(driveDto);
-    }
+    public Result privateData(@AuthenticationPrincipal MyUserDetails myUserDetails
+            , @NotNull @RequestParam Long folderId){
+        if(Objects.isNull(myUserDetails)) throw new UnauthorizedException(ExceptionEnum.GUEST_NOT_ALLOWED);
+        Long userId = myUserDetails.getUser().getId();
+        if(Objects.isNull(userId)) throw new UnauthorizedException(ExceptionEnum.GUEST_NOT_ALLOWED);
 
+        return driveDtoService.privateData(userId, folderId);
+    }
+    @GetMapping("/pub/drive/preview")
+    public ResponseEntity publicPreview(@NotNull @RequestParam Long fileId){
+        return driveDtoService.previewPublic(fileId);
+    }
     @GetMapping("/drive/preview")
-    public ResponseEntity preview(@NotNull @RequestParam Long userId, @NotNull @RequestParam Long fileId){
-        return dtoService.preview(userId, fileId);
+    public ResponseEntity preview(@AuthenticationPrincipal MyUserDetails myUserDetails
+            ,@NotNull @RequestParam Long fileId){
+        if(Objects.isNull(myUserDetails)){
+            throw new UnauthorizedException(ExceptionEnum.GUEST_NOT_ALLOWED);
+        }
+        Long userId = myUserDetails.getUser().getId();
+        if(Objects.isNull(userId)) throw new UnauthorizedException(ExceptionEnum.GUEST_NOT_ALLOWED);
+
+        return driveDtoService.previewPersonal(userId, fileId);
     }
 
     // ----------------------------------Update: rename---------------------------------- //
     @PostMapping("/drive/rename")
     public ResponseEntity rename(@Valid @RequestBody DriveDto dto){
-        dtoService.rename(dto);
+        driveDtoService.rename(dto);
         return ResponseEntity.ok().body(Result.success());
     }
     // ----------------------------------Update: relocate---------------------------------- //
@@ -89,7 +114,7 @@ public class DataManagerController {
 
     @PostMapping("/drive/relocate")
     public ResponseEntity relocate(@NotNull @RequestParam Long destId, @NotNull @RequestBody FileFolderDto dto){
-        dtoService.relocate(destId, dto);
+        driveDtoService.relocate(destId, dto);
         return ResponseEntity.ok().body(Result.success());
     }
 
@@ -97,25 +122,25 @@ public class DataManagerController {
 
     @PostMapping("/drive/trash")
     public ResponseEntity gotoTrash(@NotNull @RequestBody FileFolderDto dto){
-        dtoService.gotoTrash(dto);
+        driveDtoService.gotoTrash(dto);
         return ResponseEntity.ok().body(Result.success());
     }
 
     @PostMapping("/drive/recover")
     public ResponseEntity recover(@NotNull @RequestBody FileFolderDto dto){
-        dtoService.recover(dto);
+        driveDtoService.recover(dto);
         return ResponseEntity.ok().body(Result.success());
     }
 
     @PostMapping("/drive/clean") // 清空垃圾桶
     public ResponseEntity clean(@NotNull @RequestParam Long userId){
-        dtoService.clean(userId);
+        driveDtoService.clean(userId);
         return ResponseEntity.ok().body(Result.success());
     }
 
     @PostMapping("/drive/softDelete")
     public ResponseEntity softDelete(@NotNull @RequestParam Long userId, @NotNull @RequestBody FileFolderDto dto){
-        dtoService.softDelete(userId, dto);
+        driveDtoService.softDelete(userId, dto);
         return ResponseEntity.ok().body(Result.success());
     }
 

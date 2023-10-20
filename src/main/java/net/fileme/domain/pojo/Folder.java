@@ -28,6 +28,8 @@ public class Folder{
     @NotNull
     private Long parentId;
 
+    private Integer accessLevel;
+
     @Override
     public String toString() {
         return "{" +

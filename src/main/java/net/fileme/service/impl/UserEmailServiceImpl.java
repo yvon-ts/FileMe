@@ -16,7 +16,7 @@ import net.fileme.service.EmailService;
 import net.fileme.service.EmailTemplateService;
 import net.fileme.service.UserEmailService;
 import net.fileme.utils.RandomUtil;
-import net.fileme.utils.RedisUtil;
+import net.fileme.utils.RedisCache;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -36,7 +36,7 @@ public class UserEmailServiceImpl extends ServiceImpl<UserMapper, User>
     @Autowired
     private PasswordEncoder passwordEncoder;
     @Autowired
-    private RedisUtil redisUtil;
+    private RedisCache redisCache;
     @Autowired
     private TemplateEngine templateEngine;
     @Autowired
@@ -148,19 +148,19 @@ public class UserEmailServiceImpl extends ServiceImpl<UserMapper, User>
         boolean isUnique = false;
         while(!isUnique){
             token = RandomUtil.createToken();
-            isUnique = redisUtil.setUniqueObj(token, dto, timeout, timeUnit);
+            isUnique = redisCache.setUniqueObj(token, dto, timeout, timeUnit);
         }
         log.info("token generated for " + dto.getReqEmail());
         return token;
     }
     public Integer nextIssueNo(String reqEmail){
-        Integer issueNo = redisUtil.getRedisValue(reqEmail);
-        if(issueNo == null){
-            redisUtil.setObj(reqEmail, 1, timeout, timeUnit);
+        Integer issueNo = redisCache.getRedisValue(reqEmail);
+        if(Objects.isNull(issueNo)){
+            redisCache.setObj(reqEmail, 1, timeout, timeUnit);
             return 1;
         }else{
             issueNo++;
-            redisUtil.setObj(reqEmail, issueNo, timeout, timeUnit);
+            redisCache.setObj(reqEmail, issueNo, timeout, timeUnit);
             return issueNo;
         }
     }
@@ -199,13 +199,13 @@ public class UserEmailServiceImpl extends ServiceImpl<UserMapper, User>
         emailService.sendHtmlMail(dto);
     }
     public TokenDto lookUpToken(String token){
-        boolean hasKey = redisUtil.hasKey(token);
+        boolean hasKey = redisCache.hasKey(token);
         if(!hasKey){
             throw new UnauthorizedException(ExceptionEnum.INVALID_TOKEN);
         }else{
-            TokenDto dto = redisUtil.getRedisValue(token);
+            TokenDto dto = redisCache.getRedisValue(token);
             Integer dtoIssueNo = dto.getIssueNo();
-            Integer currentIssueNo = redisUtil.getRedisValue(dto.getReqEmail());
+            Integer currentIssueNo = redisCache.getRedisValue(dto.getReqEmail());
             if(currentIssueNo != null && currentIssueNo != 0 && Objects.equals(currentIssueNo, dtoIssueNo)){
                 return dto;
             }else{
@@ -216,7 +216,7 @@ public class UserEmailServiceImpl extends ServiceImpl<UserMapper, User>
     @Async
     @Override
     public void deleteToken(String token){
-        redisUtil.deleteObj(token);
+        redisCache.deleteObj(token);
         log.info("Used token has been removed.");
     }
 }

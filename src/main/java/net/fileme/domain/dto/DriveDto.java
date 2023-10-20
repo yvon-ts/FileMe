@@ -15,4 +15,5 @@ public class DriveDto {
     private String dataName;
     @NotNull
     private Integer dataType;
+    private Integer accessLevel;
 }

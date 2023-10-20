@@ -117,12 +117,27 @@ public class DataTreeServiceImpl implements DataTreeService {
         List<File> subFiles = fileService.list(lqw);
         return subFiles;
     }
-    @Override
-    public String findFilePath(Long userId, Long fileId){
-        File file = fileService.getById(fileId);
+
+    public String findFilePath(File file){
         StringBuilder builder = new StringBuilder();
-        builder.append(remotePathPrefix).append("/").append(userId).append("/").append(file.getId()).append(".").append(file.getExt());
+        builder.append(remotePathPrefix).append("/").append(file.getUserId()).append("/").append(file.getId()).append(".").append(file.getExt());
         return builder.toString();
+    }
+    @Override
+    public String findPublicFilePath(Long fileId){
+        File file = fileService.getById(fileId);
+        if(Objects.isNull(file)) return null;
+        if(file.getAccessLevel() == 0) return null;
+
+        return findFilePath(file);
+    }
+    @Override
+    public String findPersonalFilePath(Long userId, Long fileId){
+        File file = fileService.getById(fileId);
+        if(Objects.isNull(file)) return null;
+        if(!file.getUserId().equals(userId)) return null;
+
+        return findFilePath(file);
     }
 //    public List<Path> findBatchPath(Long userId, List<Long> fileIds){
 //        List<String> strPaths = new ArrayList<>();

@@ -6,14 +6,23 @@
         <id column="id" jdbcType="BIGINT" property="id"/>
         <result column="data_name" jdbcType="VARCHAR" property="dataName"/>
         <result column="data_type" jdbcType="TINYINT" property="dataType"/>
+        <result column="access_level" jdbcType="TINYINT" property="accessLevel"/>
     </resultMap>
 
-    <select id="getDriveDto" resultMap="driveDto">
-        select folder_id id, folder_name data_name, 0 data_type
+    <select id="getPrivateData" resultMap="driveDto">
+        select folder_id id, folder_name data_name, 0 data_type, access_level
         from folder where user_id = #{userId} and parent_id = #{folderId}
         union
-        select file_id, concat(file_name, '.', ext), 1
+        select file_id, concat(file_name, '.', ext), 1, access_level
         from file_data where user_id = #{userId} and folder_id = #{folderId}
+    </select>
+
+    <select id="getPublicData" resultMap="driveDto">
+        select folder_id id, folder_name data_name, 0 data_type
+        from folder where parent_id = #{folderId} and access_level = 1
+        union
+        select file_id, concat(file_name, '.', ext), 1
+        from file_data where folder_id = #{folderId} and access_level = 1
     </select>
 
 </mapper>

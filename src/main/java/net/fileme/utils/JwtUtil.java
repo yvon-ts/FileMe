@@ -11,6 +11,7 @@ import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.security.Key;
 import java.util.Date;
+import java.util.Objects;
 import java.util.Properties;
 import java.util.UUID;
 
@@ -48,7 +49,7 @@ public class JwtUtil {
         Key key = generalKey();
         long nowMillis = System.currentTimeMillis();
         Date now = new Date(nowMillis);
-        if(duration == null){
+        if(Objects.isNull(duration)){
             duration = JWT_EXP;
         }
         long expMillis = nowMillis + (duration * 60 * 1000); // millisecond

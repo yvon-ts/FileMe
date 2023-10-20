@@ -15,6 +15,7 @@ public enum ExceptionEnum {
     , UPDATE_DB_FAIL(630, "操作DB失敗，請檢查ID是否存在")
     , CONFIG_ERROR(640, "組態異常")
     , UPDATE_FAIL(650, "更新失敗")
+    , LOGIN_TIMEOUT(660, "請重新登入")
     , GUEST_NOT_ALLOWED(690, "不接受訪客操作，請先登入")
     , EMAIL_ERROR(699, "系統發信異常")
     // 會員異常
@@ -48,7 +49,8 @@ public enum ExceptionEnum {
     , FOLDER_NOT_EXISTS(833, "目錄不存在，操作失敗")
     , DATA_DELETE_FAIL(840, "資料刪除失敗")
     , DATA_NOT_EXISTS(841,"目標資料不存在，操作失敗")
-    , FOLDER_NOT_EMPTY(842,"目錄底下尚有資料，請清空後再刪除");
+    , FOLDER_NOT_EMPTY(842,"目錄底下尚有資料，請清空後再刪除")
+    , NO_SUCH_DATA(843, "查無資料");
 
     private final Integer code;
     private final String desc;

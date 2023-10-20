@@ -2,11 +2,11 @@ package net.fileme.filter;
 
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.ExpiredJwtException;
+import io.jsonwebtoken.security.SignatureException;
 import net.fileme.domain.MyUserDetails;
 import net.fileme.enums.ExceptionEnum;
-import net.fileme.exception.UnauthorizedException;
 import net.fileme.utils.JwtUtil;
-import net.fileme.utils.RedisUtil;
+import net.fileme.utils.RedisCache;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -28,7 +28,7 @@ import java.util.Objects;
 @Component // need to add filter into SecurityConfig
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
     @Autowired
-    private RedisUtil redisUtil;
+    private RedisCache redisCache;
     @Autowired
     @Qualifier("handlerExceptionResolver")
     private HandlerExceptionResolver resolver;
@@ -48,16 +48,29 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             // get userId from JWT token
             Claims claims = JwtUtil.parseJWT(token);
             userId = claims.getSubject();
-        }catch(ExpiredJwtException ex){
+            request.setAttribute("parsedJwt", userId);
+        }catch(SignatureException ex){
             log.error(ex.getClass().toString());
+            log.error("token: " + token);
             log.error(ex.getMessage());
-            request.getRequestDispatcher("/error").forward(request, response);
+            request.setAttribute("errMsg", ExceptionEnum.INVALID_TOKEN.getDesc());
+            request.getRequestDispatcher("/access-denied").forward(request, response);
+            return;
+        }catch(ExpiredJwtException ex) {
+            log.error(ex.getClass().toString());
+            log.error("token: " + token);
+            log.error(ex.getMessage());
+            request.setAttribute("errMsg", ExceptionEnum.EXPIRED_TOKEN.getDesc());
+            request.getRequestDispatcher("/access-denied").forward(request, response);
             return;
         }
 
         // get userDetails from Redis
-        MyUserDetails myUserDetails = redisUtil.getRedisValue("login:" + userId);
-        if(Objects.isNull(myUserDetails)) throw new UnauthorizedException(ExceptionEnum.GUEST_NOT_ALLOWED);
+        MyUserDetails myUserDetails = redisCache.getRedisValue("login:" + userId);
+        if(Objects.isNull(myUserDetails)){
+            log.error(ExceptionEnum.LOGIN_TIMEOUT.toStringDetails());
+            request.getRequestDispatcher("/error").forward(request, response);
+        }
 
         // encapsulate authorities
         UsernamePasswordAuthenticationToken authenticationToken = new UsernamePasswordAuthenticationToken(myUserDetails, null, myUserDetails.getAuthorities());

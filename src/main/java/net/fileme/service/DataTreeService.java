@@ -14,6 +14,8 @@ public interface DataTreeService {
     FileFolderDto findTreeIds(Long userId, Long rootFolderId);
     List<Folder> findSubFolders(Long userId, Long rootFolderId);
     List<File> findSubFiles(Long userId, Long rootFolderId);
-    String findFilePath(Long userId, Long fileId);
+    String findPublicFilePath(Long fileId);
+
+    String findPersonalFilePath(Long userId, Long fileId);
 //    List<Path> findRemotePaths(Long userId, List<Long> fileIds);
 }

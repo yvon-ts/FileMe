@@ -37,7 +37,7 @@ public class SecurityConfig {
                 .authorizeRequests()
                  // 感覺會有一個("/**").hasAuthority("admin")
                 .antMatchers("/user/login").anonymous()
-                .anyRequest().authenticated()
+                .antMatchers("/pub**").permitAll()
                 .and()
                 .exceptionHandling()
                 .accessDeniedPage("/access-denied")
