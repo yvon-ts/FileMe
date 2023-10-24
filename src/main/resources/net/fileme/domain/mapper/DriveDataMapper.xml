@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="net.fileme.domain.mapper.DriveDtoMapper">
-
+<!-- TODO: 確認一下檔名要不要改 這個是for select public/private目錄內容-->
     <resultMap id="driveDto" type="net.fileme.domain.dto.DriveDto">
         <id column="id" jdbcType="BIGINT" property="id"/>
         <result column="data_name" jdbcType="VARCHAR" property="dataName"/>
@@ -9,20 +9,56 @@
         <result column="access_level" jdbcType="TINYINT" property="accessLevel"/>
     </resultMap>
 
-    <select id="getPrivateData" resultMap="driveDto">
-        select folder_id id, folder_name data_name, 0 data_type, access_level
-        from folder where user_id = #{userId} and parent_id = #{folderId}
-        union
-        select file_id, concat(file_name, '.', ext), 1, access_level
-        from file_data where user_id = #{userId} and folder_id = #{folderId}
-    </select>
+    <resultMap id="folderDto" type="net.fileme.domain.dto.DriveDto">
+        <id column="id" jdbcType="BIGINT" property="id"/>
+        <result column="data_name" jdbcType="VARCHAR" property="dataName"/>
+    </resultMap>
+
+<!--    <select id="getAll" resultMap="driveDto">-->
+<!--        select data_id id, data_name, data_type, access_level from v_user_drive-->
+<!--        where user_id = #{userId}-->
+<!--    </select>-->
+
+<!--    <select id="getAllFolders" resultMap="driveDto">-->
+<!--        select data_id id, data_name, data_type, access_level from v_user_drive-->
+<!--        where user_id = #{userId} and data_type = 0-->
+<!--    </select>-->
+
+<!--    <select id="getAllFiles" resultMap="driveDto">-->
+<!--        select data_id id, data_name, data_type, access_level from v_user_drive-->
+<!--        where user_id = #{userId} and data_type = 1-->
+<!--    </select>-->
 
     <select id="getPublicData" resultMap="driveDto">
-        select folder_id id, folder_name data_name, 0 data_type
-        from folder where parent_id = #{folderId} and access_level = 1
+        select data_id id, data_name, data_type, access_level from v_user_drive
+        where parent_id = ${folderId} and access_level = 1
+    </select>
+
+    <select id="getData" resultMap="driveDto">
+        select data_id id, data_name, data_type, access_level from v_user_drive
+        where user_id = #{userId} and parent_id = #{folderId}
+    </select>
+
+    <select id="getFolderDto" resultMap="driveDto">
+        select data_id id, data_name, parent_id, access_level from v_user_drive
+        where user_id = #{userId} and data_id = #{folderId} and data_type = 0
+    </select>
+
+    <select id="findSubFolderDtos" resultMap="folderDto">
+        select data_id id, data_name from v_user_drive
+        where  user_id = #{userId} and parent_id = #{folderId} and data_type = 0
+    </select>
+
+    <select id="findSuperFolderDtos" resultMap="folderDto">
+        with recursive cte as(
+        select user_id, data_id id, data_name, parent_id, 0 as sort from v_user_drive
+        where data_id = #{folderId} and user_id = #{userId}
         union
-        select file_id, concat(file_name, '.', ext), 1
-        from file_data where folder_id = #{folderId} and access_level = 1
+        select v.user_id, v.data_id, v.data_name, v.parent_id, sort + 1
+        from v_user_drive v
+        join cte on cte.parent_id = v.data_id
+        )
+        select id, data_name from cte where user_id = #{userId}
     </select>
 
 </mapper>

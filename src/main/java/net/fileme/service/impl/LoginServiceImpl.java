@@ -34,7 +34,6 @@ public class LoginServiceImpl implements LoginService {
         Authentication authentication = authenticationManager.authenticate(authenticationToken);
 
         // TODO: 這邊好像需要自己抓exception 登入錯誤的話
-
         MyUserDetails myUserDetails = (MyUserDetails) authentication.getPrincipal();
         String userId = myUserDetails.getUser().getId().toString();
 

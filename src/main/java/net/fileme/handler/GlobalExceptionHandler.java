@@ -8,8 +8,10 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.TypeMismatchException;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.dao.DuplicateKeyException;
+import org.springframework.expression.spel.SpelEvaluationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.jdbc.BadSqlGrammarException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.MissingServletRequestParameterException;
@@ -79,6 +81,14 @@ public class GlobalExceptionHandler {
                 .body(Result.error(ex.getExceptionEnum()));
     }
     // -------------------------- Spring Exceptions -------------------------- //
+    @ExceptionHandler(SpelEvaluationException.class)
+    public ModelAndView handleSpelEvaluation(SpelEvaluationException ex){
+        return handleUnauthorized(new UnauthorizedException(ExceptionEnum.PRE_AUTH_FAIL));
+    }
+    @ExceptionHandler(HttpMessageNotReadableException.class)
+    public ResponseEntity handleHttpMsgNotReadable(HttpMessageNotReadableException ex){
+        return handleBadRequest(new BadRequestException(ExceptionEnum.PARAM_ERROR));
+    }
     @ExceptionHandler(MaxUploadSizeExceededException.class)
     public ResponseEntity handleMaxUploadSize(MaxUploadSizeExceededException ex){
         logError(ex, ExceptionEnum.FILE_SIZE_ERROR);

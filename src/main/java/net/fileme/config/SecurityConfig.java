@@ -1,6 +1,7 @@
 package net.fileme.config;
 
 import net.fileme.filter.JwtAuthenticationFilter;
+import net.fileme.handler.AccessDeniedExceptionHandler;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -11,6 +12,7 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.access.AccessDeniedHandler;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
 @Configuration
@@ -27,6 +29,10 @@ public class SecurityConfig {
         return authenticationConfiguration.getAuthenticationManager();
     }
     @Bean
+    public AccessDeniedHandler accessDeniedHandler(){
+        return new AccessDeniedExceptionHandler();
+    }
+    @Bean
     SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
                 // 關閉csrf
@@ -40,7 +46,8 @@ public class SecurityConfig {
                 .antMatchers("/pub**").permitAll()
                 .and()
                 .exceptionHandling()
-                .accessDeniedPage("/access-denied")
+                .accessDeniedHandler(accessDeniedHandler())
+//                .accessDeniedPage("/access-denied")
                 .and()
                 .formLogin()
                 .permitAll();

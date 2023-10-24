@@ -17,6 +17,7 @@ public enum ExceptionEnum {
     , UPDATE_FAIL(650, "更新失敗")
     , LOGIN_TIMEOUT(660, "請重新登入")
     , GUEST_NOT_ALLOWED(690, "不接受訪客操作，請先登入")
+    , PRE_AUTH_FAIL(691, "權限不足")
     , EMAIL_ERROR(699, "系統發信異常")
     // 會員異常
     , USER_NOT_EXISTS(700, "帳號或密碼錯誤")
@@ -50,7 +51,8 @@ public enum ExceptionEnum {
     , DATA_DELETE_FAIL(840, "資料刪除失敗")
     , DATA_NOT_EXISTS(841,"目標資料不存在，操作失敗")
     , FOLDER_NOT_EMPTY(842,"目錄底下尚有資料，請清空後再刪除")
-    , NO_SUCH_DATA(843, "查無資料");
+    , NO_SUCH_DATA(843, "查無資料")
+    , NESTED_FOLDER(844, "目錄結構異常");
 
     private final Integer code;
     private final String desc;

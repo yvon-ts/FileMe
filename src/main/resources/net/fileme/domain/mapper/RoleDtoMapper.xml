@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="net.fileme.domain.mapper.RoleDtoMapper">
+
+    <resultMap id="distinctRoles" type="net.fileme.domain.dto.RoleDto">
+        <id property="userId" column="user_id"/>
+        <collection property="roles" ofType="string">
+            <result column="role_name"/>
+        </collection>
+    </resultMap>
+    <select id="getRolesByUserId" resultMap="distinctRoles">
+        select user_id, role_name from sys_user_role u
+        join sys_role r on u.role_id = r.role_id
+        where user_id = #{userId}
+    </select>
+</mapper>

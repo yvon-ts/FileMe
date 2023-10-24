@@ -3,9 +3,7 @@ package net.fileme.controller;
 import net.fileme.domain.MyUserDetails;
 import net.fileme.domain.dto.FileFolderDto;
 import net.fileme.domain.Result;
-import net.fileme.domain.mapper.DriveDtoMapper;
 import net.fileme.domain.dto.DriveDto;
-import net.fileme.domain.pojo.Folder;
 import net.fileme.enums.ExceptionEnum;
 import net.fileme.exception.BadRequestException;
 import net.fileme.exception.UnauthorizedException;
@@ -14,11 +12,14 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.PropertySource;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.util.CollectionUtils;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.validation.Valid;
+import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 import java.util.*;
 
@@ -28,6 +29,8 @@ public class DataManagerController {
 
     @Value("${file.root.folderId}")
     private Long rootId;
+    @Value("${file.trash.folderId}")
+    private Long trashId;
 
     @Autowired
     private DataTreeService dataTreeService;
@@ -38,84 +41,99 @@ public class DataManagerController {
     @Autowired
     private DriveDtoService driveDtoService;
     @Autowired
-    private DriveDtoMapper driveDtoMapper;
+    private ValidateService validateService;
 
     // ----------------------------------Create---------------------------------- //
     @PostMapping("/drive/file")
     public Result createFile(@NotNull @RequestPart("file") MultipartFile part
-            , @NotNull @RequestParam Long userId
-            , @NotNull @RequestParam Long folderId) {
+            , @NotNull @RequestParam Long folderId
+            , @AuthenticationPrincipal MyUserDetails myUserDetails) {
+        if(Objects.isNull(myUserDetails)) throw new UnauthorizedException(ExceptionEnum.GUEST_NOT_ALLOWED);
+        Long userId = myUserDetails.getUser().getId();
         fileService.createFile(part, userId, folderId);
         return Result.success();
     }
     @PostMapping("/drive/folder")
-    public ResponseEntity createFolder(@Valid @RequestBody Folder folder){
-        folderService.createFolder(folder);
-        return ResponseEntity.ok().body(Result.success());
+    public Result createFolder(@AuthenticationPrincipal MyUserDetails myUserDetails
+            , @NotNull Long parentId, @NotBlank String name){
+        if(Objects.isNull(myUserDetails)) throw new UnauthorizedException(ExceptionEnum.GUEST_NOT_ALLOWED);
+        Long userId = myUserDetails.getUser().getId();
+        folderService.createFolder(userId, parentId, name);
+        return Result.success();
     }
 
     // ----------------------------------Read---------------------------------- //
     @GetMapping("/drive/my-drive")
-    public Result myDrive(@AuthenticationPrincipal MyUserDetails myUserDetails){
-        Long userId = myUserDetails.getUser().getId();
-        List<DriveDto> driveDto = driveDtoMapper.getPrivateData(userId, rootId);
-        return Result.success(driveDto);
+    @PreAuthorize("hasAuthority('admin') OR authentication.principal.user.getId().equals(#userId)")
+    public Result getMyDrive(@NotNull @RequestParam Long userId) {
+        return driveDtoService.getData(userId, rootId);
     }
     @GetMapping("/pub/drive/data") // TODO: 如何避免攻擊?
-    public Result publicData(@NotNull @RequestParam Long folderId){
+    public Result getPublicData(@NotNull @RequestParam Long folderId){
         // no public access for user's root folder
         if(folderId == 0) throw new BadRequestException(ExceptionEnum.PARAM_ERROR);
         return driveDtoService.publicData(folderId);
     }
     @GetMapping("/drive/data")
-    public Result privateData(@AuthenticationPrincipal MyUserDetails myUserDetails
-            , @NotNull @RequestParam Long folderId){
-        if(Objects.isNull(myUserDetails)) throw new UnauthorizedException(ExceptionEnum.GUEST_NOT_ALLOWED);
-        Long userId = myUserDetails.getUser().getId();
-        if(Objects.isNull(userId)) throw new UnauthorizedException(ExceptionEnum.GUEST_NOT_ALLOWED);
-
-        return driveDtoService.privateData(userId, folderId);
+    @PreAuthorize("hasAuthority('admin') OR authentication.principal.user.getId().equals(#userId)")
+    public Result getData(@NotNull @RequestParam Long userId, @NotNull @RequestParam Long folderId){
+        return driveDtoService.getData(userId, folderId);
     }
     @GetMapping("/pub/drive/preview")
     public ResponseEntity publicPreview(@NotNull @RequestParam Long fileId){
         return driveDtoService.previewPublic(fileId);
     }
     @GetMapping("/drive/preview")
-    public ResponseEntity preview(@AuthenticationPrincipal MyUserDetails myUserDetails
-            ,@NotNull @RequestParam Long fileId){
-        if(Objects.isNull(myUserDetails)){
-            throw new UnauthorizedException(ExceptionEnum.GUEST_NOT_ALLOWED);
-        }
-        Long userId = myUserDetails.getUser().getId();
-        if(Objects.isNull(userId)) throw new UnauthorizedException(ExceptionEnum.GUEST_NOT_ALLOWED);
-
+    @PreAuthorize("hasAuthority('admin') OR authentication.principal.user.getId().equals(#userId)")
+    public ResponseEntity preview(@NotNull @RequestParam Long userId, @NotNull @RequestParam Long fileId){
         return driveDtoService.previewPersonal(userId, fileId);
     }
 
     // ----------------------------------Update: rename---------------------------------- //
     @PostMapping("/drive/rename")
-    public ResponseEntity rename(@Valid @RequestBody DriveDto dto){
-        driveDtoService.rename(dto);
+    public ResponseEntity rename(@Valid @RequestBody DriveDto dto
+            , @AuthenticationPrincipal MyUserDetails myUserDetails){
+        if(Objects.isNull(myUserDetails)) throw new UnauthorizedException(ExceptionEnum.GUEST_NOT_ALLOWED);
+        Long userId = myUserDetails.getUser().getId();
+
+        driveDtoService.rename(dto, userId);
         return ResponseEntity.ok().body(Result.success());
     }
     // ----------------------------------Update: relocate---------------------------------- //
 
     @GetMapping("/drive/relocate/super")
-    public ResponseEntity getRelocateSuper(@NotNull @RequestParam Long folderId){
-        List<Folder> superFolders = dataTreeService.findSuperFolders(folderId);
-        return ResponseEntity.ok().body(Result.success(superFolders));
+    public Result getRelocateSuper(@NotNull @RequestParam Long folderId
+            , @AuthenticationPrincipal MyUserDetails myUserDetails){
+        if(Objects.isNull(myUserDetails)) throw new UnauthorizedException(ExceptionEnum.GUEST_NOT_ALLOWED);
+
+        Long userId = myUserDetails.getUser().getId();
+        List<DriveDto> superFolderDtos = dataTreeService.findSuperFolderDtos(userId, folderId);
+        return Result.success(superFolderDtos);
     }
 
     @GetMapping("/drive/relocate/sub")
-    public ResponseEntity getRelocateSub(@NotNull @RequestParam Long userId, @NotNull @RequestParam Long folderId){
-        List<Folder> subFolders = dataTreeService.findSubFolders(userId, folderId);
-        return ResponseEntity.ok().body(Result.success(subFolders));
+    public Result getRelocateSub(@NotNull @RequestParam Long folderId
+            , @AuthenticationPrincipal MyUserDetails myUserDetails){
+        if(Objects.isNull(myUserDetails)) throw new UnauthorizedException(ExceptionEnum.GUEST_NOT_ALLOWED);
+        if(rootId.equals(folderId) || trashId.equals(folderId)) throw new BadRequestException(ExceptionEnum.PARAM_ERROR);
+
+        Long userId = myUserDetails.getUser().getId();
+        List<DriveDto> subFolderDtos = dataTreeService.findSubFolderDtos(userId, folderId);
+        return Result.success(subFolderDtos);
     }
 
     @PostMapping("/drive/relocate")
-    public ResponseEntity relocate(@NotNull @RequestParam Long destId, @NotNull @RequestBody FileFolderDto dto){
-        driveDtoService.relocate(destId, dto);
-        return ResponseEntity.ok().body(Result.success());
+    public Result relocate(@NotNull @RequestParam Long destId, @NotNull @RequestBody List<DriveDto> listDto
+            , @AuthenticationPrincipal MyUserDetails myUserDetails){
+        if(Objects.isNull(myUserDetails)) throw new UnauthorizedException(ExceptionEnum.GUEST_NOT_ALLOWED);
+        if(CollectionUtils.isEmpty(listDto)) throw new BadRequestException(ExceptionEnum.PARAM_EMPTY);
+
+        Long userId = myUserDetails.getUser().getId();
+        boolean validDestination = validateService.validateFolder(userId, destId);
+        if(!validDestination) throw new BadRequestException(ExceptionEnum.PARAM_ERROR);
+
+        driveDtoService.relocate(destId, listDto, userId);
+        return Result.success();
     }
 
     // ----------------------------------Delete: clean & recover---------------------------------- //

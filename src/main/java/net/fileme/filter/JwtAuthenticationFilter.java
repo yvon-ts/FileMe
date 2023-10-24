@@ -69,7 +69,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         MyUserDetails myUserDetails = redisCache.getRedisValue("login:" + userId);
         if(Objects.isNull(myUserDetails)){
             log.error(ExceptionEnum.LOGIN_TIMEOUT.toStringDetails());
-            request.getRequestDispatcher("/error").forward(request, response);
+            request.setAttribute("errMsg", ExceptionEnum.LOGIN_TIMEOUT.getDesc());
+            request.getRequestDispatcher("/access-denied").forward(request, response);
         }
 
         // encapsulate authorities

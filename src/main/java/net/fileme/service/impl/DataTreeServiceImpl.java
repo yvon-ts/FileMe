@@ -1,10 +1,14 @@
 package net.fileme.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import net.fileme.domain.dto.DriveDto;
 import net.fileme.domain.dto.FileFolderDto;
+import net.fileme.domain.mapper.DriveDtoMapper;
 import net.fileme.domain.mapper.FolderMapper;
 import net.fileme.domain.pojo.File;
 import net.fileme.domain.pojo.Folder;
+import net.fileme.enums.ExceptionEnum;
+import net.fileme.exception.NotFoundException;
 import net.fileme.service.DataTreeService;
 import net.fileme.service.FileService;
 import net.fileme.service.FolderService;
@@ -12,6 +16,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.PropertySource;
 import org.springframework.stereotype.Service;
+import org.springframework.util.CollectionUtils;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -30,13 +35,24 @@ public class DataTreeServiceImpl implements DataTreeService {
     @Autowired
     private FolderMapper folderMapper;
 
+    @Autowired
+    private DriveDtoMapper driveDtoMapper;
+
     @Override
-    public List<Folder> findSuperFolders(Long folderId){
-        List<Folder> superFolders = folderMapper.findSuperFolders(folderId);
-        Collections.reverse(superFolders);
-        return superFolders;
+    public List<DriveDto> findSuperFolderDtos(Long userId, Long folderId){
+        List<DriveDto> dtos = driveDtoMapper.findSuperFolderDtos(userId, folderId);
+        if(CollectionUtils.isEmpty(dtos)) throw new NotFoundException(ExceptionEnum.NO_SUCH_DATA);
+        Collections.reverse(dtos);
+        return dtos;
     }
 
+    @Override
+    public List<DriveDto> findSubFolderDtos(Long userId, Long folderId){
+        List<DriveDto> dtos = driveDtoMapper.findSubFolderDtos(userId, folderId);
+        if(CollectionUtils.isEmpty(dtos)) throw new NotFoundException(ExceptionEnum.NO_SUCH_DATA);
+        return dtos;
+    }
+    // TODO: 重構以下
     // 考慮到根目錄=0, 目前都要傳userId
     @Override
     public List<Long> findSubFolderIds(Long userId, Long rootFolderId) {
@@ -100,14 +116,7 @@ public class DataTreeServiceImpl implements DataTreeService {
         return dto;
     }
 
-    @Override
-    public List<Folder> findSubFolders(Long userId, Long rootFolderId) {
-        LambdaQueryWrapper<Folder> lqw = new LambdaQueryWrapper<>();
-        lqw.eq(Folder::getUserId, userId)
-                .eq(Folder::getParentId, rootFolderId);
-        List<Folder> subFolders = folderService.list(lqw);
-        return subFolders;
-    }
+
 
     @Override
     public List<File> findSubFiles(Long userId, Long rootFolderId) {

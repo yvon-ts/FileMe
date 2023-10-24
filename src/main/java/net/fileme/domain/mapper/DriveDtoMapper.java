@@ -8,6 +8,16 @@ import java.util.List;
 
 @Mapper
 public interface DriveDtoMapper extends BaseMapper<DriveDto> {
-    List<DriveDto> getPrivateData(Long userId, Long folderId);
+    List<DriveDto> getAll(Long userId);
+    List<DriveDto> getAllFolders(Long userId);
+    List<DriveDto> getAllFiles(Long userId);
+
+    // ----------- 要改 ----------- //
     List<DriveDto> getPublicData(Long folderId);
+    List<DriveDto> getData(Long userId, Long folderId);
+
+    // ----------- 要改 ----------- //
+    DriveDto getFolderDto(Long userId, Long folderId); // validate
+    List<DriveDto> findSuperFolderDtos(Long userId, Long folderId);
+    List<DriveDto> findSubFolderDtos(Long userId, Long folderId);
 }

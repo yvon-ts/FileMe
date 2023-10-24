@@ -14,6 +14,8 @@ import net.fileme.service.DriveDtoService;
 import net.fileme.service.FileService;
 import net.fileme.service.FolderService;
 import org.apache.tika.Tika;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -27,6 +29,7 @@ import org.springframework.util.StringUtils;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 public class DriveDtoServiceImpl implements DriveDtoService {
@@ -39,6 +42,8 @@ public class DriveDtoServiceImpl implements DriveDtoService {
     @Autowired
     private DriveDtoMapper driveDtoMapper;
 
+    private Logger log = LoggerFactory.getLogger(DriveDtoServiceImpl.class);
+
     @Override
     public Result publicData(Long folderId){
         List<DriveDto> publicData = driveDtoMapper.getPublicData(folderId);
@@ -47,11 +52,9 @@ public class DriveDtoServiceImpl implements DriveDtoService {
         return Result.success(publicData);
     }
     @Override
-    public Result privateData(Long userId, Long folderId){
-        // folderId = 0 免擋
-        // 要擋非本人folder
-        List<DriveDto> privateData = driveDtoMapper.getPrivateData(userId, folderId);
-        if(CollectionUtils.isEmpty(privateData)) throw new BadRequestException(ExceptionEnum.NO_SUCH_DATA);
+    public Result getData(Long userId, Long folderId){
+        List<DriveDto> privateData = driveDtoMapper.getData(userId, folderId);
+        if(CollectionUtils.isEmpty(privateData)) throw new NotFoundException(ExceptionEnum.NO_SUCH_DATA);
 
         return Result.success(privateData);
     }
@@ -100,32 +103,44 @@ public class DriveDtoServiceImpl implements DriveDtoService {
                 .body(Result.error(ExceptionEnum.PREVIEW_NOT_ALLOWED));
     }
     @Override
-    public void rename(DriveDto dto){
+    public void rename(DriveDto dto, Long userId){
         int dataType = dto.getDataType();
         if(dataType == 0){
-            folderService.rename(dto.getId(), dto.getDataName());
+            folderService.rename(dto.getId(), dto.getDataName(), userId);
         }else if(dataType == 1){
-            fileService.rename(dto.getId(), dto.getDataName());
+            fileService.rename(dto.getId(), dto.getDataName(), userId);
         }else{
             throw new BadRequestException(ExceptionEnum.PARAM_ERROR);
         }
     }
+
     @Override
     @Transactional
-    public void relocate(Long destId, FileFolderDto dto) {
-        List<Long> folderIds = dto.getFolderIds();
-        List<Long> fileIds = dto.getFileIds();
+    public void relocate(Long destId, List<DriveDto> listDto, Long userId){
+        List<Long> folderIds = getListDataId(listDto, 0);
+        List<Long> fileIds = getListDataId(listDto, 1);
 
-        if(CollectionUtils.isEmpty(folderIds) && CollectionUtils.isEmpty(fileIds)){
-            throw new BadRequestException(ExceptionEnum.PARAM_EMPTY);
+        if(folderIds.contains(destId)){
+            log.warn(ExceptionEnum.NESTED_FOLDER.toStringDetails());
+            log.info("Remove destination folder id from relocate pending list.");
+            folderIds.remove(destId);
         }
+
         if(!CollectionUtils.isEmpty(folderIds)){
-            folderService.relocate(destId, folderIds);
+            folderService.relocate(destId, folderIds, userId);
         }
         if(!CollectionUtils.isEmpty(fileIds)){
-            fileService.relocate(destId, fileIds);
+            fileService.relocate(destId, fileIds, userId);
         }
+
     }
+    public List<Long> getListDataId(List<DriveDto> list, int type){
+        return list.stream()
+                .filter(dto -> dto.getDataType() == type)
+                .map(DriveDto::getId)
+                .collect(Collectors.toList());
+    }
+
     @Override
     @Transactional
     public void gotoTrash(FileFolderDto dto){

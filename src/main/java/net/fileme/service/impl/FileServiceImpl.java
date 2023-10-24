@@ -132,9 +132,11 @@ public class FileServiceImpl extends ServiceImpl<FileMapper, File>
     }
 
     @Override
-    public void rename(Long dataId, String newName){
+    public void rename(Long dataId, String newName, Long userId){
         LambdaUpdateWrapper<File> luw = new LambdaUpdateWrapper<>();
-        luw.set(File::getFileName, newName).eq(File::getId, dataId);
+        luw.set(File::getFileName, newName)
+                .eq(File::getId, dataId)
+                .eq(File::getUserId, userId);
         boolean success = update(luw);
         if(!success){
             throw new NotFoundException(ExceptionEnum.FILE_NOT_EXISTS);
@@ -151,9 +153,11 @@ public class FileServiceImpl extends ServiceImpl<FileMapper, File>
     }
 
     @Override
-    public void relocate(Long parentId, List<Long> dataIds) {
+    public void relocate(Long parentId, List<Long> dataIds, Long userId) {
         LambdaUpdateWrapper<File> luw = new LambdaUpdateWrapper<>();
-        luw.set(File::getFolderId, parentId).in(File::getId, dataIds);
+        luw.set(File::getFolderId, parentId)
+                .in(File::getId, dataIds)
+                .eq(File::getUserId, userId);
         boolean success = update(luw);
         if(!success){
             throw new NotFoundException(ExceptionEnum.UPDATE_DB_FAIL);
@@ -164,7 +168,8 @@ public class FileServiceImpl extends ServiceImpl<FileMapper, File>
     @Transactional
     public void gotoTrash(List<Long> dataIds) {
         fileTrashMapper.create(dataIds);
-        relocate(trashId, dataIds);
+        // TODO: 改
+//        relocate(trashId, dataIds);
     }
 
     @Override
