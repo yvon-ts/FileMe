@@ -10,9 +10,6 @@ import net.fileme.service.CheckExistService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.util.HashMap;
-import java.util.Map;
-
 @Service
 public class CheckExistServiceImpl implements CheckExistService {
     @Autowired
@@ -26,9 +23,9 @@ public class CheckExistServiceImpl implements CheckExistService {
 
     @Override
     public boolean checkValidFolder(Long userId, Long folderId){
-        int count = checkExistFolder(userId, folderId);
-
         if(folderId.equals(0L)) return true;
+
+        int count = checkExistFolder(userId, folderId);
         if(count == 1) return true;
 
         return false;
@@ -40,6 +37,8 @@ public class CheckExistServiceImpl implements CheckExistService {
         lqw.eq(Folder::getUserId, userId).eq(Folder::getId, folderId);
         return folderMapper.selectCount(lqw);
     }
+
+
 
     @Override
     public int checkExistFile(Long fileId) {
@@ -59,19 +58,5 @@ public class CheckExistServiceImpl implements CheckExistService {
         lqw.eq(File::getUserId, userId).eq(File::getFolderId,folderId);
         return fileMapper.selectCount(lqw);
     }
-    @Override
-    public Map<String, Integer> checkContents(Long userId, Long folderId){
-        Map<String, Integer> contents = new HashMap<>();
-        int countFolder = checkSubFolder(userId, folderId);
-        int countFile = checkSubFile(userId, folderId);
-        if(countFolder != 0){
-            contents.put("subFolder", countFolder);
-        }
-        if(countFile != 0){
-            contents.put("subFile", countFile);
-        }
-        System.out.println("*********************");
-        System.out.println(contents);
-        return contents;
-    }
+
 }

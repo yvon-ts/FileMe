@@ -1,7 +1,6 @@
 package net.fileme.service.impl;
 
 import net.fileme.domain.dto.DriveDto;
-import net.fileme.domain.dto.FileFolderDto;
 import net.fileme.domain.Result;
 import net.fileme.domain.mapper.DriveDtoMapper;
 import net.fileme.exception.BadRequestException;
@@ -17,6 +16,7 @@ import org.apache.tika.Tika;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -29,6 +29,7 @@ import org.springframework.util.StringUtils;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @Service
@@ -41,19 +42,49 @@ public class DriveDtoServiceImpl implements DriveDtoService {
     private DataTreeService dataTreeService;
     @Autowired
     private DriveDtoMapper driveDtoMapper;
+    @Value("${file.root.folderId}")
+    private Long rootId;
+    @Value("${file.trash.folderId}")
+    private Long trashId;
 
     private Logger log = LoggerFactory.getLogger(DriveDtoServiceImpl.class);
 
+    public List<Long> filterByType(List<DriveDto> list, int type){
+        return list.stream()
+                .filter(dto -> dto.getDataType() == type)
+                .map(DriveDto::getId)
+                .collect(Collectors.toList());
+    }
+    public Set<Long> filterToSetByType(List<DriveDto> list, int type){
+        return list.stream()
+                .filter(dto -> dto.getDataType() == type)
+                .map(DriveDto::getId)
+                .collect(Collectors.toSet());
+    }
+    @Override
+    public boolean sameParentCheck(Long userId, List<DriveDto> list){
+        List<Long> dataIds = list.stream()
+                .map(DriveDto::getId)
+                .collect(Collectors.toList());
+
+        List<Long> count = driveDtoMapper.getDistinctParent(userId, dataIds);
+        if(count.size() != 1) return false;
+
+        return true;
+    }
+
+    // ----------------------------------Read---------------------------------- //
+
     @Override
     public Result publicData(Long folderId){
-        List<DriveDto> publicData = driveDtoMapper.getPublicData(folderId);
+        List<DriveDto> publicData = driveDtoMapper.getPublicSub(folderId);
         if(CollectionUtils.isEmpty(publicData)) throw new BadRequestException(ExceptionEnum.NO_SUCH_DATA);
 
         return Result.success(publicData);
     }
     @Override
-    public Result getData(Long userId, Long folderId){
-        List<DriveDto> privateData = driveDtoMapper.getData(userId, folderId);
+    public Result getSub(Long userId, Long folderId){
+        List<DriveDto> privateData = driveDtoMapper.getSub(userId, folderId);
         if(CollectionUtils.isEmpty(privateData)) throw new NotFoundException(ExceptionEnum.NO_SUCH_DATA);
 
         return Result.success(privateData);
@@ -102,6 +133,8 @@ public class DriveDtoServiceImpl implements DriveDtoService {
                 .status(HttpStatus.FORBIDDEN)
                 .body(Result.error(ExceptionEnum.PREVIEW_NOT_ALLOWED));
     }
+
+    // ----------------------------------Update---------------------------------- //
     @Override
     public void rename(DriveDto dto, Long userId){
         int dataType = dto.getDataType();
@@ -117,8 +150,8 @@ public class DriveDtoServiceImpl implements DriveDtoService {
     @Override
     @Transactional
     public void relocate(Long destId, List<DriveDto> listDto, Long userId){
-        List<Long> folderIds = getListDataId(listDto, 0);
-        List<Long> fileIds = getListDataId(listDto, 1);
+        List<Long> folderIds = filterByType(listDto, 0);
+        List<Long> fileIds = filterByType(listDto, 1);
 
         if(folderIds.contains(destId)){
             log.warn(ExceptionEnum.NESTED_FOLDER.toStringDetails());
@@ -134,88 +167,72 @@ public class DriveDtoServiceImpl implements DriveDtoService {
         }
 
     }
-    public List<Long> getListDataId(List<DriveDto> list, int type){
-        return list.stream()
-                .filter(dto -> dto.getDataType() == type)
-                .map(DriveDto::getId)
-                .collect(Collectors.toList());
-    }
-
+    // ----------------------------------Delete: clean & recover---------------------------------- //
     @Override
     @Transactional
-    public void gotoTrash(FileFolderDto dto){
-        List<Long> folderIds = dto.getFolderIds();
-        List<Long> fileIds = dto.getFileIds();
-
-        if(CollectionUtils.isEmpty(folderIds) && CollectionUtils.isEmpty(fileIds)){
-            throw new BadRequestException(ExceptionEnum.PARAM_EMPTY);
-        }
+    public void gotoTrash(Long userId, List<DriveDto> listDto){
+        List<Long> folderIds = filterByType(listDto, 0);
+        List<Long> fileIds = filterByType(listDto, 1);
 
         if(!CollectionUtils.isEmpty(folderIds)){
-            folderService.gotoTrash(folderIds);
+            folderService.gotoTrash(userId, folderIds);
         }
         if(!CollectionUtils.isEmpty(fileIds)){
-            fileService.gotoTrash(fileIds);
+            fileService.gotoTrash(userId, fileIds);
         }
     }
     @Override
     @Transactional
-    public void recover(FileFolderDto dto) {
-        List<Long> folderIds = dto.getFolderIds();
-        List<Long> fileIds = dto.getFileIds();
-
-        if(CollectionUtils.isEmpty(folderIds) && CollectionUtils.isEmpty(fileIds)){
-            throw new BadRequestException(ExceptionEnum.PARAM_EMPTY);
-        }
+    public void recover(Long userId, List<DriveDto> listDto) {
+        List<Long> folderIds = filterByType(listDto, 0);
+        List<Long> fileIds = filterByType(listDto, 1);
 
         if(!CollectionUtils.isEmpty(folderIds)){
-            folderService.recover(folderIds);
+            folderService.recover(userId, folderIds);
         }
         if(!CollectionUtils.isEmpty(fileIds)){
-            fileService.recover(fileIds);
+            fileService.recover(userId, fileIds);
         }
     }
 
     @Override
     public void clean(Long userId) {
-        List<Long> folderIds = folderService.getTrashIds(userId);
-        List<Long> fileIds = fileService.getTrashIds(userId);
-        FileFolderDto dto = new FileFolderDto();
-        dto.setFolderIds(folderIds);
-        dto.setFileIds(fileIds);
+        List<DriveDto> trash = driveDtoMapper.getSubIds(userId, trashId);
+        if(CollectionUtils.isEmpty(trash)) throw new NotFoundException(ExceptionEnum.NO_SUCH_DATA);
 
-        softDelete(userId, dto);
+        softDelete(userId, trash);
     }
 
     @Override
     @Transactional
-    public void softDelete(Long userId, FileFolderDto dto) {
-        List<Long> folderIds = dto.getFolderIds();
-        List<Long> fileIds = dto.getFileIds();
+    public void softDelete(Long userId, List<DriveDto> listDto) {
 
-        if(CollectionUtils.isEmpty(folderIds) && CollectionUtils.isEmpty(fileIds)){
-            throw new BadRequestException(ExceptionEnum.PARAM_EMPTY);
-        }
+        // add to pending lists
+        // use Set to avoid deleting repeatedly
+        Set<Long> folderIds = filterToSetByType(listDto, 0);
+        Set<Long> fileIds = filterToSetByType(listDto, 1);
 
+        // init tmp lists
         List<Long> tmpFolderIds = new ArrayList<>();
         List<Long> tmpFileIds = new ArrayList<>();
 
-        // handle sub data
+        // find sub folders and files
         if(!CollectionUtils.isEmpty(folderIds)){
 
             folderIds.forEach(folderId -> {
-                FileFolderDto treeDto = dataTreeService.findTreeIds(userId, folderId);
-                tmpFolderIds.addAll(treeDto.getFolderIds());
-                tmpFileIds.addAll(treeDto.getFileIds());
+                List<DriveDto> subDataList = driveDtoMapper.getSubTree(userId, folderId);
+                tmpFolderIds.addAll(filterByType(subDataList, 0));
+                tmpFileIds.addAll(filterByType(subDataList, 1));
             });
 
             folderIds.addAll(tmpFolderIds);
             fileIds.addAll(tmpFileIds);
-            folderService.softDelete(folderIds);
+
+            folderService.softDelete(userId, new ArrayList<>(folderIds)); // workaround casting
         }
 
         if(!CollectionUtils.isEmpty(fileIds)){
-            fileService.softDelete(fileIds);
+            fileService.softDelete(userId, new ArrayList<>(fileIds)); // workaround casting
         }
     }
 }

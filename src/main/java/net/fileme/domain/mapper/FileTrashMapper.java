@@ -8,6 +8,6 @@ import java.util.List;
 
 @Mapper
 public interface FileTrashMapper extends BaseMapper<FileTrash> {
-    void create(List<Long> fileIds);
-    void recover(List<Long> fileIds);
+    int create(Long userId, List<Long> fileIds);
+    int recover(Long userId, List<Long> fileIds);
 }

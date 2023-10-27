@@ -120,10 +120,6 @@ public class FileServiceImpl extends ServiceImpl<FileMapper, File>
     @Override
     @Transactional
     public void createFile(MultipartFile part, Long userId, Long folderId){
-        boolean isValid = checkExistService.checkValidFolder(userId, folderId);
-        if(!isValid){
-            throw new BadRequestException(ExceptionEnum.FOLDER_ERROR);
-        }
         File file = handlePartFile(part);
         file.setUserId(userId);
         file.setFolderId(folderId);
@@ -144,15 +140,6 @@ public class FileServiceImpl extends ServiceImpl<FileMapper, File>
     }
 
     @Override
-    public List<Long> getTrashIds(Long userId) {
-        LambdaQueryWrapper<File> lqw = new LambdaQueryWrapper<>();
-        lqw.select(File::getId).eq(File::getUserId, userId).eq(File::getFolderId, trashId);
-        List<String> tmp = listObjs(lqw, Object::toString);
-        List<Long> trashIds = tmp.stream().map(Long::valueOf).collect(Collectors.toList());
-        return trashIds;
-    }
-
-    @Override
     public void relocate(Long parentId, List<Long> dataIds, Long userId) {
         LambdaUpdateWrapper<File> luw = new LambdaUpdateWrapper<>();
         luw.set(File::getFolderId, parentId)
@@ -166,25 +153,32 @@ public class FileServiceImpl extends ServiceImpl<FileMapper, File>
 
     @Override
     @Transactional
-    public void gotoTrash(List<Long> dataIds) {
-        fileTrashMapper.create(dataIds);
-        // TODO: 改
-//        relocate(trashId, dataIds);
+    public void gotoTrash(Long userId, List<Long> dataIds) {
+        int successCreate = fileTrashMapper.create(userId, dataIds);
+        if(successCreate == 0) throw new InternalErrorException(ExceptionEnum.UPDATE_DB_FAIL);
+        relocate(trashId, dataIds, userId);
     }
 
     @Override
     @Transactional
-    public void recover(List<Long> dataIds) {
-        fileTrashMapper.recover(dataIds);
-        fileTrashMapper.deleteBatchIds(dataIds);
+    public void recover(Long userId, List<Long> dataIds) {
+        int successRecover = fileTrashMapper.recover(userId, dataIds);
+        if(successRecover == 0) throw new InternalErrorException(ExceptionEnum.UPDATE_DB_FAIL);
+        int successDelete = fileTrashMapper.deleteBatchIds(dataIds);
+        if(successDelete == 0) throw new InternalErrorException(ExceptionEnum.UPDATE_DB_FAIL);
     }
 
     @Override
     @Transactional
-    public void softDelete(List<Long> dataIds){
-        removeListMapper.create(dataIds);
+    public void softDelete(Long userId, List<Long> dataIds){
+        int successCreate = removeListMapper.create(dataIds);
+        if(successCreate == 0) throw new InternalErrorException(ExceptionEnum.UPDATE_DB_FAIL);
         fileTrashMapper.deleteBatchIds(dataIds);
-        removeByIds(dataIds);
+        LambdaUpdateWrapper<File> luw = new LambdaUpdateWrapper<>();
+        luw.eq(File::getUserId, userId)
+                .in(File::getId, dataIds);
+        boolean success = remove(luw);
+        if(!success) throw new InternalErrorException(ExceptionEnum.UPDATE_DB_FAIL);
     }
     @Override // 可以再評估一下PK要流水號 or FileID, 以下尚未考慮location
     @Transactional // 尚未測試

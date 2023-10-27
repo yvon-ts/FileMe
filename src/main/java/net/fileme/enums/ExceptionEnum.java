@@ -52,7 +52,8 @@ public enum ExceptionEnum {
     , DATA_NOT_EXISTS(841,"目標資料不存在，操作失敗")
     , FOLDER_NOT_EMPTY(842,"目錄底下尚有資料，請清空後再刪除")
     , NO_SUCH_DATA(843, "查無資料")
-    , NESTED_FOLDER(844, "目錄結構異常");
+    , NESTED_FOLDER(844, "目錄結構異常")
+    , NOT_SAME_PARENT(845, "操作非同層參數異常");
 
     private final Integer code;
     private final String desc;

@@ -2,22 +2,28 @@ package net.fileme.service;
 
 import net.fileme.domain.Result;
 import net.fileme.domain.dto.DriveDto;
-import net.fileme.domain.dto.FileFolderDto;
 import org.springframework.http.ResponseEntity;
 
 import java.util.List;
 
 public interface DriveDtoService {
+
+    // ----------------------------------Read---------------------------------- //
     Result publicData(Long folderId);
-
-    Result getData(Long userId, Long folderId);
-
+    Result getSub(Long userId, Long folderId);
     ResponseEntity previewPublic(Long fileId);
     ResponseEntity previewPersonal(Long userId, Long fileId);
+
+    // ----------------------------------Update---------------------------------- //
     void rename(DriveDto dto, Long userId);
     void relocate(Long destId, List<DriveDto> listDto, Long userId);
-    void gotoTrash(FileFolderDto dto);
-    void recover(FileFolderDto dto);
+
+    // ----------------------------------Delete: clean & recover---------------------------------- //
+    void gotoTrash(Long userId, List<DriveDto> listDto);
+    void recover(Long userId, List<DriveDto> listDto);
     void clean(Long userId);
-    void softDelete(Long userId, FileFolderDto dto);
+    void softDelete(Long userId, List<DriveDto> listDto);
+
+    // ----------------------------------specific handling---------------------------------- //
+    boolean sameParentCheck(Long userId, List<DriveDto> list);
 }

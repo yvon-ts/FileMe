@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="net.fileme.domain.mapper.DriveDtoMapper">
-<!-- TODO: 確認一下檔名要不要改 這個是for select public/private目錄內容-->
+
     <resultMap id="driveDto" type="net.fileme.domain.dto.DriveDto">
         <id column="id" jdbcType="BIGINT" property="id"/>
         <result column="data_name" jdbcType="VARCHAR" property="dataName"/>
@@ -14,42 +14,64 @@
         <result column="data_name" jdbcType="VARCHAR" property="dataName"/>
     </resultMap>
 
-<!--    <select id="getAll" resultMap="driveDto">-->
-<!--        select data_id id, data_name, data_type, access_level from v_user_drive-->
-<!--        where user_id = #{userId}-->
-<!--    </select>-->
+    <resultMap id="parentId" type="long">
+        <result column="parent_id" jdbcType="BIGINT"/>
+    </resultMap>
 
-<!--    <select id="getAllFolders" resultMap="driveDto">-->
-<!--        select data_id id, data_name, data_type, access_level from v_user_drive-->
-<!--        where user_id = #{userId} and data_type = 0-->
-<!--    </select>-->
+<!--  get All  -->
 
-<!--    <select id="getAllFiles" resultMap="driveDto">-->
-<!--        select data_id id, data_name, data_type, access_level from v_user_drive-->
-<!--        where user_id = #{userId} and data_type = 1-->
-<!--    </select>-->
-
-    <select id="getPublicData" resultMap="driveDto">
+    <select id="getAll" resultMap="driveDto">
         select data_id id, data_name, data_type, access_level from v_user_drive
-        where parent_id = ${folderId} and access_level = 1
+        where user_id = #{userId}
     </select>
 
-    <select id="getData" resultMap="driveDto">
+    <select id="getAllFolders" resultMap="driveDto">
+        select data_id id, data_name, data_type, access_level from v_user_drive
+        where user_id = #{userId} and data_type = 0
+    </select>
+
+    <select id="getAllFiles" resultMap="driveDto">
+        select data_id id, data_name, data_type, access_level from v_user_drive
+        where user_id = #{userId} and data_type = 1
+    </select>
+
+    <!--  get Sub  -->
+
+    <select id="getSub" resultMap="driveDto">
         select data_id id, data_name, data_type, access_level from v_user_drive
         where user_id = #{userId} and parent_id = #{folderId}
     </select>
 
-    <select id="getFolderDto" resultMap="driveDto">
-        select data_id id, data_name, parent_id, access_level from v_user_drive
+    <select id="getSubIds" resultMap="driveDto">
+        select data_id id, data_type from v_user_drive
+        where user_id = #{userId} and parent_id = #{folderId}
+    </select>
+
+    <select id="getPublicSub" resultMap="driveDto">
+        select data_id id, data_name, data_type, access_level from v_user_drive
+        where parent_id = #{folderId} and access_level = 1
+    </select>
+
+    <select id="getSubFolders" resultMap="driveDto">
+        select data_id id, data_name, data_type, access_level from v_user_drive
+        where user_id = #{userId} and parent_id = #{folderId} and data_type = 0
+    </select>
+
+    <select id="getSubTree" resultMap="driveDto">
+        with recursive cte as(
+        select data_type, data_id id, data_name, parent_id, 0 as sort from v_user_drive
         where user_id = #{userId} and data_id = #{folderId} and data_type = 0
+        union
+        select v.data_type, v.data_id, v.data_name, v.parent_id, sort + 1
+        from v_user_drive v
+        join cte on cte.id = v.parent_id
+        )
+        select id, data_name, data_type from cte where id &lt;&gt; #{folderId}
     </select>
 
-    <select id="findSubFolderDtos" resultMap="folderDto">
-        select data_id id, data_name from v_user_drive
-        where  user_id = #{userId} and parent_id = #{folderId} and data_type = 0
-    </select>
+    <!--  get Super  -->
 
-    <select id="findSuperFolderDtos" resultMap="folderDto">
+    <select id="getSuperFolderTree" resultMap="folderDto">
         with recursive cte as(
         select user_id, data_id id, data_name, parent_id, 0 as sort from v_user_drive
         where data_id = #{folderId} and user_id = #{userId}
@@ -59,6 +81,22 @@
         join cte on cte.parent_id = v.data_id
         )
         select id, data_name from cte where user_id = #{userId}
+    </select>
+
+    <!--  specific handling  -->
+
+    <select id="getOneFolder" resultMap="driveDto">
+        select data_id id, data_name, parent_id, access_level from v_user_drive
+        where user_id = #{userId} and data_id = #{folderId} and data_type = 0
+    </select>
+
+    <select id="getDistinctParent" resultMap="parentId">
+        select distinct parent_id from v_user_drive
+        where user_id = #{userId}
+        and data_id in
+        <foreach collection="dataIds" item="dataId" open="(" separator="," close=")">
+            #{dataId}
+        </foreach>
     </select>
 
 </mapper>

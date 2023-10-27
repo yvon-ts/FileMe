@@ -11,13 +11,14 @@
 
     <select id="findSuperFolders" resultMap="superFolders">
         with recursive cte as(
-        select folder_id, user_id, folder_name, parent_id, 0 as sort from folder where folder_id = #{folder_id}
+        select folder_id, user_id, folder_name, parent_id, 0 as sort from folder
+        where folder_id = #{folderId} and user_id = #{userId}
         union
         select f.folder_id, f.user_id, f.folder_name, f.parent_id, sort + 1
         from folder f
         join cte on cte.parent_id = f.folder_id
         )
-        select folder_id, user_id, folder_name, parent_id from cte
+        select folder_id, user_id, folder_name, parent_id from cte where user_id = #{userId}
     </select>
 
 </mapper>

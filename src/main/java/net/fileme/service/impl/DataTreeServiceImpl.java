@@ -2,11 +2,9 @@ package net.fileme.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import net.fileme.domain.dto.DriveDto;
-import net.fileme.domain.dto.FileFolderDto;
 import net.fileme.domain.mapper.DriveDtoMapper;
 import net.fileme.domain.mapper.FolderMapper;
 import net.fileme.domain.pojo.File;
-import net.fileme.domain.pojo.Folder;
 import net.fileme.enums.ExceptionEnum;
 import net.fileme.exception.NotFoundException;
 import net.fileme.service.DataTreeService;
@@ -19,7 +17,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 
 import java.util.*;
-import java.util.stream.Collectors;
 
 @Service
 @PropertySource("classpath:credentials.properties")
@@ -39,82 +36,90 @@ public class DataTreeServiceImpl implements DataTreeService {
     private DriveDtoMapper driveDtoMapper;
 
     @Override
-    public List<DriveDto> findSuperFolderDtos(Long userId, Long folderId){
-        List<DriveDto> dtos = driveDtoMapper.findSuperFolderDtos(userId, folderId);
+    public List<DriveDto> getSuperFolderTree(Long userId, Long folderId){
+        List<DriveDto> dtos = driveDtoMapper.getSuperFolderTree(userId, folderId);
         if(CollectionUtils.isEmpty(dtos)) throw new NotFoundException(ExceptionEnum.NO_SUCH_DATA);
         Collections.reverse(dtos);
         return dtos;
     }
 
     @Override
-    public List<DriveDto> findSubFolderDtos(Long userId, Long folderId){
-        List<DriveDto> dtos = driveDtoMapper.findSubFolderDtos(userId, folderId);
+    public List<DriveDto> getSubFolders(Long userId, Long folderId){
+        List<DriveDto> dtos = driveDtoMapper.getSubFolders(userId, folderId);
         if(CollectionUtils.isEmpty(dtos)) throw new NotFoundException(ExceptionEnum.NO_SUCH_DATA);
         return dtos;
     }
     // TODO: 重構以下
     // 考慮到根目錄=0, 目前都要傳userId
-    @Override
-    public List<Long> findSubFolderIds(Long userId, Long rootFolderId) {
-        LambdaQueryWrapper<Folder> lqw = new LambdaQueryWrapper<>();
-        lqw.select(Folder::getId)
-                .eq(Folder::getUserId, userId)
-                .eq(Folder::getParentId, rootFolderId);
-        List<String> tmpList = folderService.listObjs(lqw, Object::toString);
-        List<Long> subFolderIds = tmpList.stream().map(Long::valueOf).collect(Collectors.toList());
-        return subFolderIds;
-    }
+//    @Override
+//    public List<Long> findSubFolderIds(Long userId, Long rootFolderId) {
+//        LambdaQueryWrapper<Folder> lqw = new LambdaQueryWrapper<>();
+//        lqw.select(Folder::getId)
+//                .eq(Folder::getUserId, userId)
+//                .eq(Folder::getParentId, rootFolderId);
+//        List<String> tmpList = folderService.listObjs(lqw, Object::toString);
+//        List<Long> subFolderIds = tmpList.stream().map(Long::valueOf).collect(Collectors.toList());
+//        return subFolderIds;
+//    }
+//
+//    @Override
+//    public List<Long> findSubFileIds(Long userId, Long rootFolderId) {
+//        LambdaQueryWrapper<File> lqw = new LambdaQueryWrapper<>();
+//        lqw.select(File::getId)
+//                .eq(File::getUserId, userId)
+//                .eq(File::getFolderId, rootFolderId);
+//        List<String> tmpList = fileService.listObjs(lqw, Object::toString);
+//        List<Long> subFileIds = tmpList.stream().map(Long::valueOf).collect(Collectors.toList());
+//        return subFileIds;
+//    }
+//
+//    @Override
+//    public FileFolderDto findSubIds(Long userId, Long rootFolderId) {
+//        FileFolderDto dto = new FileFolderDto();
+//        List<Long> subFolderIds = findSubFolderIds(userId, rootFolderId);
+//        List<Long> subFileIds = findSubFileIds(userId, rootFolderId);
+//        dto.setFolderIds(subFolderIds);
+//        dto.setFileIds(subFileIds);
+//        return dto;
+//    }
 
-    @Override
-    public List<Long> findSubFileIds(Long userId, Long rootFolderId) {
-        LambdaQueryWrapper<File> lqw = new LambdaQueryWrapper<>();
-        lqw.select(File::getId)
-                .eq(File::getUserId, userId)
-                .eq(File::getFolderId, rootFolderId);
-        List<String> tmpList = fileService.listObjs(lqw, Object::toString);
-        List<Long> subFileIds = tmpList.stream().map(Long::valueOf).collect(Collectors.toList());
-        return subFileIds;
-    }
+//    @Override
+//    public List<DriveDto> findTree(Long userId, Long folderId){
+//        return driveDtoMapper.getSubTree(userId, folderId);
+//    }
 
-    @Override
-    public FileFolderDto findSubIds(Long userId, Long rootFolderId) {
-        FileFolderDto dto = new FileFolderDto();
-        List<Long> subFolderIds = findSubFolderIds(userId, rootFolderId);
-        List<Long> subFileIds = findSubFileIds(userId, rootFolderId);
-        dto.setFolderIds(subFolderIds);
-        dto.setFileIds(subFileIds);
-        return dto;
-    }
-
-    @Override
-    public FileFolderDto findTreeIds(Long userId, Long rootFolderId) {
-        FileFolderDto dto = new FileFolderDto();
-        List<Long> listFolderIds = new ArrayList<>();
-        List<Long> listFileIds = new ArrayList<>();
-        List<Long> tmpList = new ArrayList<>();
-
-        tmpList.add(rootFolderId); // init
-        Iterator<Long> it = tmpList.iterator();
-
-        while(it.hasNext()){
-            Long tmpId = it.next();
-            it.remove();
-
-            List<Long> subFolderIds = findSubFolderIds(userId, tmpId);
-            listFolderIds.addAll(subFolderIds);
-
-            List<Long> subFileIds = findSubFileIds(userId, tmpId);
-            listFileIds.addAll(subFileIds);
-
-            // update loop condition
-            tmpList.addAll(subFolderIds);
-            it = tmpList.iterator();
-        }
-        dto.setFolderIds(listFolderIds);
-        dto.setFileIds(listFileIds);
-
-        return dto;
-    }
+//    public FileFolderDto findTreeIds1(Long userId, Long rootFolderId) {
+//        FileFolderDto dto = new FileFolderDto();
+//        List<Long> listFolderIds = new ArrayList<>();
+//        List<Long> listFileIds = new ArrayList<>();
+//        List<Long> tmpList = new ArrayList<>();
+//
+//        tmpList.add(rootFolderId); // init
+//        Iterator<Long> it = tmpList.iterator();
+//
+//        while(it.hasNext()){
+//            Long tmpId = it.next();
+//            it.remove();
+//
+//            // List<DriveDto>
+//            // listFile直接++
+//            // listFolder+進去後直接再放pending再找
+//
+//            List<Long> subFolderIds = findSubFolderIds(userId, tmpId);
+//            listFolderIds.addAll(subFolderIds);
+//
+//            List<Long> subFileIds = findSubFileIds(userId, tmpId);
+//            listFileIds.addAll(subFileIds);
+//
+//            // update loop condition
+//            tmpList.addAll(subFolderIds);
+//            it = tmpList.iterator();
+//        }
+//        dto.setFolderIds(listFolderIds);
+//        dto.setFileIds(listFileIds);
+//
+//        return dto;
+//    }
 
 
 

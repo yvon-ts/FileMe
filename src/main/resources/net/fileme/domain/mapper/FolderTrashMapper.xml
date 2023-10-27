@@ -4,9 +4,10 @@
 
     <insert id="create">
         insert into folder_trash(folder_id, origin)
-        select folder_id, parent_id
-        from folder
-        where folder_id in
+        select data_id, parent_id from v_user_drive
+        where data_type = 0
+        and user_id = #{userId}
+        and data_id in
         <foreach collection="folderIds" item="folderId" open="(" separator="," close=")">
             #{folderId}
         </foreach>
@@ -14,8 +15,9 @@
 
     <update id="recover">
         update folder f join folder_trash t on f.folder_id = t.folder_id
-        set f.parend_id = t.origin
-        where f.folder_id in
+        set f.parent_id = t.origin
+        where user_id = #{userId}
+        and f.folder_id in
         <foreach collection="folderIds" item="folderId" open="(" separator="," close=")">
             #{folderId}
         </foreach>

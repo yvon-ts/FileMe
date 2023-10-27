@@ -2,7 +2,7 @@
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="net.fileme.domain.mapper.FileTrashMapper">
 
-    <insert id="create">
+    <insert id="oldcreate">
         insert into file_trash(file_id, origin)
         select file_id, folder_id
         from file_data
@@ -12,10 +12,22 @@
         </foreach>
     </insert>
 
+    <insert id="create">
+        insert into file_trash(file_id, origin)
+        select data_id, parent_id from v_user_drive
+        where data_type = 1
+        and user_id = #{userId}
+        and data_id in
+        <foreach collection="fileIds" item="fileId" open="(" separator="," close=")">
+            #{fileId}
+        </foreach>
+    </insert>
+
     <update id="recover">
         update file_data f join file_trash t on f.file_id = t.file_id
         set f.folder_id = t.origin
-        where f.file_id in
+        where user_id = #{userId}
+        and f.file_id in
         <foreach collection="fileIds" item="fileId" open="(" separator="," close=")">
             #{fileId}
         </foreach>

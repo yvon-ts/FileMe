@@ -1,11 +1,11 @@
 package net.fileme.service.impl;
 
-import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import net.fileme.domain.mapper.FolderMapper;
 import net.fileme.domain.mapper.FolderTrashMapper;
 import net.fileme.domain.pojo.Folder;
+import net.fileme.exception.InternalErrorException;
 import net.fileme.exception.NotFoundException;
 import net.fileme.service.CheckExistService;
 import net.fileme.service.FileService;
@@ -20,7 +20,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Service
 @PropertySource("classpath:credentials.properties")
@@ -41,11 +40,6 @@ public class FolderServiceImpl extends ServiceImpl<FolderMapper, Folder>
 
     @Override
     public void createFolder(Long userId, Long parentId, String name){
-
-//        boolean isValid = checkExistService.checkValidFolder(userId, parentId);
-//        if(!isValid) {
-//            throw new BadRequestException(ExceptionEnum.PARAM_ERROR);
-//        }
         Folder folder = new Folder();
         folder.setUserId(userId);
         folder.setFolderName(name);
@@ -65,15 +59,6 @@ public class FolderServiceImpl extends ServiceImpl<FolderMapper, Folder>
     }
 
     @Override
-    public List<Long> getTrashIds(Long userId) {
-        LambdaQueryWrapper<Folder> lqw = new LambdaQueryWrapper<>();
-        lqw.select((Folder::getId)).eq(Folder::getUserId, userId).eq(Folder::getParentId, trashId);
-        List<String> tmp = listObjs(lqw, Object::toString);
-        List<Long> trashIds = tmp.stream().map(Long::valueOf).collect(Collectors.toList());
-        return trashIds;
-    }
-
-    @Override
     public void relocate(Long parentId, List<Long> dataIds, Long userId) {
         LambdaUpdateWrapper<Folder> luw = new LambdaUpdateWrapper<>();
         luw.set(Folder::getParentId, parentId)
@@ -87,23 +72,29 @@ public class FolderServiceImpl extends ServiceImpl<FolderMapper, Folder>
 
     @Override
     @Transactional
-    public void gotoTrash(List<Long> dataIds) {
-        folderTrashMapper.create(dataIds);
-        // TODO: 改
-//        relocate(trashId, dataIds);
+    public void gotoTrash(Long userId, List<Long> dataIds) {
+        int successCreate = folderTrashMapper.create(userId, dataIds);
+        if(successCreate == 0) throw new InternalErrorException(ExceptionEnum.UPDATE_DB_FAIL);
+        relocate(trashId, dataIds, userId);
     }
 
     @Override
     @Transactional
-    public void recover(List<Long> dataIds) {
-        folderTrashMapper.recover(dataIds);
-        folderTrashMapper.deleteBatchIds(dataIds);
+    public void recover(Long userId, List<Long> dataIds) {
+        int successRecover = folderTrashMapper.recover(userId, dataIds);
+        if(successRecover == 0) throw new InternalErrorException(ExceptionEnum.UPDATE_DB_FAIL);
+        int successDelete = folderTrashMapper.deleteBatchIds(dataIds);
+        if(successDelete == 0) throw new InternalErrorException(ExceptionEnum.UPDATE_DB_FAIL);
     }
 
     @Override
     @Transactional
-    public void softDelete(List<Long> dataIds) {
+    public void softDelete(Long userId, List<Long> dataIds) {
         folderTrashMapper.deleteBatchIds(dataIds);
-        removeByIds(dataIds);
+        LambdaUpdateWrapper<Folder> luw = new LambdaUpdateWrapper<>();
+        luw.eq(Folder::getUserId, userId)
+            .in(Folder::getId, dataIds);
+        boolean success = remove(luw);
+        if(!success) throw new InternalErrorException(ExceptionEnum.UPDATE_DB_FAIL);
     }
 }
