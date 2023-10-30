@@ -18,7 +18,7 @@
         <result column="parent_id" jdbcType="BIGINT"/>
     </resultMap>
 
-<!--  get All  -->
+    <!--  get All  -->
 
     <select id="getAll" resultMap="driveDto">
         select data_id id, data_name, data_type, access_level from v_user_drive

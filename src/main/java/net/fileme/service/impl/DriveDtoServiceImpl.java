@@ -8,7 +8,6 @@ import net.fileme.exception.InternalErrorException;
 import net.fileme.exception.NotFoundException;
 import net.fileme.enums.ExceptionEnum;
 import net.fileme.enums.MimeEnum;
-import net.fileme.service.DataTreeService;
 import net.fileme.service.DriveDtoService;
 import net.fileme.service.FileService;
 import net.fileme.service.FolderService;
@@ -28,6 +27,7 @@ import org.springframework.util.StringUtils;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -38,8 +38,6 @@ public class DriveDtoServiceImpl implements DriveDtoService {
     private FolderService folderService;
     @Autowired
     private FileService fileService;
-    @Autowired
-    private DataTreeService dataTreeService;
     @Autowired
     private DriveDtoMapper driveDtoMapper;
     @Value("${file.root.folderId}")
@@ -76,7 +74,7 @@ public class DriveDtoServiceImpl implements DriveDtoService {
     // ----------------------------------Read---------------------------------- //
 
     @Override
-    public Result publicData(Long folderId){
+    public Result getPublicSub(Long folderId){
         List<DriveDto> publicData = driveDtoMapper.getPublicSub(folderId);
         if(CollectionUtils.isEmpty(publicData)) throw new BadRequestException(ExceptionEnum.NO_SUCH_DATA);
 
@@ -91,12 +89,12 @@ public class DriveDtoServiceImpl implements DriveDtoService {
     }
     @Override
     public ResponseEntity previewPublic(Long fileId){
-        String path = dataTreeService.findPublicFilePath(fileId);
+        String path = fileService.findPublicFilePath(fileId);
         return preview(path);
     }
     @Override
     public ResponseEntity previewPersonal(Long userId, Long fileId){
-        String path = dataTreeService.findPersonalFilePath(userId, fileId);
+        String path = fileService.findPersonalFilePath(userId, fileId);
         return preview(path);
     }
     public ResponseEntity preview(String path){
@@ -166,6 +164,20 @@ public class DriveDtoServiceImpl implements DriveDtoService {
             fileService.relocate(destId, fileIds, userId);
         }
 
+    }
+
+    @Override
+    public List<DriveDto> getSuperFolderTree(Long userId, Long folderId){
+        List<DriveDto> list = driveDtoMapper.getSuperFolderTree(userId, folderId);
+        if(CollectionUtils.isEmpty(list)) throw new NotFoundException(ExceptionEnum.NO_SUCH_DATA);
+        Collections.reverse(list);
+        return list;
+    }
+    @Override
+    public List<DriveDto> getSubFolders(Long userId, Long folderId){
+        List<DriveDto> list = driveDtoMapper.getSubFolders(userId, folderId);
+        if(CollectionUtils.isEmpty(list)) throw new NotFoundException(ExceptionEnum.NO_SUCH_DATA);
+        return list;
     }
     // ----------------------------------Delete: clean & recover---------------------------------- //
     @Override

@@ -9,7 +9,7 @@ import java.util.List;
 public interface DriveDtoService {
 
     // ----------------------------------Read---------------------------------- //
-    Result publicData(Long folderId);
+    Result getPublicSub(Long folderId);
     Result getSub(Long userId, Long folderId);
     ResponseEntity previewPublic(Long fileId);
     ResponseEntity previewPersonal(Long userId, Long fileId);
@@ -17,6 +17,10 @@ public interface DriveDtoService {
     // ----------------------------------Update---------------------------------- //
     void rename(DriveDto dto, Long userId);
     void relocate(Long destId, List<DriveDto> listDto, Long userId);
+
+    List<DriveDto> getSuperFolderTree(Long userId, Long folderId);
+
+    List<DriveDto> getSubFolders(Long userId, Long folderId);
 
     // ----------------------------------Delete: clean & recover---------------------------------- //
     void gotoTrash(Long userId, List<DriveDto> listDto);

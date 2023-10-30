@@ -13,6 +13,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.jdbc.BadSqlGrammarException;
+import org.springframework.web.HttpRequestMethodNotSupportedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -81,6 +82,13 @@ public class GlobalExceptionHandler {
                 .body(Result.error(ex.getExceptionEnum()));
     }
     // -------------------------- Spring Exceptions -------------------------- //
+    @ExceptionHandler(HttpRequestMethodNotSupportedException.class)
+    public ResponseEntity handleMethodNotAllowed(HttpRequestMethodNotSupportedException ex){
+        logError(ex, ExceptionEnum.METHOD_NOT_ALLOWED);
+        return ResponseEntity
+                .status(HttpStatus.METHOD_NOT_ALLOWED)
+                .body(Result.error(ExceptionEnum.METHOD_NOT_ALLOWED));
+    }
     @ExceptionHandler(SpelEvaluationException.class)
     public ModelAndView handleSpelEvaluation(SpelEvaluationException ex){
         return handleUnauthorized(new UnauthorizedException(ExceptionEnum.PRE_AUTH_FAIL));

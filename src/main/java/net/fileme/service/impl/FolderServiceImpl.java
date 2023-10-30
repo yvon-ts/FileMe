@@ -7,7 +7,6 @@ import net.fileme.domain.mapper.FolderTrashMapper;
 import net.fileme.domain.pojo.Folder;
 import net.fileme.exception.InternalErrorException;
 import net.fileme.exception.NotFoundException;
-import net.fileme.service.CheckExistService;
 import net.fileme.service.FileService;
 import net.fileme.service.FolderService;
 import net.fileme.enums.ExceptionEnum;
@@ -33,8 +32,6 @@ public class FolderServiceImpl extends ServiceImpl<FolderMapper, Folder>
     private FolderTrashMapper folderTrashMapper;
     @Autowired
     private FileService fileService;
-    @Autowired
-    private CheckExistService checkExistService;
 
     private Logger log = LoggerFactory.getLogger(FolderService.class);
 

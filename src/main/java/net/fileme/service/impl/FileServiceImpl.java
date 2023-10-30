@@ -12,7 +12,6 @@ import net.fileme.exception.BadRequestException;
 import net.fileme.exception.BizException;
 import net.fileme.exception.InternalErrorException;
 import net.fileme.exception.NotFoundException;
-import net.fileme.service.CheckExistService;
 import net.fileme.enums.ExceptionEnum;
 import net.fileme.service.FileService;
 import net.fileme.enums.MimeEnum;
@@ -52,8 +51,29 @@ public class FileServiceImpl extends ServiceImpl<FileMapper, File>
     private RemoveListMapper removeListMapper;
     @Autowired
     private ApplicationContext applicationContext;
-    @Autowired
-    private CheckExistService checkExistService;
+
+    public String findFilePath(File file){
+        StringBuilder builder = new StringBuilder();
+        builder.append(remotePathPrefix).append("/").append(file.getUserId()).append("/").append(file.getId()).append(".").append(file.getExt());
+        return builder.toString();
+    }
+
+    @Override
+    public String findPersonalFilePath(Long userId, Long fileId){
+        LambdaQueryWrapper<File> lqw = new LambdaQueryWrapper<>();
+        lqw.eq(File::getId, fileId).eq(File::getUserId, userId);
+        File file = getOne(lqw);
+        if(Objects.isNull(file)) throw new NotFoundException(ExceptionEnum.NO_SUCH_DATA);
+        return findFilePath(file);
+    }
+    @Override
+    public String findPublicFilePath(Long fileId){
+        LambdaQueryWrapper<File> lqw = new LambdaQueryWrapper<>();
+        lqw.eq(File::getId, fileId).eq(File::getAccessLevel, 1);
+        File file = getOne(lqw);
+        if(Objects.isNull(file)) throw new NotFoundException(ExceptionEnum.NO_SUCH_DATA);
+        return findFilePath(file);
+    }
 
     @Override
     public File handlePartFile(MultipartFile multipartFile){
@@ -180,6 +200,9 @@ public class FileServiceImpl extends ServiceImpl<FileMapper, File>
         boolean success = remove(luw);
         if(!success) throw new InternalErrorException(ExceptionEnum.UPDATE_DB_FAIL);
     }
+
+
+
     @Override // 可以再評估一下PK要流水號 or FileID, 以下尚未考慮location
     @Transactional // 尚未測試
     public void hardDelete(List<Long> fileIds){

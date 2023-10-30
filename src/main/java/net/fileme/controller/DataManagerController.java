@@ -31,8 +31,6 @@ public class DataManagerController {
     private Long trashId;
 
     @Autowired
-    private DataTreeService dataTreeService;
-    @Autowired
     private FolderService folderService;
     @Autowired
     private FileService fileService;
@@ -67,33 +65,35 @@ public class DataManagerController {
     }
 
     // ----------------------------------Read---------------------------------- //
-    @GetMapping("/drive/my-drive")
+    @PostMapping("/drive/my-drive")
     @PreAuthorize("hasAuthority('admin') OR authentication.principal.user.getId().equals(#userId)")
     public Result getMyDrive(@NotNull @RequestParam Long userId) {
         return driveDtoService.getSub(userId, rootId);
     }
-    @GetMapping("/pub/drive/data") // TODO: 如何避免攻擊?
-    public Result getPublicSub(@NotNull @RequestParam Long folderId){
-        // no public access for user's root folder
-        if(folderId == 0) throw new BadRequestException(ExceptionEnum.PARAM_ERROR);
-        return driveDtoService.publicData(folderId);
+    @GetMapping("/pub/drive/{folderId}") // TODO: 如何避免攻擊?
+    public Result getPublicSub(@NotNull @PathVariable Long folderId){
+        if(rootId.equals(folderId) || trashId.equals(folderId)) throw new BadRequestException(ExceptionEnum.PARAM_ERROR);
+        return driveDtoService.getPublicSub(folderId);
     }
-    @GetMapping("/drive/data")
+    @PostMapping("/drive/data")
     @PreAuthorize("hasAuthority('admin') OR authentication.principal.user.getId().equals(#userId)")
     public Result getSub(@NotNull @RequestParam Long userId, @NotNull @RequestParam Long folderId){
         return driveDtoService.getSub(userId, folderId);
     }
-    @GetMapping("/pub/drive/preview")
-    public ResponseEntity publicPreview(@NotNull @RequestParam Long fileId){
+    @GetMapping("/pub/drive/preview/{fileId}")
+    public ResponseEntity publicPreview(@NotNull @PathVariable Long fileId){
         return driveDtoService.previewPublic(fileId);
     }
-    @GetMapping("/drive/preview")
+    @PostMapping("/drive/preview")
     @PreAuthorize("hasAuthority('admin') OR authentication.principal.user.getId().equals(#userId)")
     public ResponseEntity preview(@NotNull @RequestParam Long userId, @NotNull @RequestParam Long fileId){
         return driveDtoService.previewPersonal(userId, fileId);
     }
-
-    // TODO: 少了垃圾桶！
+    @PostMapping("/drive/my-trash")
+    @PreAuthorize("hasAuthority('admin') OR authentication.principal.user.getId().equals(#userId)")
+    public Result getMyTrash(@NotNull @RequestParam Long userId) {
+        return driveDtoService.getSub(userId, trashId);
+    }
 
     // ----------------------------------Update: rename---------------------------------- //
     @PostMapping("/drive/rename")
@@ -113,11 +113,10 @@ public class DataManagerController {
             , @AuthenticationPrincipal MyUserDetails myUserDetails){
 
         if(Objects.isNull(myUserDetails)) throw new UnauthorizedException(ExceptionEnum.GUEST_NOT_ALLOWED);
-
         Long userId = myUserDetails.getUser().getId();
-        // TODO: 是否改dtoService就好 不用用到tree 且是否要排除自身folder?
-        List<DriveDto> superFolderDtos = dataTreeService.getSuperFolderTree(userId, folderId);
-        return Result.success(superFolderDtos);
+
+        List<DriveDto> superFolders = driveDtoService.getSuperFolderTree(userId, folderId);
+        return Result.success(superFolders);
     }
 
     @GetMapping("/drive/relocate/sub")
@@ -128,8 +127,8 @@ public class DataManagerController {
         if(rootId.equals(folderId) || trashId.equals(folderId)) throw new BadRequestException(ExceptionEnum.PARAM_ERROR);
 
         Long userId = myUserDetails.getUser().getId();
-        List<DriveDto> subFolderDtos = dataTreeService.getSubFolders(userId, folderId);
-        return Result.success(subFolderDtos);
+        List<DriveDto> subFolders = driveDtoService.getSubFolders(userId, folderId);
+        return Result.success(subFolders);
     }
 
     @PostMapping("/drive/relocate")

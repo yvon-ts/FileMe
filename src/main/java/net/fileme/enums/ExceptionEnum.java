@@ -19,6 +19,7 @@ public enum ExceptionEnum {
     , GUEST_NOT_ALLOWED(690, "不接受訪客操作，請先登入")
     , PRE_AUTH_FAIL(691, "權限不足")
     , EMAIL_ERROR(699, "系統發信異常")
+    , METHOD_NOT_ALLOWED(661, "請求方式異常")
     // 會員異常
     , USER_NOT_EXISTS(700, "帳號或密碼錯誤")
     , USER_STATE_ERROR(710, "會員狀態異常")
