@@ -3,6 +3,7 @@ package net.fileme.service.impl;
 import net.fileme.domain.dto.DriveDto;
 import net.fileme.domain.Result;
 import net.fileme.domain.mapper.DriveDtoMapper;
+import net.fileme.domain.pojo.File;
 import net.fileme.exception.BadRequestException;
 import net.fileme.exception.InternalErrorException;
 import net.fileme.exception.NotFoundException;
@@ -16,6 +17,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.io.ByteArrayResource;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -25,11 +27,10 @@ import org.springframework.util.CollectionUtils;
 import org.springframework.util.FileCopyUtils;
 import org.springframework.util.StringUtils;
 
+import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Set;
+import java.nio.charset.StandardCharsets;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -40,6 +41,7 @@ public class DriveDtoServiceImpl implements DriveDtoService {
     private FileService fileService;
     @Autowired
     private DriveDtoMapper driveDtoMapper;
+
     @Value("${file.root.folderId}")
     private Long rootId;
     @Value("${file.trash.folderId}")
@@ -89,12 +91,14 @@ public class DriveDtoServiceImpl implements DriveDtoService {
     }
     @Override
     public ResponseEntity previewPublic(Long fileId){
-        String path = fileService.findPublicFilePath(fileId);
+        File file = fileService.findPublicFile(fileId);
+        String path = fileService.findFilePath(file);
         return preview(path);
     }
     @Override
     public ResponseEntity previewPersonal(Long userId, Long fileId){
-        String path = fileService.findPersonalFilePath(userId, fileId);
+        File file = fileService.findPersonalFile(userId, fileId);
+        String path = fileService.findFilePath(file);
         return preview(path);
     }
     public ResponseEntity preview(String path){
@@ -132,7 +136,61 @@ public class DriveDtoServiceImpl implements DriveDtoService {
                 .body(Result.error(ExceptionEnum.PREVIEW_NOT_ALLOWED));
     }
 
+    @Override
+    public ResponseEntity<ByteArrayResource> downloadPublic(Long fileId, HttpServletResponse response){
+        File file = fileService.findPublicFile(fileId);
+        String fileName = file.getFullName();
+        if(!StringUtils.hasText(fileName)) throw new InternalErrorException(ExceptionEnum.FILE_NAME_ERROR);
+
+        String path = fileService.findFilePath(file);
+        return download(fileName, path, response);
+    }
+    @Override
+    public ResponseEntity<ByteArrayResource> downloadPersonal(Long userId, Long fileId, HttpServletResponse response){
+        File file = fileService.findPersonalFile(userId, fileId);
+        String fileName = file.getFileName();
+        if(!StringUtils.hasText(fileName)) throw new InternalErrorException(ExceptionEnum.FILE_NAME_ERROR);
+
+        String path = fileService.findFilePath(file);
+        return download(fileName, path, response);
+    }
+    public ResponseEntity<ByteArrayResource> download(String fileName, String path, HttpServletResponse response){
+        if(!StringUtils.hasText(path)) throw new NotFoundException(ExceptionEnum.NO_SUCH_DATA);
+        java.io.File file = new java.io.File(path);
+        ByteArrayResource resource = null;
+        try{
+            byte[] bytes = FileCopyUtils.copyToByteArray(file);
+            resource = new ByteArrayResource(bytes);
+        }catch (IOException ex){
+            throw new InternalErrorException(ExceptionEnum.FILE_ERROR);
+        }
+        return ResponseEntity.ok()
+                .header("Content-Disposition","attachment;filename=" + new String(fileName.getBytes(StandardCharsets.UTF_8), StandardCharsets.ISO_8859_1))
+                .contentLength(file.length())
+                .contentType(MediaType.APPLICATION_OCTET_STREAM)
+                .body(resource);
+    }
+
     // ----------------------------------Update---------------------------------- //
+    public int doXOR(int input){
+        return input ^ 1;
+    }
+    @Override
+    public void accessControl(DriveDto dto, Long userId){
+        int dataType = dto.getDataType();
+        if(dataType == 0){
+            int XORAccessLevel = doXOR(dto.getAccessLevel());
+            folderService.accessControl(dto.getId(), XORAccessLevel);
+
+        }else if(dataType == 1){
+            int XORAccessLevel = doXOR(dto.getAccessLevel());
+            fileService.accessControl(dto.getId(), XORAccessLevel);
+
+        }else{
+            throw new BadRequestException(ExceptionEnum.PARAM_ERROR);
+        }
+
+    }
     @Override
     public void rename(DriveDto dto, Long userId){
         int dataType = dto.getDataType();

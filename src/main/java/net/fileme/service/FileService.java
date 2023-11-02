@@ -7,9 +7,11 @@ import org.springframework.web.multipart.MultipartFile;
 import java.util.List;
 
 public interface FileService extends IService<File>, DataManagerService {
-    String findPublicFilePath(Long fileId);
 
-    String findPersonalFilePath(Long userId, Long fileId);
+
+    String findFilePath(File file);
+    File findPublicFile(Long fileId);
+    File findPersonalFile(Long userId, Long fileId);
 
     File handlePartFile(MultipartFile multipartFile);
     void upload(MultipartFile multipartFile, File file);

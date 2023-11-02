@@ -7,6 +7,7 @@ import java.util.List;
  */
 public interface DataManagerService {
 
+    void accessControl(Long id, int newAccess);
     void rename(Long dataId, String newName, Long userId);
 
     void relocate(Long parentId, List<Long> dataIds, Long userId);

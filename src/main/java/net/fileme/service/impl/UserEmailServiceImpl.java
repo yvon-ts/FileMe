@@ -29,7 +29,6 @@ import org.thymeleaf.context.Context;
 
 import java.util.Objects;
 import java.util.concurrent.TimeUnit;
-
 @Service
 public class UserEmailServiceImpl extends ServiceImpl<UserMapper, User>
         implements UserEmailService {
@@ -49,19 +48,19 @@ public class UserEmailServiceImpl extends ServiceImpl<UserMapper, User>
     private TimeUnit timeUnit;
 
     private Logger log = LoggerFactory.getLogger(UserEmailServiceImpl.class);
+    private String pwdRegex = "^(?=.*[A-Z])(?=.*[a-z])(?=.*[0-9])(?=.*[!@#$%^&*()_+|~\\-=?<>{}\\[\\]:;/.,])[A-Za-z0-9!@#$%^&*()_+|~\\-=?<>{}\\[\\]:;/.,]{8,50}$";
 
     // ----------------------------Sign Up----------------------------- //
     @Override
     public User createUser(User guest){
-        String username = guest.getUsername();
         String tmpPassword = guest.getPassword();
-        String email = guest.getEmail();
+//        if(!Pattern.matches(pwdRegex, tmpPassword)) throw new BadRequestException(ExceptionEnum.PWD_ERROR);
         String password = passwordEncoder.encode(tmpPassword);
 
         User user = new User();
-        user.setUsername(username);
+        user.setUsername(guest.getUsername());
         user.setPassword(password);
-        user.setEmail(email);
+        user.setEmail(guest.getEmail());
         save(user);
         return user;
     }

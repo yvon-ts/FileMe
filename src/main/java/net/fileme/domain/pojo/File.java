@@ -33,4 +33,11 @@ public class File extends BasePojo{
                 ", updateTime=" + super.getUpdateTime() +
                 '}';
     }
+    public String getFullName(){
+        return new StringBuilder()
+                .append(this.getFileName())
+                .append(".")
+                .append(this.getExt())
+                .toString();
+    }
 }

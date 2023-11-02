@@ -7,6 +7,7 @@
         <result column="data_name" jdbcType="VARCHAR" property="dataName"/>
         <result column="data_type" jdbcType="TINYINT" property="dataType"/>
         <result column="access_level" jdbcType="TINYINT" property="accessLevel"/>
+        <result column="parent_id" jdbcType="BIGINT" property="parentId"/>
     </resultMap>
 
     <resultMap id="folderDto" type="net.fileme.domain.dto.DriveDto">
@@ -47,11 +48,6 @@
         where user_id = #{userId} and parent_id = #{folderId}
     </select>
 
-    <select id="getPublicSub" resultMap="driveDto">
-        select data_id id, data_name, data_type, access_level from v_user_drive
-        where parent_id = #{folderId} and access_level = 1
-    </select>
-
     <select id="getSubFolders" resultMap="driveDto">
         select data_id id, data_name, data_type, access_level from v_user_drive
         where user_id = #{userId} and parent_id = #{folderId} and data_type = 0
@@ -83,12 +79,41 @@
         select id, data_name from cte where user_id = #{userId}
     </select>
 
-    <!--  specific handling  -->
+    <!--  get One  -->
+
+    <select id="getOneData" resultMap="driveDto">
+        select data_id id, data_name, parent_id, access_level, data_type from v_user_drive
+        where user_id = #{userId} and data_id = #{dataId}
+    </select>
 
     <select id="getOneFolder" resultMap="driveDto">
         select data_id id, data_name, parent_id, access_level from v_user_drive
         where user_id = #{userId} and data_id = #{folderId} and data_type = 0
     </select>
+
+    <select id="getOneFile" resultMap="driveDto">
+        select data_id id, data_name, parent_id, access_level from v_user_drive
+        where user_id = #{userId} and data_id = #{fileId} and data_type = 1
+    </select>
+
+    <!--  get Public  -->
+
+    <select id="getPublicFile" resultMap="driveDto">
+        select data_id id, data_name from v_user_drive
+        where data_id = #{fileId} and data_type = 1 and access_level = 1
+    </select>
+
+    <select id="getPublicFolder" resultMap="driveDto">
+        select data_id id, data_name from v_user_drive
+        where data_id = #{folderId} and data_type = 0 and access_level = 1
+    </select>
+
+    <select id="getPublicSub" resultMap="driveDto">
+        select data_id id, data_name, data_type, access_level from v_user_drive
+        where parent_id = #{folderId} and access_level = 1
+    </select>
+
+    <!--  specific handling  -->
 
     <select id="getDistinctParent" resultMap="parentId">
         select distinct parent_id from v_user_drive
@@ -98,5 +123,4 @@
             #{dataId}
         </foreach>
     </select>
-
 </mapper>

@@ -10,25 +10,30 @@ import net.fileme.service.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.PropertySource;
+import org.springframework.core.io.ByteArrayResource;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
-import javax.validation.Valid;
-import javax.validation.constraints.NotBlank;
+import javax.servlet.http.HttpServletResponse;
+
 import javax.validation.constraints.NotNull;
 import java.util.*;
 
 @RestController
 @PropertySource("classpath:credentials.properties")
+
 public class DataManagerController {
 
     @Value("${file.root.folderId}")
     private Long rootId;
     @Value("${file.trash.folderId}")
     private Long trashId;
+    @Value("${folder.name.regex}")
+    private String folderRegex;
 
     @Autowired
     private FolderService folderService;
@@ -53,17 +58,15 @@ public class DataManagerController {
         return Result.success();
     }
     @PostMapping("/drive/folder")
-    public Result createFolder(@AuthenticationPrincipal MyUserDetails myUserDetails
-            , @NotNull Long parentId, @NotBlank String name){
+    public Result createFolder(@Validated(DriveDto.Create.class) @RequestBody DriveDto dto, @AuthenticationPrincipal MyUserDetails myUserDetails){
 
         if(Objects.isNull(myUserDetails)) throw new UnauthorizedException(ExceptionEnum.GUEST_NOT_ALLOWED);
         Long userId = myUserDetails.getUser().getId();
 
-        validateService.checkFolder(userId, parentId);
-        folderService.createFolder(userId, parentId, name);
+        validateService.checkFolder(userId, dto.getParentId());
+        folderService.createFolder(userId, dto.getParentId(), dto.getDataName());
         return Result.success();
     }
-
     // ----------------------------------Read---------------------------------- //
     @PostMapping("/drive/my-drive")
     @PreAuthorize("hasAuthority('admin') OR authentication.principal.user.getId().equals(#userId)")
@@ -72,7 +75,7 @@ public class DataManagerController {
     }
     @GetMapping("/pub/drive/{folderId}") // TODO: 如何避免攻擊?
     public Result getPublicSub(@NotNull @PathVariable Long folderId){
-        if(rootId.equals(folderId) || trashId.equals(folderId)) throw new BadRequestException(ExceptionEnum.PARAM_ERROR);
+        validateService.checkPublicFolder(folderId);
         return driveDtoService.getPublicSub(folderId);
     }
     @PostMapping("/drive/data")
@@ -81,12 +84,12 @@ public class DataManagerController {
         return driveDtoService.getSub(userId, folderId);
     }
     @GetMapping("/pub/drive/preview/{fileId}")
-    public ResponseEntity publicPreview(@NotNull @PathVariable Long fileId){
+    public ResponseEntity previewPublic(@NotNull @PathVariable Long fileId){
         return driveDtoService.previewPublic(fileId);
     }
     @PostMapping("/drive/preview")
     @PreAuthorize("hasAuthority('admin') OR authentication.principal.user.getId().equals(#userId)")
-    public ResponseEntity preview(@NotNull @RequestParam Long userId, @NotNull @RequestParam Long fileId){
+    public ResponseEntity previewPersonal(@NotNull @RequestParam Long userId, @NotNull @RequestParam Long fileId){
         return driveDtoService.previewPersonal(userId, fileId);
     }
     @PostMapping("/drive/my-trash")
@@ -95,16 +98,41 @@ public class DataManagerController {
         return driveDtoService.getSub(userId, trashId);
     }
 
+    // ----------------------------------Download---------------------------------- //
+    @GetMapping("/pub/drive/download/{fileId}")
+    public ResponseEntity<ByteArrayResource> downloadPublic(@NotNull @PathVariable Long fileId, HttpServletResponse response){
+        return driveDtoService.downloadPublic(fileId, response);
+    }
+    @PostMapping("/drive/download")
+    @PreAuthorize("hasAuthority('admin') OR authentication.principal.user.getId().equals(#userId)")
+    public ResponseEntity<ByteArrayResource> downloadPersonal(@NotNull @RequestParam Long userId
+            , @NotNull @RequestParam Long fileId
+            , HttpServletResponse response){
+        return driveDtoService.downloadPersonal(userId, fileId, response);
+    }
+    // ----------------------------------Update: access level & shared link---------------------------------- //
+
+    @PostMapping("/drive/access-control")
+    public Result accessControl(@NotNull @RequestParam Long dataId
+            , @AuthenticationPrincipal MyUserDetails myUserDetails){
+        if(Objects.isNull(myUserDetails)) throw new UnauthorizedException(ExceptionEnum.GUEST_NOT_ALLOWED);
+        Long userId = myUserDetails.getUser().getId();
+
+        DriveDto data = validateService.checkData(userId, dataId);
+        driveDtoService.accessControl(data, userId);
+        return Result.success();
+    }
+
     // ----------------------------------Update: rename---------------------------------- //
     @PostMapping("/drive/rename")
-    public ResponseEntity rename(@Valid @RequestBody DriveDto dto
+    public Result rename(@Validated(DriveDto.Update.class) @RequestBody DriveDto dto
             , @AuthenticationPrincipal MyUserDetails myUserDetails){
 
         if(Objects.isNull(myUserDetails)) throw new UnauthorizedException(ExceptionEnum.GUEST_NOT_ALLOWED);
         Long userId = myUserDetails.getUser().getId();
 
         driveDtoService.rename(dto, userId);
-        return ResponseEntity.ok().body(Result.success());
+        return Result.success();
     }
     // ----------------------------------Update: relocate---------------------------------- //
 

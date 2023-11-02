@@ -2,6 +2,7 @@ package net.fileme.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
+import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import net.fileme.domain.mapper.FileMapper;
 import net.fileme.domain.mapper.FileTrashMapper;
@@ -28,12 +29,12 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.FileSystemUtils;
 import org.springframework.util.ObjectUtils;
 import org.springframework.web.multipart.MultipartFile;
-import org.springframework.util.StringUtils;
 
 import java.io.IOException;
 import java.nio.file.Paths;
 import java.util.List;
 import java.util.Objects;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 @Service
@@ -45,6 +46,8 @@ public class FileServiceImpl extends ServiceImpl<FileMapper, File>
     private String remotePathPrefix;
     @Value("${file.trash.folderId}")
     private Long trashId;
+    @Value("${file.name.regex}")
+    private String regex;
     @Autowired
     private FileTrashMapper fileTrashMapper;
     @Autowired
@@ -52,6 +55,12 @@ public class FileServiceImpl extends ServiceImpl<FileMapper, File>
     @Autowired
     private ApplicationContext applicationContext;
 
+    public void checkDataName(String dataName){
+        if(StringUtils.isBlank(dataName)) throw new BadRequestException(ExceptionEnum.PARAM_ERROR);
+        if(!Pattern.matches(regex, dataName)) throw new BadRequestException(ExceptionEnum.DATA_NAME_ERROR);
+        if(dataName.indexOf(".") == 0) throw new BadRequestException(ExceptionEnum.DATA_NAME_ERROR);
+    }
+    @Override
     public String findFilePath(File file){
         StringBuilder builder = new StringBuilder();
         builder.append(remotePathPrefix).append("/").append(file.getUserId()).append("/").append(file.getId()).append(".").append(file.getExt());
@@ -59,20 +68,20 @@ public class FileServiceImpl extends ServiceImpl<FileMapper, File>
     }
 
     @Override
-    public String findPersonalFilePath(Long userId, Long fileId){
+    public File findPersonalFile(Long userId, Long fileId){
         LambdaQueryWrapper<File> lqw = new LambdaQueryWrapper<>();
         lqw.eq(File::getId, fileId).eq(File::getUserId, userId);
         File file = getOne(lqw);
         if(Objects.isNull(file)) throw new NotFoundException(ExceptionEnum.NO_SUCH_DATA);
-        return findFilePath(file);
+        return file;
     }
     @Override
-    public String findPublicFilePath(Long fileId){
+    public File findPublicFile(Long fileId){
         LambdaQueryWrapper<File> lqw = new LambdaQueryWrapper<>();
         lqw.eq(File::getId, fileId).eq(File::getAccessLevel, 1);
         File file = getOne(lqw);
         if(Objects.isNull(file)) throw new NotFoundException(ExceptionEnum.NO_SUCH_DATA);
-        return findFilePath(file);
+        return file;
     }
 
     @Override
@@ -99,10 +108,9 @@ public class FileServiceImpl extends ServiceImpl<FileMapper, File>
             // handle file name
             String tmpFullName = multipartFile.getOriginalFilename();
             String fileName = tmpFullName.substring(0, tmpFullName.lastIndexOf("."));
-            // 檔名卡控待補充，是否要正則表達式
-            if (!StringUtils.hasLength(fileName) || ".".equals(fileName)) {
-                throw new BadRequestException(ExceptionEnum.FILE_NAME_ERROR);
-            }
+
+            checkDataName(fileName);
+
             file.setFileName(fileName);
 
             // handle file size
@@ -146,7 +154,16 @@ public class FileServiceImpl extends ServiceImpl<FileMapper, File>
         save(file);
         upload(part, file);
     }
-
+    @Override
+    public void accessControl(Long dataId, int newAccess){
+        LambdaUpdateWrapper<File> luw = new LambdaUpdateWrapper<>();
+        luw.set(File::getAccessLevel, newAccess)
+                .eq(File::getId, dataId);
+        boolean success = update(luw);
+        if(!success){
+            throw new NotFoundException(ExceptionEnum.UPDATE_DB_FAIL);
+        }
+    }
     @Override
     public void rename(Long dataId, String newName, Long userId){
         LambdaUpdateWrapper<File> luw = new LambdaUpdateWrapper<>();

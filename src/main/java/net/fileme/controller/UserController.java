@@ -7,6 +7,7 @@ import net.fileme.service.UserEmailService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import javax.validation.constraints.NotNull;
@@ -18,7 +19,7 @@ public class UserController {
 
     // ----------------------------Sign Up----------------------------- //
     @PostMapping("/sign-up")
-    public String signUp(@NotNull @RequestBody User guest, Model model){
+    public String signUp(@Validated(User.Create.class) @NotNull @RequestBody User guest, Model model){
         EmailTemplateEnum templateEnum = EmailTemplateEnum.SIGN_UP;
         // TODO: log密碼明文需另外處理
         userEmailService.createUser(guest);

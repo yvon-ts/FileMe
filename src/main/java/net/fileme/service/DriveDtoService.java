@@ -2,8 +2,10 @@ package net.fileme.service;
 
 import net.fileme.domain.Result;
 import net.fileme.domain.dto.DriveDto;
+import org.springframework.core.io.ByteArrayResource;
 import org.springframework.http.ResponseEntity;
 
+import javax.servlet.http.HttpServletResponse;
 import java.util.List;
 
 public interface DriveDtoService {
@@ -13,8 +15,11 @@ public interface DriveDtoService {
     Result getSub(Long userId, Long folderId);
     ResponseEntity previewPublic(Long fileId);
     ResponseEntity previewPersonal(Long userId, Long fileId);
+    ResponseEntity<ByteArrayResource> downloadPublic(Long fileId, HttpServletResponse response);
+    ResponseEntity<ByteArrayResource> downloadPersonal(Long userId, Long fileId, HttpServletResponse response);
 
     // ----------------------------------Update---------------------------------- //
+    void accessControl(DriveDto dto, Long userId);
     void rename(DriveDto dto, Long userId);
     void relocate(Long destId, List<DriveDto> listDto, Long userId);
 

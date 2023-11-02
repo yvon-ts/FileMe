@@ -141,6 +141,7 @@ public class GlobalExceptionHandler {
                     .forEach(error -> {
                         log.debug("Invalid {} value submitted for {}",
                                 error.getRejectedValue(), error.getField());
+                        // TODO: 避免pwd明碼顯示於log須移除getRejectedValue
                         log.debug(error.toString());
                     });
         }
