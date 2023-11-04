@@ -30,7 +30,7 @@ public class EmailServiceImpl implements EmailService {
             mailMessage.setText(dto.getText());
             javaMailSender.send(mailMessage);
         }catch (Exception e){
-            throw new BizException(ExceptionEnum.EMAIL_ERROR);
+            throw new BizException(ExceptionEnum.SYS_EMAIL_ERROR);
         }
         return false;
     }
@@ -69,7 +69,7 @@ public class EmailServiceImpl implements EmailService {
 
             javaMailSender.send(mimeMessage);
         }catch(Exception e){
-            throw new BizException(ExceptionEnum.EMAIL_ERROR);
+            throw new BizException(ExceptionEnum.SYS_EMAIL_ERROR);
         }
     }
 }

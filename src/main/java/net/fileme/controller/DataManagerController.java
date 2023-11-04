@@ -32,7 +32,7 @@ public class DataManagerController {
     private Long rootId;
     @Value("${file.trash.folderId}")
     private Long trashId;
-    @Value("${folder.name.regex}")
+    @Value("${regex.folder.name}")
     private String folderRegex;
 
     @Autowired

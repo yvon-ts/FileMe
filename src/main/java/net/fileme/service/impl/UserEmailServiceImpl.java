@@ -22,6 +22,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Async;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.thymeleaf.TemplateEngine;
@@ -48,13 +49,11 @@ public class UserEmailServiceImpl extends ServiceImpl<UserMapper, User>
     private TimeUnit timeUnit;
 
     private Logger log = LoggerFactory.getLogger(UserEmailServiceImpl.class);
-    private String pwdRegex = "^(?=.*[A-Z])(?=.*[a-z])(?=.*[0-9])(?=.*[!@#$%^&*()_+|~\\-=?<>{}\\[\\]:;/.,])[A-Za-z0-9!@#$%^&*()_+|~\\-=?<>{}\\[\\]:;/.,]{8,50}$";
 
     // ----------------------------Sign Up----------------------------- //
     @Override
     public User createUser(User guest){
         String tmpPassword = guest.getPassword();
-//        if(!Pattern.matches(pwdRegex, tmpPassword)) throw new BadRequestException(ExceptionEnum.PWD_ERROR);
         String password = passwordEncoder.encode(tmpPassword);
 
         User user = new User();
@@ -79,6 +78,22 @@ public class UserEmailServiceImpl extends ServiceImpl<UserMapper, User>
                 .eq(User::getState, dto.getMapping());
         return update(luw);
     }
+    // ----------------------------Change Password----------------------------- //
+    @Override
+    public void matchCurrentPwd(String inputPwd, String currentPwd){
+        BCryptPasswordEncoder encoder = new BCryptPasswordEncoder();
+        if(!encoder.matches(inputPwd, currentPwd)) throw new UnauthorizedException(ExceptionEnum.WRONG_PWD);
+    }
+    @Override
+    public void processChangePwd(Long userId, String newPwd){
+        BCryptPasswordEncoder encoder = new BCryptPasswordEncoder();
+        String password = encoder.encode(newPwd);
+        LambdaUpdateWrapper<User> luw = new LambdaUpdateWrapper<>();
+        luw.set(User::getPassword, password)
+                .eq(User::getId, userId)
+                .eq(User::getState, 0);
+        update(luw);
+    }
     // ----------------------------Change Email----------------------------- //
     @Override
     public TokenDto processChangeEmail(String token){
@@ -92,9 +107,9 @@ public class UserEmailServiceImpl extends ServiceImpl<UserMapper, User>
 
     public boolean doChangeEmail(TokenDto dto){
         LambdaUpdateWrapper<User> luw = new LambdaUpdateWrapper<>();
-        luw.set(User::getEmail, dto.getReqEmail())
+        luw.set(User::getEmail, dto.getPending())
                 .set(User::getState, 0)
-                .eq(User::getEmail, dto.getPending())
+                .eq(User::getEmail, dto.getReqEmail())
                 .eq(User::getState, dto.getMapping());
         return update(luw);
     }
@@ -124,7 +139,11 @@ public class UserEmailServiceImpl extends ServiceImpl<UserMapper, User>
     public void setUserState(EmailTemplateEnum templateEnum, String email){
         Integer mapping = emailTemplateService.findTemplate(templateEnum).getMapping();
         LambdaUpdateWrapper<User> luw = new LambdaUpdateWrapper<>();
-        luw.set(User::getState, mapping).eq(User::getEmail, email);
+        luw.set(User::getState, mapping)
+                .eq(User::getEmail, email)
+                .eq(User::getState, 0)
+                .or()
+                .eq(User::getState, mapping);
         boolean success = update(luw);
         if(!success){
             throw new InternalErrorException(ExceptionEnum.USER_STATE_ERROR);
@@ -137,6 +156,14 @@ public class UserEmailServiceImpl extends ServiceImpl<UserMapper, User>
         String token = createToken(dto);
         EmailTemplate template = emailTemplateService.findTemplate(templateEnum);
         createTokenEmail(template, emailReceiver, token);
+    }
+    @Async
+    @Override // different email receiver when changing email
+    public void sendTokenEmailForEmailChange(EmailTemplateEnum templateEnum, String oldEmail, String newEmail){
+        TokenDto dto = createTokenDto(templateEnum.getMapping(), oldEmail, newEmail);
+        String token = createToken(dto);
+        EmailTemplate template = emailTemplateService.findTemplate(templateEnum);
+        createTokenEmail(template, newEmail, token);
     }
     public<T> TokenDto createTokenDto(Integer mapping, String reqEmail, T pending){
         Integer issueNo = nextIssueNo(reqEmail);
@@ -197,6 +224,7 @@ public class UserEmailServiceImpl extends ServiceImpl<UserMapper, User>
 
         emailService.sendHtmlMail(dto);
     }
+    @Override
     public TokenDto lookUpToken(String token){
         boolean hasKey = redisCache.hasKey(token);
         if(!hasKey){

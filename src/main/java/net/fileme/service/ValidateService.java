@@ -7,6 +7,10 @@ import java.util.List;
 
 public interface ValidateService {
 
+    void regexEmail(String email);
+
+    void regexPwd(String pwd);
+
     void checkUserName(String username);
 
     void checkEmail(String email);

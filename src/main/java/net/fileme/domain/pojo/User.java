@@ -24,13 +24,23 @@ public class User extends BasePojo{
     @TableField(value = "pwd")
     @NotBlank
     @Pattern(groups = Create.class
-    , regexp = "^(?=.*[A-Z])(?=.*[a-z])(?=.*[0-9])(?=.*[!@#$%^&*()_+|~\\-=?<>{}\\[\\]:;/.,])[A-Za-z0-9!@#$%^&*()_+|~\\-=?<>{}\\[\\]:;/.,]{8,50}$")
+    , regexp = "^(?=.*[A-Z])(?=.*[a-z])(?=.*[0-9])(?=.*[!@#$%^&*()_+|~=?<>{}\\[\\]:;/.,-])[A-Za-z0-9!@#$%^&*()_+|~=?<>{}\\[\\]:;/.,-]{8,50}$")
     private String password;
 
     @Email
     private String email;
 
     private Integer membership;
+
+    @Override // avoid password log
+    public String toString() {
+        return "User{" +
+                "id=" + id +
+                ", username='" + username + '\'' +
+                ", email='" + email + '\'' +
+                ", membership=" + membership +
+                '}';
+    }
 
     public interface Create extends Default{}
 }

@@ -43,14 +43,18 @@ public class SecurityConfig {
                 .authorizeRequests()
                  // 感覺會有一個("/**").hasAuthority("admin")
                 .antMatchers("/user/login").anonymous()
+                .antMatchers("/support/**").anonymous()
                 .antMatchers("/pub**").permitAll()
+                .anyRequest().authenticated()
+                .and().formLogin()
+                        .loginPage("/access-denied") // TODO: change to real login page
+                        .failureUrl("/access-denied")
+                        .permitAll()
                 .and()
                 .exceptionHandling()
-                .accessDeniedHandler(accessDeniedHandler())
+                .accessDeniedHandler(accessDeniedHandler());
 //                .accessDeniedPage("/access-denied")
-                .and()
-                .formLogin()
-                .permitAll();
+
 
 
         // 加入自定義JWT過濾器

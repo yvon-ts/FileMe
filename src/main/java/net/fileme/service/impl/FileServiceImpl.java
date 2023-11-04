@@ -46,7 +46,7 @@ public class FileServiceImpl extends ServiceImpl<FileMapper, File>
     private String remotePathPrefix;
     @Value("${file.trash.folderId}")
     private Long trashId;
-    @Value("${file.name.regex}")
+    @Value("${regex.file.name}")
     private String regex;
     @Autowired
     private FileTrashMapper fileTrashMapper;

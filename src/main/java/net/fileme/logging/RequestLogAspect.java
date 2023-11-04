@@ -75,7 +75,11 @@ public class RequestLogAspect {
                 if(!StringUtils.isEmpty(requestParam.value())){
                     key = requestParam.value();
                 }
-                map.put(key, args[i]);
+                if(key.toLowerCase().contains("password")){
+                    map.put(key, ""); // avoid password log
+                }else{
+                    map.put(key, args[i]);
+                }
                 argList.add(map);
             }
         }

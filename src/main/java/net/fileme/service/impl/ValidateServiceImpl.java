@@ -20,6 +20,7 @@ import org.springframework.util.CollectionUtils;
 
 import java.util.List;
 import java.util.Objects;
+import java.util.regex.Pattern;
 
 @Service
 public class ValidateServiceImpl implements ValidateService {
@@ -35,8 +36,27 @@ public class ValidateServiceImpl implements ValidateService {
     private Long rootId;
     @Value("${file.trash.folderId}")
     private Long trashId;
-    @Value("${file.name.regex}")
-    private String regex;
+    @Value("${regex.email}")
+    private String regexEmail;
+    @Value("${regex.pwd}")
+    private String regexPwd;
+
+
+    /**
+     * can remove when @NotBlank @Email validation works on controller
+     */
+    @Override
+    public void regexEmail(String email){
+        if(!Pattern.matches(regexEmail, email)) throw new BadRequestException(ExceptionEnum.USER_EMAIL_ERROR);
+    }
+
+    /**
+     * can remove when @NotBlank @Pattern validation works on controller
+     */
+    @Override
+    public void regexPwd(String pwd){
+        if(!Pattern.matches(regexPwd, pwd)) throw new BadRequestException(ExceptionEnum.PWD_ERROR);
+    }
 
     @Override
     public void checkUserName(String username){

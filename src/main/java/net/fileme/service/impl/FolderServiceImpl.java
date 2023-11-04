@@ -5,7 +5,6 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import net.fileme.domain.mapper.FolderMapper;
 import net.fileme.domain.mapper.FolderTrashMapper;
 import net.fileme.domain.pojo.Folder;
-import net.fileme.exception.BadRequestException;
 import net.fileme.exception.InternalErrorException;
 import net.fileme.exception.NotFoundException;
 import net.fileme.service.FileService;
@@ -20,7 +19,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
-import java.util.regex.Pattern;
 
 @Service
 @PropertySource("classpath:credentials.properties")
@@ -30,7 +28,7 @@ public class FolderServiceImpl extends ServiceImpl<FolderMapper, Folder>
     private String remotePathPrefix;
     @Value("${file.trash.folderId}")
     private Long trashId;
-    @Value("${folder.name.regex}")
+    @Value("${regex.folder.name}")
     private String regex;
     @Autowired
     private FolderTrashMapper folderTrashMapper;
@@ -41,8 +39,8 @@ public class FolderServiceImpl extends ServiceImpl<FolderMapper, Folder>
 
     @Override
     public void createFolder(Long userId, Long parentId, String name){
-        if(!Pattern.matches(regex, name)) throw new BadRequestException(ExceptionEnum.FOLDER_NAME_ERROR);
-        if(name.indexOf(".") == 0) throw new BadRequestException(ExceptionEnum.FOLDER_NAME_ERROR);
+//        if(!Pattern.matches(regex, name)) throw new BadRequestException(ExceptionEnum.FOLDER_NAME_ERROR);
+//        if(name.indexOf(".") == 0) throw new BadRequestException(ExceptionEnum.FOLDER_NAME_ERROR);
         Folder folder = new Folder();
         folder.setUserId(userId);
         folder.setFolderName(name);

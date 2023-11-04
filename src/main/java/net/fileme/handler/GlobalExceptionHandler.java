@@ -13,6 +13,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.jdbc.BadSqlGrammarException;
+import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.core.AuthenticationException;
 import org.springframework.web.HttpRequestMethodNotSupportedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.MissingServletRequestParameterException;
@@ -82,6 +84,21 @@ public class GlobalExceptionHandler {
                 .body(Result.error(ex.getExceptionEnum()));
     }
     // -------------------------- Spring Exceptions -------------------------- //
+
+    @ExceptionHandler(BadCredentialsException.class)
+    public ResponseEntity handleFailedLogin(BadCredentialsException ex){
+        logError(ex, ExceptionEnum.USER_NOT_EXISTS);
+        return ResponseEntity
+                .status(HttpStatus.UNAUTHORIZED)
+                .body(Result.error(ExceptionEnum.USER_NOT_EXISTS));
+    }
+    @ExceptionHandler(AuthenticationException.class)
+    public ResponseEntity handleAuthentication(AuthenticationException ex){
+        logError(ex, ExceptionEnum.GUEST_NOT_ALLOWED);
+        return ResponseEntity
+                .status(HttpStatus.UNAUTHORIZED)
+                .body(Result.error(ExceptionEnum.GUEST_NOT_ALLOWED));
+    }
     @ExceptionHandler(HttpRequestMethodNotSupportedException.class)
     public ResponseEntity handleMethodNotAllowed(HttpRequestMethodNotSupportedException ex){
         logError(ex, ExceptionEnum.METHOD_NOT_ALLOWED);

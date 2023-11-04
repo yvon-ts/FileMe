@@ -8,6 +8,11 @@ public interface UserEmailService{
     // ----------------------------Sign Up---------------------------- //
     User createUser(User guest);
     void processSignUp(String token);
+
+    // ----------------------------Change Password----------------------------- //
+    void matchCurrentPwd(String pwdFromUser, String pwdFromDb);
+    void processChangePwd(Long userId, String newPwd);
+
     // ----------------------------Change Email---------------------------- //
     TokenDto processChangeEmail(String token);
     // ----------------------------Reset Password---------------------------- //
@@ -15,6 +20,10 @@ public interface UserEmailService{
     // ----------------------------Util Methods---------------------------- //
     void setUserState(EmailTemplateEnum templateEnum, String email);
     void sendTokenEmail(EmailTemplateEnum templateEnum, String emailReceiver, String pending);
+    void sendTokenEmailForEmailChange(EmailTemplateEnum templateEnum, String emailReceiver, String pending);
     void createBasicEmail(EmailTemplateEnum templateEnum, String emailReceiver);
+
+    TokenDto lookUpToken(String token);
+
     void deleteToken(String token);
 }

@@ -28,12 +28,12 @@ public class LoginServiceImpl implements LoginService {
     @Value("${user.session.time-unit}")
     private TimeUnit timeUnit;
     @Override
-    public Result login(UserDto dto) { // TODO: 可再考慮是否要改user還是loginUser
+    public Result login(UserDto dto) {
 
         UsernamePasswordAuthenticationToken authenticationToken = new UsernamePasswordAuthenticationToken(dto.getUsername(), dto.getPassword());
         Authentication authentication = authenticationManager.authenticate(authenticationToken);
 
-        // TODO: 這邊好像需要自己抓exception 登入錯誤的話
+        // about login error, see BadCredentialsException handling
         MyUserDetails myUserDetails = (MyUserDetails) authentication.getPrincipal();
         String userId = myUserDetails.getUser().getId().toString();
 

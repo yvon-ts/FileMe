@@ -18,11 +18,11 @@
 <body>
 <div th:utext="${text}"></div>
 <div class="btn">
-  <a th:href="@{http://localhost:8080/{endpoint}/{token}(endpoint=${endpoint},token=${token})}">
+  <a th:href="@{http://localhost:8080/support/{endpoint}/{token}(endpoint=${endpoint},token=${token})}">
     <span th:text="${btn}"></span></a>
 </div>
-<a th:href="@{http://localhost:8080/{endpoint}/{token}(endpoint=${endpoint},token=${token})}">
-  <span th:text="|http://localhost:8080/${endpoint}/${token}|"></span>
+<a th:href="@{http://localhost:8080/support/{endpoint}/{token}(endpoint=${endpoint},token=${token})}">
+  <span th:text="|http://localhost:8080/support/${endpoint}/${token}|"></span>
 </a>
 </body>
 </html>

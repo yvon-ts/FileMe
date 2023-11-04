@@ -18,7 +18,7 @@ public enum ExceptionEnum {
     , LOGIN_TIMEOUT(660, "請重新登入")
     , GUEST_NOT_ALLOWED(690, "不接受訪客操作，請先登入")
     , PRE_AUTH_FAIL(691, "權限不足")
-    , EMAIL_ERROR(699, "系統發信異常")
+    , SYS_EMAIL_ERROR(699, "系統發信異常")
     , METHOD_NOT_ALLOWED(661, "請求方式異常")
     // 會員異常
     , USER_NOT_EXISTS(700, "帳號或密碼錯誤")
@@ -26,6 +26,8 @@ public enum ExceptionEnum {
     , EXISTING_USERNAME(702, "該帳號已被使用")
     , EXISTING_EMAIL(703, "該信箱已被使用")
     , PWD_ERROR(702, "密碼格式不符合規定")
+    , WRONG_PWD(704, "密碼錯誤")
+    , USER_EMAIL_ERROR(703, "信箱格式不符合規定")
     , USER_STATE_ERROR(710, "會員狀態異常")
     , INVALID_TOKEN(780, "驗證失敗，請聯繫客服")
     , EXPIRED_TOKEN(781, "操作逾時，請重新登入")
