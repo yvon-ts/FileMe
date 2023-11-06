@@ -37,6 +37,6 @@ public class RedisCache {
     public void deleteObj(String key){
         Boolean success = redisTemplate.delete(key);
         if(!success)
-            throw new InternalErrorException(ExceptionEnum.TOKEN_DEL_ERROR);
+            throw new InternalErrorException(ExceptionEnum.REDIS_DEL_ERROR);
     }
 }

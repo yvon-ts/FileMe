@@ -3,6 +3,7 @@ package net.fileme.config;
 import net.fileme.filter.JwtAuthenticationFilter;
 import net.fileme.handler.AccessDeniedExceptionHandler;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -18,6 +19,11 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 @Configuration
 @EnableGlobalMethodSecurity(prePostEnabled = true)
 public class SecurityConfig {
+    @Value("${server.port}")
+    private int httpsPort;
+    @Value("${http.port}")
+    private int httpPort;
+
     @Autowired
     private JwtAuthenticationFilter jwtAuthenticationFilter;
     @Bean
@@ -34,17 +40,23 @@ public class SecurityConfig {
     }
     @Bean
     SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+        // allow HTTP redirect to HTTPS
+        http.portMapper().http(httpPort).mapsTo(httpsPort);
+
         http
                 // 關閉csrf
                 .csrf().disable()
                 // 不通過session取得securityContext
                 .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 .and()
+                // allow HTTPS
+                .requiresChannel().anyRequest().requiresSecure()
+                .and()
                 .authorizeRequests()
                  // 感覺會有一個("/**").hasAuthority("admin")
                 .antMatchers("/user/login").anonymous()
                 .antMatchers("/support/**").anonymous()
-                .antMatchers("/pub**").permitAll()
+                .antMatchers("/pub/**").permitAll()
                 .anyRequest().authenticated()
                 .and().formLogin()
                         .loginPage("/access-denied") // TODO: change to real login page

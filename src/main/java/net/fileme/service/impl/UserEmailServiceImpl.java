@@ -68,7 +68,7 @@ public class UserEmailServiceImpl extends ServiceImpl<UserMapper, User>
         TokenDto dto = lookUpToken(token);
         boolean success = doSignUp(dto);
         if(!success){
-            throw new ConflictException(ExceptionEnum.DUPLICATED_EMAIL);
+            throw new ConflictException(ExceptionEnum.SIGN_UP_FAIL);
         }
     }
     public boolean doSignUp(TokenDto dto){
@@ -92,7 +92,7 @@ public class UserEmailServiceImpl extends ServiceImpl<UserMapper, User>
         luw.set(User::getPassword, password)
                 .eq(User::getId, userId)
                 .eq(User::getState, 0);
-        update(luw);
+        update(luw); // TODO: 要擋
     }
     // ----------------------------Change Email----------------------------- //
     @Override
@@ -100,7 +100,7 @@ public class UserEmailServiceImpl extends ServiceImpl<UserMapper, User>
         TokenDto dto = lookUpToken(token);
         boolean success = doChangeEmail(dto);
         if(!success){
-            throw new ConflictException(ExceptionEnum.DUPLICATED_EMAIL);
+            throw new ConflictException(ExceptionEnum.CHANGE_EMAIL_FAIL);
         }
         return dto;
     }
@@ -121,7 +121,7 @@ public class UserEmailServiceImpl extends ServiceImpl<UserMapper, User>
         dto.setPending(password);
         boolean success = doResetPassword(dto);
         if(!success){
-            throw new InternalErrorException(ExceptionEnum.UPDATE_FAIL);
+            throw new InternalErrorException(ExceptionEnum.PWD_RESET_FAIL);
         }
         return dto;
     }
@@ -228,7 +228,7 @@ public class UserEmailServiceImpl extends ServiceImpl<UserMapper, User>
     public TokenDto lookUpToken(String token){
         boolean hasKey = redisCache.hasKey(token);
         if(!hasKey){
-            throw new UnauthorizedException(ExceptionEnum.INVALID_TOKEN);
+            throw new UnauthorizedException(ExceptionEnum.NO_SUCH_TOKEN);
         }else{
             TokenDto dto = redisCache.getRedisValue(token);
             Integer dtoIssueNo = dto.getIssueNo();
@@ -236,7 +236,7 @@ public class UserEmailServiceImpl extends ServiceImpl<UserMapper, User>
             if(currentIssueNo != null && currentIssueNo != 0 && Objects.equals(currentIssueNo, dtoIssueNo)){
                 return dto;
             }else{
-                throw new UnauthorizedException(ExceptionEnum.INVALID_TOKEN);
+                throw new UnauthorizedException(ExceptionEnum.WRONG_TOKEN_VERSION);
             }
         }
     }

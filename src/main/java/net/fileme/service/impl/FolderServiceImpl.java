@@ -39,8 +39,7 @@ public class FolderServiceImpl extends ServiceImpl<FolderMapper, Folder>
 
     @Override
     public void createFolder(Long userId, Long parentId, String name){
-//        if(!Pattern.matches(regex, name)) throw new BadRequestException(ExceptionEnum.FOLDER_NAME_ERROR);
-//        if(name.indexOf(".") == 0) throw new BadRequestException(ExceptionEnum.FOLDER_NAME_ERROR);
+//        if(!Pattern.matches(regex, name)) throw new BadRequestException(ExceptionEnum.FOLDER_NAME_REGEX_ERROR);
         Folder folder = new Folder();
         folder.setUserId(userId);
         folder.setFolderName(name);
@@ -54,7 +53,7 @@ public class FolderServiceImpl extends ServiceImpl<FolderMapper, Folder>
                 .eq(Folder::getId, dataId);
         boolean success = update(luw);
         if(!success){
-            throw new NotFoundException(ExceptionEnum.UPDATE_DB_FAIL);
+            throw new NotFoundException(ExceptionEnum.SET_FOLDER_ACCESS_FAIL);
         }
     }
     @Override
@@ -65,7 +64,7 @@ public class FolderServiceImpl extends ServiceImpl<FolderMapper, Folder>
                 .eq(Folder::getUserId, userId);
         boolean success = update(luw);
         if(!success){
-            throw new NotFoundException(ExceptionEnum.FOLDER_NOT_EXISTS);
+            throw new NotFoundException(ExceptionEnum.FOLDER_RENAME_FAIL);
         }
     }
 
@@ -77,7 +76,7 @@ public class FolderServiceImpl extends ServiceImpl<FolderMapper, Folder>
                 .eq(Folder::getUserId, userId);
         boolean success = update(luw);
         if(!success){
-            throw new NotFoundException(ExceptionEnum.UPDATE_DB_FAIL);
+            throw new NotFoundException(ExceptionEnum.FOLDER_RELOCATE_FAIL);
         }
     }
 
@@ -85,7 +84,7 @@ public class FolderServiceImpl extends ServiceImpl<FolderMapper, Folder>
     @Transactional
     public void gotoTrash(Long userId, List<Long> dataIds) {
         int successCreate = folderTrashMapper.create(userId, dataIds);
-        if(successCreate == 0) throw new InternalErrorException(ExceptionEnum.UPDATE_DB_FAIL);
+        if(successCreate == 0) throw new InternalErrorException(ExceptionEnum.CREATE_FOLDER_TRASH_FAIL);
         relocate(trashId, dataIds, userId);
     }
 
@@ -93,9 +92,9 @@ public class FolderServiceImpl extends ServiceImpl<FolderMapper, Folder>
     @Transactional
     public void recover(Long userId, List<Long> dataIds) {
         int successRecover = folderTrashMapper.recover(userId, dataIds);
-        if(successRecover == 0) throw new InternalErrorException(ExceptionEnum.UPDATE_DB_FAIL);
+        if(successRecover == 0) throw new InternalErrorException(ExceptionEnum.FOLDER_RECOVER_FAIL);
         int successDelete = folderTrashMapper.deleteBatchIds(dataIds);
-        if(successDelete == 0) throw new InternalErrorException(ExceptionEnum.UPDATE_DB_FAIL);
+        if(successDelete == 0) throw new InternalErrorException(ExceptionEnum.DELETE_FOLDER_TRASH_FAIL);
     }
 
     @Override
@@ -106,6 +105,6 @@ public class FolderServiceImpl extends ServiceImpl<FolderMapper, Folder>
         luw.eq(Folder::getUserId, userId)
             .in(Folder::getId, dataIds);
         boolean success = remove(luw);
-        if(!success) throw new InternalErrorException(ExceptionEnum.UPDATE_DB_FAIL);
+        if(!success) throw new InternalErrorException(ExceptionEnum.DELETE_FOLDER_FAIL);
     }
 }

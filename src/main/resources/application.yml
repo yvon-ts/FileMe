@@ -23,13 +23,3 @@ mybatis-plus:
     log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
 # 將MyBatis sql command輸出至log
 #    log-impl: org.apache.ibatis.logging.slf4j.Slf4jImpl
-# 預設檔案上傳路徑
-#file:
-#  upload:
-#    dir: /Users/yvon/ideaUploads
-# 預設垃圾桶目錄id
-#  trash:
-#    folderId: 999
-# 預設根目錄id
-#  root:
-#    folderId: 0

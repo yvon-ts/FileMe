@@ -30,7 +30,7 @@ public class JwtUtil {
             JWT_KEY = prop.getProperty("jwt.key");
             JWT_ISSUER = prop.getProperty("jwt.issuer");
         } catch (IOException e) {
-            throw new BizException(ExceptionEnum.CONFIG_ERROR);
+            throw new BizException(ExceptionEnum.JWT_CONFIG_ERROR);
         }
     }
 

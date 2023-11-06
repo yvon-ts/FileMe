@@ -32,7 +32,7 @@ public class UserController {
     @PostMapping("/support/sign-up")
     public String signUp(@Validated(User.Create.class) @NotNull @RequestBody User guest, Model model){
         EmailTemplateEnum templateEnum = EmailTemplateEnum.SIGN_UP;
-
+        validateService.checkUserName(guest.getUsername());
         userEmailService.createUser(guest);
         userEmailService.sendTokenEmail(templateEnum, guest.getEmail(), null);
         model.addAttribute("viewText", templateEnum.getAsyncViewText());

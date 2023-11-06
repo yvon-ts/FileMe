@@ -104,16 +104,13 @@ public class DriveDtoServiceImpl implements DriveDtoService {
     public ResponseEntity preview(String path){
         if(!StringUtils.hasText(path)) return ResponseEntity
                                         .status(HttpStatus.NOT_FOUND)
-                                        .body(Result.error(ExceptionEnum.FILE_NOT_EXISTS));
+                                        .body(Result.error(ExceptionEnum.NO_SUCH_DATA));
 
         String ext = path.substring(path.lastIndexOf(".") + 1);
 
         // check mime type if allowed to preview
         if(MimeEnum.valueOf(ext.toUpperCase()).allowPreview){
             java.io.File ioFile = new java.io.File(path);
-            if(!ioFile.exists()){
-                throw new NotFoundException(ExceptionEnum.FILE_ERROR);
-            }
             try{
                 Tika tika = new Tika(); // mimeType library
                 String mimeType = tika.detect(ioFile);
@@ -127,7 +124,7 @@ public class DriveDtoServiceImpl implements DriveDtoService {
                         .body(bytes);
 
             }catch (IOException e){
-                throw new InternalErrorException(ExceptionEnum.FILE_ERROR);
+                throw new InternalErrorException(ExceptionEnum.FILE_IO_ERROR);
             }
         }
         // preview not allowed
@@ -148,7 +145,7 @@ public class DriveDtoServiceImpl implements DriveDtoService {
     @Override
     public ResponseEntity<ByteArrayResource> downloadPersonal(Long userId, Long fileId, HttpServletResponse response){
         File file = fileService.findPersonalFile(userId, fileId);
-        String fileName = file.getFileName();
+        String fileName = file.getFullName();
         if(!StringUtils.hasText(fileName)) throw new InternalErrorException(ExceptionEnum.FILE_NAME_ERROR);
 
         String path = fileService.findFilePath(file);
@@ -162,7 +159,7 @@ public class DriveDtoServiceImpl implements DriveDtoService {
             byte[] bytes = FileCopyUtils.copyToByteArray(file);
             resource = new ByteArrayResource(bytes);
         }catch (IOException ex){
-            throw new InternalErrorException(ExceptionEnum.FILE_ERROR);
+            throw new InternalErrorException(ExceptionEnum.FILE_IO_ERROR);
         }
         return ResponseEntity.ok()
                 .header("Content-Disposition","attachment;filename=" + new String(fileName.getBytes(StandardCharsets.UTF_8), StandardCharsets.ISO_8859_1))

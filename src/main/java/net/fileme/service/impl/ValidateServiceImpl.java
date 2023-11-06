@@ -40,6 +40,8 @@ public class ValidateServiceImpl implements ValidateService {
     private String regexEmail;
     @Value("${regex.pwd}")
     private String regexPwd;
+    @Value("${regex.username.forbidden}")
+    private String regexUsernameForbidden;
 
 
     /**
@@ -47,7 +49,7 @@ public class ValidateServiceImpl implements ValidateService {
      */
     @Override
     public void regexEmail(String email){
-        if(!Pattern.matches(regexEmail, email)) throw new BadRequestException(ExceptionEnum.USER_EMAIL_ERROR);
+        if(!Pattern.matches(regexEmail, email)) throw new BadRequestException(ExceptionEnum.USER_EMAIL_REGEX_ERROR);
     }
 
     /**
@@ -55,12 +57,18 @@ public class ValidateServiceImpl implements ValidateService {
      */
     @Override
     public void regexPwd(String pwd){
-        if(!Pattern.matches(regexPwd, pwd)) throw new BadRequestException(ExceptionEnum.PWD_ERROR);
+        if(!Pattern.matches(regexPwd, pwd)) throw new BadRequestException(ExceptionEnum.PWD_REGEX_ERROR);
+    }
+
+    public boolean filterUserName(String username){
+        if(Pattern.matches(regexUsernameForbidden, username)) return true;
+        return false;
     }
 
     @Override
     public void checkUserName(String username){
         if(StringUtils.isBlank(username)) throw new BadRequestException(ExceptionEnum.PARAM_ERROR);
+        if(!filterUserName(username)) throw new BadRequestException(ExceptionEnum.USERNAME_REGEX_ERROR);
         LambdaQueryWrapper<User> lqw = new LambdaQueryWrapper<>();
         lqw.eq(User::getUsername, username).ne(User::getState, 99); // invalid user
         Integer count = userMapper.selectCount(lqw);

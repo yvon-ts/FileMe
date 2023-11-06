@@ -29,7 +29,7 @@ public class UserDetailsServiceImpl implements UserDetailsService {
         lqw.eq(User::getUsername, username);
         User user = userMapper.selectOne(lqw);
         if(Objects.isNull(user)){
-            throw new BadRequestException(ExceptionEnum.USER_NOT_EXISTS);
+            throw new BadRequestException(ExceptionEnum.NO_SUCH_USER);
         }
         RoleDto roleDto = roleDtoMapper.getRolesByUserId(user.getId());
         if(Objects.isNull(roleDto)) return new MyUserDetails(user, Collections.emptyList());

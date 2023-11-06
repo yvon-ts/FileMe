@@ -8,7 +8,7 @@ import org.springframework.web.servlet.ModelAndView;
 import javax.servlet.http.HttpServletRequest;
 
 @Controller
-public class CustomController {
+public class CustomAccessDeniedController {
     @GetMapping("/access-denied")
     public ModelAndView accessDenied(HttpServletRequest request){
         ModelAndView view = new ModelAndView("error");

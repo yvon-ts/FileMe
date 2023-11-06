@@ -87,10 +87,10 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(BadCredentialsException.class)
     public ResponseEntity handleFailedLogin(BadCredentialsException ex){
-        logError(ex, ExceptionEnum.USER_NOT_EXISTS);
+        logError(ex, ExceptionEnum.LOGIN_ERROR);
         return ResponseEntity
                 .status(HttpStatus.UNAUTHORIZED)
-                .body(Result.error(ExceptionEnum.USER_NOT_EXISTS));
+                .body(Result.error(ExceptionEnum.LOGIN_ERROR));
     }
     @ExceptionHandler(AuthenticationException.class)
     public ResponseEntity handleAuthentication(AuthenticationException ex){
@@ -116,18 +116,18 @@ public class GlobalExceptionHandler {
     }
     @ExceptionHandler(MaxUploadSizeExceededException.class)
     public ResponseEntity handleMaxUploadSize(MaxUploadSizeExceededException ex){
-        logError(ex, ExceptionEnum.FILE_SIZE_ERROR);
+        logError(ex, ExceptionEnum.FILE_OVER_SIZE);
         return ResponseEntity
                 .status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body(Result.error(ExceptionEnum.FILE_SIZE_ERROR));
+                .body(Result.error(ExceptionEnum.FILE_OVER_SIZE));
     }
     // when violate sql unique constraint
     @ExceptionHandler(DuplicateKeyException.class)
     public ResponseEntity handleDuplicateKey(DuplicateKeyException ex){
-        logError(ex, ExceptionEnum.DUPLICATED_DB);
+        logError(ex, ExceptionEnum.UNIQUE_CONFLICT);
         return ResponseEntity
                 .status(HttpStatus.CONFLICT)
-                .body(Result.error(ExceptionEnum.DUPLICATED_DB));
+                .body(Result.error(ExceptionEnum.UNIQUE_CONFLICT));
     }
 
     // when violate sql foreign key constraint

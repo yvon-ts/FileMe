@@ -55,10 +55,9 @@ public class FileServiceImpl extends ServiceImpl<FileMapper, File>
     @Autowired
     private ApplicationContext applicationContext;
 
-    public void checkDataName(String dataName){
+    public void checkFileName(String dataName){
         if(StringUtils.isBlank(dataName)) throw new BadRequestException(ExceptionEnum.PARAM_ERROR);
-        if(!Pattern.matches(regex, dataName)) throw new BadRequestException(ExceptionEnum.DATA_NAME_ERROR);
-        if(dataName.indexOf(".") == 0) throw new BadRequestException(ExceptionEnum.DATA_NAME_ERROR);
+        if(!Pattern.matches(regex, dataName)) throw new BadRequestException(ExceptionEnum.FILE_NAME_REGEX_ERROR);
     }
     @Override
     public String findFilePath(File file){
@@ -101,7 +100,7 @@ public class FileServiceImpl extends ServiceImpl<FileMapper, File>
             boolean isValidMime = ObjectUtils.containsConstant(MimeEnum.values(), ext);
 
             if(!isValidMime){
-                throw new BadRequestException(ExceptionEnum.FILE_TYPE_ERROR);
+                throw new BadRequestException(ExceptionEnum.FILE_TYPE_NOT_ALLOWED);
             }
             file.setExt(ext);
 
@@ -109,7 +108,7 @@ public class FileServiceImpl extends ServiceImpl<FileMapper, File>
             String tmpFullName = multipartFile.getOriginalFilename();
             String fileName = tmpFullName.substring(0, tmpFullName.lastIndexOf("."));
 
-            checkDataName(fileName);
+            checkFileName(fileName);
 
             file.setFileName(fileName);
 
@@ -119,7 +118,7 @@ public class FileServiceImpl extends ServiceImpl<FileMapper, File>
         }catch(MimeTypeException e){
             throw new BadRequestException(ExceptionEnum.FILE_TYPE_ERROR);
         }catch(IOException e){
-            throw new BadRequestException(ExceptionEnum.FILE_ERROR);
+            throw new BadRequestException(ExceptionEnum.FILE_IO_ERROR);
         }
         return file;
     }
@@ -136,7 +135,7 @@ public class FileServiceImpl extends ServiceImpl<FileMapper, File>
             tmpFile.getParentFile().mkdirs();
         }
         if(tmpFile.exists()){
-            throw new InternalErrorException(ExceptionEnum.DUPLICATED_SVR);
+            throw new InternalErrorException(ExceptionEnum.FILE_EXISTS_ON_SERVER);
         }
         try {
             part.transferTo(tmpFile);
@@ -161,7 +160,7 @@ public class FileServiceImpl extends ServiceImpl<FileMapper, File>
                 .eq(File::getId, dataId);
         boolean success = update(luw);
         if(!success){
-            throw new NotFoundException(ExceptionEnum.UPDATE_DB_FAIL);
+            throw new NotFoundException(ExceptionEnum.SET_FILE_ACCESS_FAIL);
         }
     }
     @Override
@@ -172,7 +171,7 @@ public class FileServiceImpl extends ServiceImpl<FileMapper, File>
                 .eq(File::getUserId, userId);
         boolean success = update(luw);
         if(!success){
-            throw new NotFoundException(ExceptionEnum.FILE_NOT_EXISTS);
+            throw new NotFoundException(ExceptionEnum.FILE_RENAME_FAIL);
         }
     }
 
@@ -184,7 +183,7 @@ public class FileServiceImpl extends ServiceImpl<FileMapper, File>
                 .eq(File::getUserId, userId);
         boolean success = update(luw);
         if(!success){
-            throw new NotFoundException(ExceptionEnum.UPDATE_DB_FAIL);
+            throw new NotFoundException(ExceptionEnum.FILE_RELOCATE_FAIL);
         }
     }
 
@@ -192,7 +191,7 @@ public class FileServiceImpl extends ServiceImpl<FileMapper, File>
     @Transactional
     public void gotoTrash(Long userId, List<Long> dataIds) {
         int successCreate = fileTrashMapper.create(userId, dataIds);
-        if(successCreate == 0) throw new InternalErrorException(ExceptionEnum.UPDATE_DB_FAIL);
+        if(successCreate == 0) throw new InternalErrorException(ExceptionEnum.CREATE_FILE_TRASH_FAIL);
         relocate(trashId, dataIds, userId);
     }
 
@@ -200,22 +199,22 @@ public class FileServiceImpl extends ServiceImpl<FileMapper, File>
     @Transactional
     public void recover(Long userId, List<Long> dataIds) {
         int successRecover = fileTrashMapper.recover(userId, dataIds);
-        if(successRecover == 0) throw new InternalErrorException(ExceptionEnum.UPDATE_DB_FAIL);
+        if(successRecover == 0) throw new InternalErrorException(ExceptionEnum.FILE_RECOVER_FAIL);
         int successDelete = fileTrashMapper.deleteBatchIds(dataIds);
-        if(successDelete == 0) throw new InternalErrorException(ExceptionEnum.UPDATE_DB_FAIL);
+        if(successDelete == 0) throw new InternalErrorException(ExceptionEnum.DELETE_FILE_TRASH_FAIL);
     }
 
     @Override
     @Transactional
     public void softDelete(Long userId, List<Long> dataIds){
         int successCreate = removeListMapper.create(dataIds);
-        if(successCreate == 0) throw new InternalErrorException(ExceptionEnum.UPDATE_DB_FAIL);
+        if(successCreate == 0) throw new InternalErrorException(ExceptionEnum.CREATE_REMOVE_LIST_FAIL);
         fileTrashMapper.deleteBatchIds(dataIds);
         LambdaUpdateWrapper<File> luw = new LambdaUpdateWrapper<>();
         luw.eq(File::getUserId, userId)
                 .in(File::getId, dataIds);
         boolean success = remove(luw);
-        if(!success) throw new InternalErrorException(ExceptionEnum.UPDATE_DB_FAIL);
+        if(!success) throw new InternalErrorException(ExceptionEnum.DELETE_REMOVE_LIST_FAIL);
     }
 
 
@@ -228,7 +227,7 @@ public class FileServiceImpl extends ServiceImpl<FileMapper, File>
         lqw.select(RemoveList::getFilePath).in(RemoveList::getFileId, fileIds);
         List<Object> tmp = removeListMapper.selectObjs(lqw);
         if(tmp.isEmpty()){
-            throw new BizException(ExceptionEnum.DATA_NOT_EXISTS);
+            throw new BizException(ExceptionEnum.NO_SUCH_DATA);
         }
         List<String> strPaths = tmp.stream().map(Objects::toString).collect(Collectors.toList());
 
@@ -240,7 +239,7 @@ public class FileServiceImpl extends ServiceImpl<FileMapper, File>
                 LambdaUpdateWrapper<RemoveList> luw = new LambdaUpdateWrapper<>();
                 luw.set(RemoveList::getState, 1).in(RemoveList::getFileId, fileIds);
                 removeListMapper.update(null, luw);
-                throw new BizException(ExceptionEnum.DATA_DELETE_FAIL);
+                throw new BizException(ExceptionEnum.REMOVE_REMOVE_LIST_FAIL);
             }
         });
         // delete from db
