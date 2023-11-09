@@ -1,4 +1,4 @@
-package net.fileme;
+package net.fileme.config;
 
 import org.apache.catalina.connector.Connector;
 import org.springframework.beans.factory.annotation.Value;

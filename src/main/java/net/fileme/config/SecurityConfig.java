@@ -15,6 +15,11 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.access.AccessDeniedHandler;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.CorsConfigurationSource;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+
+import java.util.Arrays;
 
 @Configuration
 @EnableGlobalMethodSecurity(prePostEnabled = true)
@@ -39,13 +44,27 @@ public class SecurityConfig {
         return new AccessDeniedExceptionHandler();
     }
     @Bean
+    public CorsConfigurationSource configurationSource(){
+        CorsConfiguration configuration = new CorsConfiguration();
+        // 允許跨域的domain
+        configuration.setAllowedOrigins(Arrays.asList("http://localhost:3000"));
+        // 允許的請求方法
+        configuration.setAllowedMethods(Arrays.asList("GET", "POST"));
+        // 是否可帶憑證
+        configuration.setAllowCredentials(true);
+        configuration.setAllowedHeaders(Arrays.asList("*"));
+
+        UrlBasedCorsConfigurationSource urlBasedCorsConfigurationSource = new UrlBasedCorsConfigurationSource();
+        // 對哪些url開放
+        urlBasedCorsConfigurationSource.registerCorsConfiguration("/**", configuration);
+        return urlBasedCorsConfigurationSource;
+    }
+    @Bean
     SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
-        // allow HTTP redirect to HTTPS
-        http.portMapper().http(httpPort).mapsTo(httpsPort);
 
         http
-                // 關閉csrf
-                .csrf().disable()
+                .cors().configurationSource(configurationSource()).and() // from gpt
+                .csrf().disable()// 關閉csrf
                 // 不通過session取得securityContext
                 .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 .and()
@@ -57,9 +76,13 @@ public class SecurityConfig {
                 .antMatchers("/user/login").anonymous()
                 .antMatchers("/support/**").anonymous()
                 .antMatchers("/pub/**").permitAll()
+                .antMatchers("/**/*.html").permitAll()
+                .antMatchers("/**/*.css").permitAll()
+                .antMatchers("/**/*.js").permitAll()
+                .antMatchers("/**/api-docs/**").permitAll()
                 .anyRequest().authenticated()
                 .and().formLogin()
-                        .loginPage("/access-denied") // TODO: change to real login page
+                        .loginPage("/index.html") // TODO: change to real login page
                         .failureUrl("/access-denied")
                         .permitAll()
                 .and()
@@ -67,13 +90,11 @@ public class SecurityConfig {
                 .accessDeniedHandler(accessDeniedHandler());
 //                .accessDeniedPage("/access-denied")
 
-
+        // allow HTTP redirect to HTTPS
+        http.portMapper().http(httpPort).mapsTo(httpsPort);
 
         // 加入自定義JWT過濾器
         http.addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
-
-        // 允許跨域
-        http.cors();
 
         return http.build();
     }
