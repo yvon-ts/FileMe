@@ -78,7 +78,7 @@ public class DriveDtoServiceImpl implements DriveDtoService {
     @Override
     public Result getPublicSub(Long folderId){
         List<DriveDto> publicData = driveDtoMapper.getPublicSub(folderId);
-        if(CollectionUtils.isEmpty(publicData)) throw new BadRequestException(ExceptionEnum.NO_SUCH_DATA);
+        if(CollectionUtils.isEmpty(publicData)) throw new NotFoundException(ExceptionEnum.NO_SUCH_DATA);
 
         return Result.success(publicData);
     }

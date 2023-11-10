@@ -10,6 +10,7 @@ import net.fileme.domain.pojo.User;
 import net.fileme.enums.ExceptionEnum;
 import net.fileme.exception.BadRequestException;
 import net.fileme.exception.ConflictException;
+import net.fileme.exception.NotFoundException;
 import net.fileme.exception.UnauthorizedException;
 import net.fileme.service.DriveDtoService;
 import net.fileme.service.ValidateService;
@@ -87,7 +88,7 @@ public class ValidateServiceImpl implements ValidateService {
     public DriveDto checkData(Long userId, Long dataId){
         if(rootId.equals(dataId) || trashId.equals(dataId)) throw new BadRequestException(ExceptionEnum.PARAM_ERROR);
         DriveDto data = driveDtoMapper.getOneData(userId, dataId);
-        if(Objects.isNull(data)) throw new BadRequestException(ExceptionEnum.NO_SUCH_DATA);
+        if(Objects.isNull(data)) throw new NotFoundException(ExceptionEnum.NO_SUCH_DATA);
         return data;
     }
     

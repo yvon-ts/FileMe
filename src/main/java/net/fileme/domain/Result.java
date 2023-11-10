@@ -1,14 +1,23 @@
 package net.fileme.domain;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 import net.fileme.enums.ExceptionEnum;
 
 import java.io.Serializable;
 
+@Schema(description = "API回傳內容")
 @Data
 public class Result<T> implements Serializable {
+    @Schema(description = "回應代碼",
+            example = "200")
     private Integer code;
+
+    @Schema(description = "回應訊息",
+            example = "範例訊息")
     private String msg;
+
+    @Schema(description = "回傳資料")
     private T data;
 
     private Result(Integer code, String msg, T data){
