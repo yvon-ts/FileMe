@@ -5,11 +5,13 @@ import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.ExampleObject;
 import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import net.fileme.domain.MyUserDetails;
 import net.fileme.domain.Result;
 import net.fileme.domain.dto.DriveDto;
 import net.fileme.domain.dto.DataOwnerDto;
+import net.fileme.domain.dto.ListDataDto;
 import net.fileme.enums.ExceptionEnum;
 import net.fileme.exception.BadRequestException;
 import net.fileme.exception.UnauthorizedException;
@@ -78,81 +80,81 @@ public class DataManagerController {
         folderService.createFolder(userId, dto.getParentId(), dto.getDataName());
         return Result.success();
     }
-    // ----------------------------------Read---------------------------------- //
+    // ----------------------------------Read & Preview---------------------------------- //
 
     @PostMapping("/drive/my-drive")
     @Operation(summary = "[Read] 瀏覽根目錄", description = "[version 1.0]")
-    @PreAuthorize("hasAuthority('admin') OR authentication.principal.user.getId().equals(#userId)")
-    public Result<List<DriveDto>> getMyDrive(@io.swagger.v3.oas.annotations.parameters.RequestBody(
-            description = "用戶ID",
-            content = @Content(
-                    schema = @Schema(type = "string"),
-                    examples = {@ExampleObject("1710573934860890113")}
-            )
-    ) @org.springframework.web.bind.annotation.RequestBody @NotNull Long userId) {
+    @PreAuthorize("hasAuthority('admin') OR authentication.principal.user.getId().equals(#dto.getUserId())")
+    public Result<List<DriveDto>> getMyDrive(@io.swagger.v3.oas.annotations.parameters.RequestBody(description = "使用者ID",
+            content = @Content(schema = @Schema(type = "string", example = "1710573934860890113")))
+                                                 @org.springframework.web.bind.annotation.RequestBody @NotNull Long userId) {
         return driveDtoService.getSub(userId, rootId);
     }
 
-    @GetMapping("/pub/drive/{folderId}") // TODO: 如何避免攻擊?
+    @GetMapping("/pub/drive/{folderId}")
     @Operation(summary = "[Read] 瀏覽單個公開目錄", description = "[version 1.0] <br> 僅顯示該目錄內的公開資料")
-    public Result<List<DriveDto>> getPublicSub(@Parameter(
-            description = "目錄ID，範例：1698350322036805633",
-            schema = @Schema(type = "string")) @PathVariable @NotNull Long folderId){
+    public Result<List<DriveDto>> getPublicSub(@Parameter(description = "目錄ID，範例：1698350322036805633", schema = @Schema(type = "string"))
+                                                   @PathVariable @NotNull Long folderId){
         validateService.checkPublicFolder(folderId);
         return driveDtoService.getPublicSub(folderId);
     }
 
     @PostMapping("/drive/data")
     @Operation(summary = "[Read] 瀏覽單個目錄所有資料", description = "[version 1.0]")
-    @PreAuthorize("hasAuthority('admin') OR authentication.principal.user.getId().equals(#userId)")
-    public Result<List<DriveDto>> getSub(@io.swagger.v3.oas.annotations.parameters.RequestBody(description = "傳入用戶及目錄ID")
+    @PreAuthorize("hasAuthority('admin') OR authentication.principal.user.getId().equals(#dto.getUserId())")
+    public Result<List<DriveDto>> getSub(@io.swagger.v3.oas.annotations.parameters.RequestBody(description = "使用者及目錄ID")
                              @org.springframework.web.bind.annotation.RequestBody @NotNull DataOwnerDto dto){
         return driveDtoService.getSub(dto.getUserId(), dto.getDataId());
     }
-
-    @Operation(summary = "[Read] 預覽單個公開檔案")
-    @GetMapping("/pub/drive/preview/{fileId}")
-    public ResponseEntity previewPublic(@NotNull @PathVariable Long fileId){
-        return driveDtoService.previewPublic(fileId);
-    }
-    @Operation(summary = "[Read] 預覽單個檔案")
-    @PostMapping("/drive/preview")
-    @PreAuthorize("hasAuthority('admin') OR authentication.principal.user.getId().equals(#userId)")
-    public ResponseEntity previewPersonal(@NotNull @RequestParam Long userId, @NotNull @RequestParam Long fileId){
-        return driveDtoService.previewPersonal(userId, fileId);
-    }
-    @Operation(summary = "[Read] 瀏覽垃圾桶資料")
     @PostMapping("/drive/my-trash")
-    @PreAuthorize("hasAuthority('admin') OR authentication.principal.user.getId().equals(#userId)")
-    public Result getMyTrash(@NotNull @RequestParam Long userId) {
+    @Operation(summary = "[Read] 瀏覽垃圾桶資料", description = "[version 1.0]")
+    @PreAuthorize("hasAuthority('admin') OR authentication.principal.user.getId().equals(#dto.getUserId())")
+    public Result<List<DriveDto>> getMyTrash(@io.swagger.v3.oas.annotations.parameters.RequestBody(description = "使用者ID",
+            content = @Content(schema = @Schema(type = "string", example = "1710573934860890113")))
+                                 @org.springframework.web.bind.annotation.RequestBody @NotNull Long userId) {
         return driveDtoService.getSub(userId, trashId);
     }
 
+    @GetMapping("/pub/drive/preview/{fileId}")
+    @Operation(summary = "[Read] 預覽單個公開檔案", description = "[version 1.0] <br> 僅能預覽圖檔 (JPG/GIF/PNG)",
+            responses = {@ApiResponse(responseCode = "200", content = @Content),
+                    @ApiResponse(responseCode = "403", description = "Preview not Allowed", content = @Content)})
+    public ResponseEntity previewPublic(@Parameter(description = "檔案ID，範例：1698350322036805633", schema = @Schema(type = "string"))
+                                            @NotNull @PathVariable Long fileId){
+        return driveDtoService.previewPublic(fileId);
+    }
+    @PostMapping("/drive/preview")
+    @Operation(summary = "[Read] 預覽單個檔案", description = "[version 1.0] <br> 僅能預覽圖檔 (JPG/GIF/PNG)",
+            responses = {@ApiResponse(responseCode = "200", content = @Content),
+                    @ApiResponse(responseCode = "403", description = "Preview not Allowed", content = @Content)})
+    @PreAuthorize("hasAuthority('admin') OR authentication.principal.user.getId().equals(#dto.getUserId())")
+    public ResponseEntity previewPersonal(@NotNull @RequestBody DataOwnerDto dto){
+        return driveDtoService.previewPersonal(dto.getUserId(), dto.getDataId());
+    }
     // ----------------------------------Download---------------------------------- //
     @GetMapping("/pub/drive/download/{fileId}")
-    @Operation(summary = "[Read] 下載單個公開檔案")
-    public ResponseEntity<ByteArrayResource> downloadPublic(@NotNull @PathVariable @Parameter(description = "欲下載檔案ID，範例：1698350322036805633"
-            , schema = @Schema(type = "string"))Long fileId
-            , HttpServletResponse response){
+    @Operation(summary = "[Read] 下載單個公開檔案", description = "[version 1.0]")
+    public ResponseEntity<ByteArrayResource> downloadPublic(
+            @Parameter(description = "欲下載檔案ID，範例：1698350322036805633", schema = @Schema(type = "string"))
+            @PathVariable @NotNull Long fileId, HttpServletResponse response){
         return driveDtoService.downloadPublic(fileId, response);
     }
     @PostMapping("/drive/download")
-    @Operation(summary = "[Read] 下載單個檔案")
-    @PreAuthorize("hasAuthority('admin') OR authentication.principal.user.getId().equals(#userId)")
-    public ResponseEntity<ByteArrayResource> downloadPersonal(@NotNull @RequestParam @Parameter(description = "檔案擁有者ID，範例：1698350322036805633"
-            , schema = @Schema(type = "string")) Long userId
-            , @NotNull @RequestParam @Parameter(description = "欲下載檔案ID，範例：1698350322036805633"
-            , schema = @Schema(type = "string")) Long fileId
+    @Operation(summary = "[Read] 下載單個檔案", description = "[version 1.0]")
+    @PreAuthorize("hasAuthority('admin') OR authentication.principal.user.getId().equals(#dto.getUserId())")
+    public ResponseEntity<ByteArrayResource> downloadPersonal(
+            @io.swagger.v3.oas.annotations.parameters.RequestBody(description = "使用者及檔案ID")
+            @org.springframework.web.bind.annotation.RequestBody @NotNull DataOwnerDto dto
             , HttpServletResponse response){
-        return driveDtoService.downloadPersonal(userId, fileId, response);
+        return driveDtoService.downloadPersonal(dto.getUserId(), dto.getDataId(), response);
     }
     // ----------------------------------Update: access level & shared link---------------------------------- //
     @PostMapping("/drive/access-control")
-    @Operation(summary = "[Update] 變更單個資料權限", description = "會根據目前狀態自動進行權限toggle，例如private -> public"
-            )
-    public Result accessControl(@NotNull @RequestParam @Parameter(
-            description = "欲變更權限的檔案或目錄ID，範例：1698350322036805633") Long dataId
-            , @AuthenticationPrincipal MyUserDetails myUserDetails){
+    @Operation(summary = "[Update] 變更單個資料權限", description = "[version 1.0] <br> 會根據目前狀態自動進行權限toggle，例如private -> public")
+    public Result accessControl(@io.swagger.v3.oas.annotations.parameters.RequestBody(description = "檔案或目錄ID", content = @Content(
+            schema = @Schema(type = "string", example = "1698350322036805633")))
+                                    @org.springframework.web.bind.annotation.RequestBody @NotNull Long dataId,
+                                @AuthenticationPrincipal MyUserDetails myUserDetails){
         if(Objects.isNull(myUserDetails)) throw new UnauthorizedException(ExceptionEnum.GUEST_NOT_ALLOWED);
         Long userId = myUserDetails.getUser().getId();
 
@@ -163,12 +165,10 @@ public class DataManagerController {
 
     // ----------------------------------Update: rename---------------------------------- //
     @PostMapping("/drive/rename")
-    @Operation(summary = "[Update] 變更單個資料名稱")
-    public Result rename(@Validated(DriveDto.Update.class) @org.springframework.web.bind.annotation.RequestBody
-                             @io.swagger.v3.oas.annotations.parameters.RequestBody(description = "傳入欲改名的檔案或目錄ID及變更後的名稱，並註明資料種類",
-                                     content = @Content(examples = {
-                                             @ExampleObject(value = "{\"id\": \"1710573934860890113\", \"dataName\": \"範例名稱\", \"dataType\": \"0\"}")
-                                     })) DriveDto dto
+    @Operation(summary = "[Update] 變更單個資料名稱", description = "[version 1.0]")
+    public Result rename(@io.swagger.v3.oas.annotations.parameters.RequestBody(description = "傳入欲改名的檔案或目錄ID及變更後的名稱，並註明資料種類", content = @Content(
+            examples = {@ExampleObject(value = "{\"id\": \"1710573934860890113\", \"dataName\": \"範例名稱\", \"dataType\": \"0\"}")}))
+            @org.springframework.web.bind.annotation.RequestBody @Validated(DriveDto.Update.class) DriveDto dto
             , @AuthenticationPrincipal MyUserDetails myUserDetails){
 
         if(Objects.isNull(myUserDetails)) throw new UnauthorizedException(ExceptionEnum.GUEST_NOT_ALLOWED);
@@ -179,10 +179,11 @@ public class DataManagerController {
     }
     // ----------------------------------Update: relocate---------------------------------- //
     @GetMapping("/drive/folder/super")
-    @Operation(summary = "[Read] 取得所有父目錄 (self included)", description = "列出包含自己以上所有父目錄ID及名稱List，不包含根目錄(ID=0)，由最外層開始向下排列")
-    public Result getRelocateSuper(@NotNull @RequestParam @Parameter(description = "欲移動資料的「父目錄」ID，範例：1698350322036805633"
-            , schema = @Schema(type = "string")) Long folderId
-            , @AuthenticationPrincipal MyUserDetails myUserDetails){
+    @Operation(summary = "[Read] 取得所有父目錄 (self included)",
+            description = "[version 1.0] <br><ul><li>列出包含自己的所有父目錄</li><li>由最上層開始向下排列</li><li>不包含根目錄(ID=0)</li><li>配合relocate使用時，需傳入欲移動資料的「父目錄」ID</li></ul>")
+    public Result<List<DriveDto>> getRelocateSuper(@Parameter(description = "目錄ID", content = @Content(
+            schema = @Schema(type = "string", example = "1698350322036805633"))) @RequestParam @NotNull Long folderId,
+                                   @AuthenticationPrincipal MyUserDetails myUserDetails){
 
         if(Objects.isNull(myUserDetails)) throw new UnauthorizedException(ExceptionEnum.GUEST_NOT_ALLOWED);
         Long userId = myUserDetails.getUser().getId();
@@ -191,11 +192,14 @@ public class DataManagerController {
         return Result.success(superFolders);
     }
 
-    @Operation(summary = "[Read] 取得所有子目錄 (self excluded)", description = "列出有相同父目錄(=同一層)的所有目錄")
     @GetMapping("/drive/folder/sub")
-    public Result getRelocateSub(@NotNull @RequestParam @Parameter(description = "欲移動資料的「父目錄」ID，範例：1698350322036805633"
-            , schema = @Schema(type = "string")) Long folderId
-            , @AuthenticationPrincipal MyUserDetails myUserDetails){
+    @Operation(summary = "[Read] 取得所有子目錄 (self excluded)", description = "[version 1.0] <br><ul><li>列出有相同父目錄(=同一層)的所有目錄</li><li>配合relocate使用時，需傳入欲移動資料的「父目錄」ID</li></ul>",
+            responses = {
+            @ApiResponse(responseCode = "200", content = @Content),
+            @ApiResponse(responseCode = "400", description = "Param error: system folders not accepted", content = @Content)})
+    public Result<List<DriveDto>> getRelocateSub(@Parameter(description = "目錄ID", content = @Content(
+            schema = @Schema(type = "string", example = "1698350322036805633"))) @RequestParam @NotNull Long folderId,
+                                                 @AuthenticationPrincipal MyUserDetails myUserDetails){
 
         if(Objects.isNull(myUserDetails)) throw new UnauthorizedException(ExceptionEnum.GUEST_NOT_ALLOWED);
         if(rootId.equals(folderId) || trashId.equals(folderId)) throw new BadRequestException(ExceptionEnum.PARAM_ERROR);
@@ -204,20 +208,16 @@ public class DataManagerController {
         List<DriveDto> subFolders = driveDtoService.getSubFolders(userId, folderId);
         return Result.success(subFolders);
     }
-
-    @Operation(summary = "[Update] 批次移動資料")
     @PostMapping("/drive/relocate")
-    public Result relocate(@NotNull @RequestParam @Parameter(description = "目的地目錄ID，範例：1698350322036805633"
-            , schema = @Schema(type = "string"))Long destId
-            , @NotNull @org.springframework.web.bind.annotation.RequestBody
-                               @io.swagger.v3.oas.annotations.parameters.RequestBody(description = "以List傳入欲移至垃圾桶的檔案或目錄ID，並註明資料種類",
-                                       content = @Content(examples = {
-                                               @ExampleObject(value = "[{\"id\": \"1710573934860890113\", \"dataType\": \"0\"}, {\"id\": \"1716111892070346754\", \"dataType\": \"1\"}]")
-                                       })) List<DriveDto> listDto
+    @Operation(summary = "[Update] 批次移動資料", description = "[version 1.0] <br><ul><li>目的地不得為系統目錄</li><li>會檢查資料是否來自同一層(父目錄)</li></ul>", responses = {
+            @ApiResponse(responseCode = "200", content = @Content),
+            @ApiResponse(responseCode = "400", description = "Destination ID error or Not same parent", content = @Content)})
+    public Result relocate(@io.swagger.v3.oas.annotations.parameters.RequestBody(description = "id：為目的地(目錄)ID <br> list：以List傳入檔案或目錄ID，並註明資料種類")
+                               @org.springframework.web.bind.annotation.RequestBody @NotNull ListDataDto dto
             , @AuthenticationPrincipal MyUserDetails myUserDetails){
-        Long userId = validateService.checkUserAndListDto(myUserDetails, listDto);
-        validateService.checkFolder(userId, destId);
-        driveDtoService.relocate(destId, listDto, userId);
+        Long userId = validateService.checkUserAndListDto(myUserDetails, dto.getList());
+        validateService.checkFolder(userId, dto.getId());
+        driveDtoService.relocate(dto.getId(), dto.getList(), userId);
         return Result.success();
     }
 
