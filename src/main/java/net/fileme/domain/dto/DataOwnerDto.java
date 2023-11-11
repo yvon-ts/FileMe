@@ -8,7 +8,7 @@ import javax.validation.constraints.NotNull;
 @Data
 public class DataOwnerDto {
     @NotNull
-    @Schema(description = "用戶ID",
+    @Schema(description = "使用者ID",
             type = "string",
             example = "1710573934860890113")
     private Long userId;
