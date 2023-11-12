@@ -7,9 +7,8 @@ import javax.validation.constraints.NotNull;
 import java.util.List;
 
 @Data
-public class ListDataDto {
-
-    @Schema(description = "ID (詳見API敘述)", type = "string", example = "1710573934860890113")
+public class ListDriveDto {
+    @Schema(description = "ID (詳見個別API用途)", type = "string", example = "1710573934860890113")
     @NotNull
     private Long id;
 

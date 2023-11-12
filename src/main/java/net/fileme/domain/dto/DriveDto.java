@@ -15,7 +15,7 @@ public class DriveDto {
     @Schema(description = "資料ID",
             type = "string",
             example = "1698350322036805633")
-    @NotNull(groups = Update.class)
+    @NotNull(groups = {Update.class, Read.class})
     private Long id;
 
     @Schema(description = "資料名稱",
@@ -26,7 +26,7 @@ public class DriveDto {
 
     @Schema(description = "資料種類 (0目錄，1檔案)",
             example = "0")
-    @NotNull(groups = Update.class)
+    @NotNull(groups = {Update.class, Read.class})
     private Integer dataType;
 
     @Schema(description = "資料權限 (0私人，1公開)",
@@ -41,4 +41,5 @@ public class DriveDto {
 
     public interface Create extends Default{}
     public interface Update extends Default{}
+    public interface Read extends Default{}
 }

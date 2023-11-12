@@ -5,13 +5,12 @@ import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.ExampleObject;
 import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.media.SchemaProperty;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import net.fileme.domain.MyUserDetails;
 import net.fileme.domain.Result;
-import net.fileme.domain.dto.DriveDto;
-import net.fileme.domain.dto.DataOwnerDto;
-import net.fileme.domain.dto.ListDataDto;
+import net.fileme.domain.dto.*;
 import net.fileme.enums.ExceptionEnum;
 import net.fileme.exception.BadRequestException;
 import net.fileme.exception.UnauthorizedException;
@@ -56,10 +55,16 @@ public class DataManagerController {
 
     // ----------------------------------Create---------------------------------- //
     @Operation(summary = "[Create] 新增檔案")
-    @PostMapping("/drive/file")
-    public Result createFile(@NotNull @RequestPart("file") MultipartFile part
-            , @NotNull @RequestParam Long folderId
-            , @AuthenticationPrincipal MyUserDetails myUserDetails) {
+    @PostMapping(value = "/drive/file")
+    public Result createFile(@io.swagger.v3.oas.annotations.parameters.RequestBody(description = "檔案",
+            content = @Content(mediaType = "multipart/form-data",
+            schema = @Schema(type = "object"),
+                    schemaProperties = {
+                    @SchemaProperty(name = "file", schema = @Schema(type = "string", format = "binary")),
+                    @SchemaProperty(name = "folderId", schema = @Schema(type = "string", example = "1698350322036805633"))}))
+            @RequestPart("file") @NotNull MultipartFile part,
+                             @RequestPart @NotNull Long folderId,
+                             @AuthenticationPrincipal MyUserDetails myUserDetails) {
 
         if(Objects.isNull(myUserDetails)) throw new UnauthorizedException(ExceptionEnum.GUEST_NOT_ALLOWED);
         Long userId = myUserDetails.getUser().getId();
@@ -68,10 +73,12 @@ public class DataManagerController {
         fileService.createFile(part, userId, folderId);
         return Result.success();
     }
-    @Operation(summary = "[Create] 新增目錄")
     @PostMapping("/drive/folder")
-    public Result createFolder(@Validated(DriveDto.Create.class) @RequestBody DriveDto dto
-            , @AuthenticationPrincipal MyUserDetails myUserDetails){
+    @Operation(summary = "[Create] 新增目錄", description = "[version 1.0]")
+    public Result createFolder(@io.swagger.v3.oas.annotations.parameters.RequestBody(description = "目錄名稱及父目錄ID", content = @Content(
+            examples = {@ExampleObject(value = "{\"dataName\": \"範例名稱\", \"parentId\": \"0\"}")}))
+                                   @org.springframework.web.bind.annotation.RequestBody @Validated(DriveDto.Create.class) DriveDto dto,
+                               @AuthenticationPrincipal MyUserDetails myUserDetails){
 
         if(Objects.isNull(myUserDetails)) throw new UnauthorizedException(ExceptionEnum.GUEST_NOT_ALLOWED);
         Long userId = myUserDetails.getUser().getId();
@@ -104,6 +111,7 @@ public class DataManagerController {
     @PreAuthorize("hasAuthority('admin') OR authentication.principal.user.getId().equals(#dto.getUserId())")
     public Result<List<DriveDto>> getSub(@io.swagger.v3.oas.annotations.parameters.RequestBody(description = "使用者及目錄ID")
                              @org.springframework.web.bind.annotation.RequestBody @NotNull DataOwnerDto dto){
+
         return driveDtoService.getSub(dto.getUserId(), dto.getDataId());
     }
     @PostMapping("/drive/my-trash")
@@ -112,6 +120,7 @@ public class DataManagerController {
     public Result<List<DriveDto>> getMyTrash(@io.swagger.v3.oas.annotations.parameters.RequestBody(description = "使用者ID",
             content = @Content(schema = @Schema(type = "string", example = "1710573934860890113")))
                                  @org.springframework.web.bind.annotation.RequestBody @NotNull Long userId) {
+
         return driveDtoService.getSub(userId, trashId);
     }
 
@@ -121,6 +130,7 @@ public class DataManagerController {
                     @ApiResponse(responseCode = "403", description = "Preview not Allowed", content = @Content)})
     public ResponseEntity previewPublic(@Parameter(description = "檔案ID，範例：1698350322036805633", schema = @Schema(type = "string"))
                                             @NotNull @PathVariable Long fileId){
+
         return driveDtoService.previewPublic(fileId);
     }
     @PostMapping("/drive/preview")
@@ -129,23 +139,28 @@ public class DataManagerController {
                     @ApiResponse(responseCode = "403", description = "Preview not Allowed", content = @Content)})
     @PreAuthorize("hasAuthority('admin') OR authentication.principal.user.getId().equals(#dto.getUserId())")
     public ResponseEntity previewPersonal(@NotNull @RequestBody DataOwnerDto dto){
+
         return driveDtoService.previewPersonal(dto.getUserId(), dto.getDataId());
     }
     // ----------------------------------Download---------------------------------- //
     @GetMapping("/pub/drive/download/{fileId}")
-    @Operation(summary = "[Read] 下載單個公開檔案", description = "[version 1.0]")
+    @Operation(summary = "[Read] 下載單個公開檔案", description = "[version 1.0]", responses = {
+            @ApiResponse(responseCode = "200", content = @Content)})
     public ResponseEntity<ByteArrayResource> downloadPublic(
             @Parameter(description = "欲下載檔案ID，範例：1698350322036805633", schema = @Schema(type = "string"))
             @PathVariable @NotNull Long fileId, HttpServletResponse response){
+
         return driveDtoService.downloadPublic(fileId, response);
     }
     @PostMapping("/drive/download")
-    @Operation(summary = "[Read] 下載單個檔案", description = "[version 1.0]")
+    @Operation(summary = "[Read] 下載單個檔案", description = "[version 1.0]", responses = {
+            @ApiResponse(responseCode = "200", content = @Content)})
     @PreAuthorize("hasAuthority('admin') OR authentication.principal.user.getId().equals(#dto.getUserId())")
     public ResponseEntity<ByteArrayResource> downloadPersonal(
             @io.swagger.v3.oas.annotations.parameters.RequestBody(description = "使用者及檔案ID")
             @org.springframework.web.bind.annotation.RequestBody @NotNull DataOwnerDto dto
             , HttpServletResponse response){
+
         return driveDtoService.downloadPersonal(dto.getUserId(), dto.getDataId(), response);
     }
     // ----------------------------------Update: access level & shared link---------------------------------- //
@@ -211,47 +226,44 @@ public class DataManagerController {
     @PostMapping("/drive/relocate")
     @Operation(summary = "[Update] 批次移動資料", description = "[version 1.0] <br><ul><li>目的地不得為系統目錄</li><li>會檢查資料是否來自同一層(父目錄)</li></ul>", responses = {
             @ApiResponse(responseCode = "200", content = @Content),
-            @ApiResponse(responseCode = "400", description = "Destination ID error or Not same parent", content = @Content)})
-    public Result relocate(@io.swagger.v3.oas.annotations.parameters.RequestBody(description = "id：為目的地(目錄)ID <br> list：以List傳入檔案或目錄ID，並註明資料種類")
-                               @org.springframework.web.bind.annotation.RequestBody @NotNull ListDataDto dto
+            @ApiResponse(responseCode = "400", description = "Destination ID error or Not from same parent", content = @Content)})
+    public Result relocate(@io.swagger.v3.oas.annotations.parameters.RequestBody(description = "id：目的地(目錄)ID <br> list：以List傳入檔案或目錄ID，並註明資料種類")
+                               @org.springframework.web.bind.annotation.RequestBody @NotNull ListDriveDto dto
             , @AuthenticationPrincipal MyUserDetails myUserDetails){
+
         Long userId = validateService.checkUserAndListDto(myUserDetails, dto.getList());
         validateService.checkFolder(userId, dto.getId());
         driveDtoService.relocate(dto.getId(), dto.getList(), userId);
         return Result.success();
     }
-
-    // ----------------------------------Delete: clean & recover---------------------------------- //
-    @Operation(summary = "[Update] 批次移至垃圾桶")
+    // ----------------------------------Update: trash & recover---------------------------------- //
     @PostMapping("/drive/trash")
-    public Result gotoTrash(@NotNull @org.springframework.web.bind.annotation.RequestBody
-                                @io.swagger.v3.oas.annotations.parameters.RequestBody(description = "以List傳入欲移至垃圾桶的檔案或目錄ID，並註明資料種類",
-                                        content = @Content(examples = {
-                                                @ExampleObject(value = "[{\"id\": \"1710573934860890113\", \"dataType\": \"0\"}, {\"id\": \"1716111892070346754\", \"dataType\": \"1\"}]")
-                                        }))List<DriveDto> listDto
-            , @AuthenticationPrincipal MyUserDetails myUserDetails){
-        
+    @Operation(summary = "[Update] 批次移至垃圾桶", description = "[version 1.0] <br> 會檢查資料是否來自同一層(父目錄)", responses = {
+            @ApiResponse(responseCode = "200", content = @Content),
+            @ApiResponse(responseCode = "400", description = "Not from same parent", content = @Content)})
+    public Result gotoTrash(@io.swagger.v3.oas.annotations.parameters.RequestBody(description = "以List傳入檔案或目錄ID，並註明資料種類", content = @Content(
+            examples = {@ExampleObject(value = "[{\"id\": \"1698350322036805633\", \"dataType\": \"0\"}, {\"id\": \"1716111892070346754\", \"dataType\": \"1\"}]")}))
+                                @org.springframework.web.bind.annotation.RequestBody @NotNull List<DriveDto> listDto,
+                            @AuthenticationPrincipal MyUserDetails myUserDetails){
+
         Long userId = validateService.checkUserAndListDto(myUserDetails, listDto);
         driveDtoService.gotoTrash(userId, listDto);
         return Result.success();
     }
-
-    @Operation(summary = "[Update] 批次從垃圾桶還原")
     @PostMapping("/drive/recover")
-    public Result recover(@NotNull @org.springframework.web.bind.annotation.RequestBody
-                              @io.swagger.v3.oas.annotations.parameters.RequestBody(description = "以List傳入欲還原的檔案或目錄ID，並註明資料種類",
-                                      content = @Content(examples = {
-                                              @ExampleObject(value = "[{\"id\": \"1710573934860890113\", \"dataType\": \"0\"}, {\"id\": \"1716111892070346754\", \"dataType\": \"1\"}]")
-                                      })) List<DriveDto> listDto
-            , @AuthenticationPrincipal MyUserDetails myUserDetails){
-        
+    @Operation(summary = "[Update] 批次從垃圾桶還原", description = "[version 1.0]")
+    public Result recover(@io.swagger.v3.oas.annotations.parameters.RequestBody(description = "以List傳入檔案或目錄ID，並註明資料種類", content = @Content(
+            examples = {@ExampleObject(value = "[{\"id\": \"1698350322036805633\", \"dataType\": \"0\"}, {\"id\": \"1716111892070346754\", \"dataType\": \"1\"}]")}))
+            @org.springframework.web.bind.annotation.RequestBody @NotNull List<DriveDto> listDto,
+                          @AuthenticationPrincipal MyUserDetails myUserDetails){
+
         Long userId = validateService.checkUserAndListDto(myUserDetails, listDto);
         driveDtoService.recover(userId, listDto);
         return Result.success();
     }
-
-    @Operation(summary = "[Delete] 清空垃圾桶")
+    // ----------------------------------Delete---------------------------------- //
     @PostMapping("/drive/clean")
+    @Operation(summary = "[Delete] 清空垃圾桶", description = "[version 1.0]")
     public Result clean(@AuthenticationPrincipal MyUserDetails myUserDetails){
         
         if(Objects.isNull(myUserDetails)) throw new UnauthorizedException(ExceptionEnum.GUEST_NOT_ALLOWED);
@@ -260,14 +272,12 @@ public class DataManagerController {
         return Result.success();
     }
 
-    @Operation(summary = "[Delete] 批次立即刪除")
     @PostMapping("/drive/softDelete")
-    public Result softDelete(@NotNull @org.springframework.web.bind.annotation.RequestBody
-                                 @io.swagger.v3.oas.annotations.parameters.RequestBody(description = "以List傳入欲立即刪除的檔案或目錄ID，並註明資料種類",
-                                         content = @Content(examples = {
-                                                 @ExampleObject(value = "[{\"id\": \"1710573934860890113\", \"dataType\": \"0\"}, {\"id\": \"1716111892070346754\", \"dataType\": \"1\"}]")
-                                         })) List<DriveDto> listDto
-    , @AuthenticationPrincipal MyUserDetails myUserDetails){
+    @Operation(summary = "[Delete] 批次立即刪除", description = "[version 1.0]")
+    public Result softDelete(@io.swagger.v3.oas.annotations.parameters.RequestBody(description = "以List傳入檔案或目錄ID，並註明資料種類", content = @Content(
+            examples = {@ExampleObject(value = "[{\"id\": \"1698350322036805633\", \"dataType\": \"0\"}, {\"id\": \"1716111892070346754\", \"dataType\": \"1\"}]")}))
+                                 @org.springframework.web.bind.annotation.RequestBody @NotNull List<DriveDto> listDto,
+                             @AuthenticationPrincipal MyUserDetails myUserDetails){
         
         Long userId = validateService.checkUserAndListDto(myUserDetails, listDto);
         driveDtoService.softDelete(userId, listDto);
