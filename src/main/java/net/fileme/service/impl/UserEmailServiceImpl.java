@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import net.fileme.domain.dto.EmailDto;
 import net.fileme.domain.dto.TokenDto;
+import net.fileme.domain.dto.UserDto;
 import net.fileme.domain.mapper.UserMapper;
 import net.fileme.domain.pojo.EmailTemplate;
 import net.fileme.domain.pojo.User;
@@ -52,7 +53,7 @@ public class UserEmailServiceImpl extends ServiceImpl<UserMapper, User>
 
     // ----------------------------Sign Up----------------------------- //
     @Override
-    public User createUser(User guest){
+    public User createUser(UserDto guest){
         String tmpPassword = guest.getPassword();
         String password = passwordEncoder.encode(tmpPassword);
 
@@ -68,7 +69,7 @@ public class UserEmailServiceImpl extends ServiceImpl<UserMapper, User>
         TokenDto dto = lookUpToken(token);
         boolean success = doSignUp(dto);
         if(!success){
-            throw new ConflictException(ExceptionEnum.SIGN_UP_FAIL);
+            throw new InternalErrorException(ExceptionEnum.SIGN_UP_FAIL);
         }
     }
     public boolean doSignUp(TokenDto dto){
@@ -92,16 +93,15 @@ public class UserEmailServiceImpl extends ServiceImpl<UserMapper, User>
         luw.set(User::getPassword, password)
                 .eq(User::getId, userId)
                 .eq(User::getState, 0);
-        update(luw); // TODO: 要擋
+        boolean success = update(luw);
+        if(!success) throw new InternalErrorException(ExceptionEnum.CHANGE_PWD_FAIL);
     }
     // ----------------------------Change Email----------------------------- //
     @Override
     public TokenDto processChangeEmail(String token){
         TokenDto dto = lookUpToken(token);
         boolean success = doChangeEmail(dto);
-        if(!success){
-            throw new ConflictException(ExceptionEnum.CHANGE_EMAIL_FAIL);
-        }
+        if(!success) throw new InternalErrorException(ExceptionEnum.CHANGE_EMAIL_FAIL);
         return dto;
     }
 
@@ -236,7 +236,7 @@ public class UserEmailServiceImpl extends ServiceImpl<UserMapper, User>
             if(currentIssueNo != null && currentIssueNo != 0 && Objects.equals(currentIssueNo, dtoIssueNo)){
                 return dto;
             }else{
-                throw new UnauthorizedException(ExceptionEnum.WRONG_TOKEN_VERSION);
+                throw new ConflictException(ExceptionEnum.WRONG_TOKEN_VERSION);
             }
         }
     }

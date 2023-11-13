@@ -1,12 +1,13 @@
 package net.fileme.service;
 
 import net.fileme.domain.dto.TokenDto;
+import net.fileme.domain.dto.UserDto;
 import net.fileme.domain.pojo.User;
 import net.fileme.enums.EmailTemplateEnum;
 
 public interface UserEmailService{
     // ----------------------------Sign Up---------------------------- //
-    User createUser(User guest);
+    User createUser(UserDto guest);
     void processSignUp(String token);
 
     // ----------------------------Change Password----------------------------- //

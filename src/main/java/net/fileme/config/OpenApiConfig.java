@@ -38,8 +38,8 @@ public class OpenApiConfig {
     @Bean
     public GroupedOpenApi publicApi(){
         return GroupedOpenApi.builder()
-                .group("公開API")
-                .pathsToMatch("/pub/**")
+                .group("public API")
+                .pathsToMatch("/pub/**", "/support/**")
                 .build();
     }
     @Bean
@@ -47,6 +47,13 @@ public class OpenApiConfig {
         return GroupedOpenApi.builder()
                 .group("drive API")
                 .pathsToMatch("/drive/**")
+                .build();
+    }
+    @Bean
+    public GroupedOpenApi userApi(){
+        return GroupedOpenApi.builder()
+                .group("user API")
+                .pathsToMatch("/user/**", "/support/**")
                 .build();
     }
 }

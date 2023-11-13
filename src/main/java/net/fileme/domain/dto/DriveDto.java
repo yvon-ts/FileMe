@@ -3,7 +3,7 @@ package net.fileme.domain.dto;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 
-import javax.validation.constraints.NotEmpty;
+import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Pattern;
 import javax.validation.groups.Default;
@@ -21,7 +21,7 @@ public class DriveDto {
     @Schema(description = "資料名稱",
             example = "範例名稱")
     @Pattern(regexp = "^(?=.{1,32}$)(?![_.])[\\p{L}\\p{Nd}_.-]+(?<![_.])$")
-    @NotEmpty
+    @NotBlank
     private String dataName;
 
     @Schema(description = "資料種類 (0目錄，1檔案)",

@@ -118,7 +118,7 @@ public class FileServiceImpl extends ServiceImpl<FileMapper, File>
         }catch(MimeTypeException e){
             throw new BadRequestException(ExceptionEnum.FILE_TYPE_ERROR);
         }catch(IOException e){
-            throw new BadRequestException(ExceptionEnum.FILE_IO_ERROR);
+            throw new InternalErrorException(ExceptionEnum.FILE_IO_ERROR);
         }
         return file;
     }

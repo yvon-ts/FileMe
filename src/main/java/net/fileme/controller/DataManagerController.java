@@ -31,7 +31,7 @@ import javax.servlet.http.HttpServletResponse;
 import javax.validation.constraints.NotNull;
 import java.util.*;
 
-@Tag(name = "File/Folder API")
+@Tag(name = "File / Folder")
 @RestController
 @PropertySource("classpath:credentials.properties")
 
@@ -54,8 +54,11 @@ public class DataManagerController {
     private ValidateService validateService;
 
     // ----------------------------------Create---------------------------------- //
-    @Operation(summary = "[Create] 新增檔案")
     @PostMapping(value = "/drive/file")
+    @Operation(summary = "[Create] 新增檔案", description = "[version 1.0] <br> 可接受的檔案類型：<ul><li>JPG/GIF/PNG</li><li>ZIP</li><li>JSON/XML/HTML/JS/CSS/SQL/LOG</li><li>PDF/TXT/CSV</li><li>DOC/XLS/DOCX/XLSX/PPT/PPTX</li></ul>",
+            responses = {@ApiResponse(responseCode = "200", content = @Content),
+                    @ApiResponse(responseCode = "400", description = "Regex not matched or File type not Allowed", content = @Content),
+                    @ApiResponse(responseCode = "404", description = "Parent folder not found", content = @Content)})
     public Result createFile(@io.swagger.v3.oas.annotations.parameters.RequestBody(description = "檔案",
             content = @Content(mediaType = "multipart/form-data",
             schema = @Schema(type = "object"),
@@ -74,7 +77,10 @@ public class DataManagerController {
         return Result.success();
     }
     @PostMapping("/drive/folder")
-    @Operation(summary = "[Create] 新增目錄", description = "[version 1.0]")
+    @Operation(summary = "[Create] 新增目錄", description = "[version 1.0]",
+            responses = {@ApiResponse(responseCode = "200", content = @Content),
+                    @ApiResponse(responseCode = "400", description = "Regex not matched", content = @Content),
+                    @ApiResponse(responseCode = "404", description = "Parent folder not found", content = @Content)})
     public Result createFolder(@io.swagger.v3.oas.annotations.parameters.RequestBody(description = "目錄名稱及父目錄ID", content = @Content(
             examples = {@ExampleObject(value = "{\"dataName\": \"範例名稱\", \"parentId\": \"0\"}")}))
                                    @org.springframework.web.bind.annotation.RequestBody @Validated(DriveDto.Create.class) DriveDto dto,
@@ -211,7 +217,7 @@ public class DataManagerController {
     @Operation(summary = "[Read] 取得所有子目錄 (self excluded)", description = "[version 1.0] <br><ul><li>列出有相同父目錄(=同一層)的所有目錄</li><li>配合relocate使用時，需傳入欲移動資料的「父目錄」ID</li></ul>",
             responses = {
             @ApiResponse(responseCode = "200", content = @Content),
-            @ApiResponse(responseCode = "400", description = "Param error: system folders not accepted", content = @Content)})
+            @ApiResponse(responseCode = "400", description = "System folders not accepted", content = @Content)})
     public Result<List<DriveDto>> getRelocateSub(@Parameter(description = "目錄ID", content = @Content(
             schema = @Schema(type = "string", example = "1698350322036805633"))) @RequestParam @NotNull Long folderId,
                                                  @AuthenticationPrincipal MyUserDetails myUserDetails){

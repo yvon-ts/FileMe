@@ -61,15 +61,14 @@ public class ValidateServiceImpl implements ValidateService {
         if(!Pattern.matches(regexPwd, pwd)) throw new BadRequestException(ExceptionEnum.PWD_REGEX_ERROR);
     }
 
-    public boolean filterUserName(String username){
-        if(Pattern.matches(regexUsernameForbidden, username)) return true;
-        return false;
+    public void regexUsername(String username){
+        if(!Pattern.matches(regexUsernameForbidden, username)) throw new BadRequestException(ExceptionEnum.USERNAME_REGEX_ERROR);
     }
 
     @Override
     public void checkUserName(String username){
         if(StringUtils.isBlank(username)) throw new BadRequestException(ExceptionEnum.PARAM_ERROR);
-        if(!filterUserName(username)) throw new BadRequestException(ExceptionEnum.USERNAME_REGEX_ERROR);
+        regexUsername(username);
         LambdaQueryWrapper<User> lqw = new LambdaQueryWrapper<>();
         lqw.eq(User::getUsername, username).ne(User::getState, 99); // invalid user
         Integer count = userMapper.selectCount(lqw);
@@ -78,6 +77,7 @@ public class ValidateServiceImpl implements ValidateService {
     @Override
     public void checkEmail(String email){
         if(StringUtils.isBlank(email)) throw new BadRequestException(ExceptionEnum.PARAM_ERROR);
+        regexEmail(email);
         LambdaQueryWrapper<User> lqw = new LambdaQueryWrapper<>();
         lqw.eq(User::getEmail, email).ne(User::getState, 99); // invalid user
         Integer count = userMapper.selectCount(lqw);
@@ -97,7 +97,7 @@ public class ValidateServiceImpl implements ValidateService {
         if(trashId.equals(folderId)) throw new BadRequestException(ExceptionEnum.PARAM_ERROR);
         if(!rootId.equals(folderId)){
             DriveDto folder = driveDtoMapper.getOneFolder(userId, folderId);
-            if(Objects.isNull(folder)) throw new BadRequestException(ExceptionEnum.NO_SUCH_DATA);
+            if(Objects.isNull(folder)) throw new NotFoundException(ExceptionEnum.NO_SUCH_DATA);
             return folder;
         }
         return null; // do nothing when folder = root
@@ -105,14 +105,14 @@ public class ValidateServiceImpl implements ValidateService {
     @Override
     public DriveDto checkFile(Long userId, Long fileId){
         DriveDto file = driveDtoMapper.getOneFile(userId, fileId);
-        if(Objects.isNull(file)) throw new BadRequestException(ExceptionEnum.NO_SUCH_DATA);
+        if(Objects.isNull(file)) throw new NotFoundException(ExceptionEnum.NO_SUCH_DATA);
         return file;
     }
     @Override
     public DriveDto checkPublicFolder(Long folderId){
         if(rootId.equals(folderId) || trashId.equals(folderId)) throw new BadRequestException(ExceptionEnum.PARAM_ERROR);
         DriveDto folder = driveDtoMapper.getPublicFolder(folderId);
-        if(Objects.isNull(folder)) throw new BadRequestException(ExceptionEnum.NO_SUCH_DATA);
+        if(Objects.isNull(folder)) throw new NotFoundException(ExceptionEnum.NO_SUCH_DATA);
         return folder;
     }
     @Override

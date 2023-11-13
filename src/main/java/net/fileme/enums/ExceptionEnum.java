@@ -7,6 +7,26 @@ import lombok.Getter;
 @AllArgsConstructor
 /**
  * should upgrade and separate msg for admin/client
+ * 前端：
+ * 1=可直接顯示
+ * 2=顯示替代文字
+ * 9=僅後端使用
+ *
+ * 後端：
+ * 0=前端異常,框架validation
+ * 1=自定義method validation
+ * 2=後端邏輯
+ * 3=DB
+ * 4=OS
+ * 5=Redis
+ *
+ * 種類：
+ * 0=general
+ * 1=user
+ * 2=folder
+ * 3=file
+ * 4=auth/token
+ * 5=email
  */
 public enum ExceptionEnum {
 
@@ -56,9 +76,10 @@ public enum ExceptionEnum {
     , VIOLATE_KEY(23011, "DB鍵值衝突")
     
     , SIGN_UP_FAIL(23110, "註冊失敗")
-    , CHANGE_EMAIL_FAIL(23111, "變更信箱失敗")
-    , PWD_RESET_FAIL(23112, "重置密碼失敗")
-    , USER_STATE_ERROR(23113, "變更會員狀態失敗")
+    , CHANGE_PWD_FAIL(23111, "變更信箱失敗")
+    , CHANGE_EMAIL_FAIL(23112, "變更信箱失敗")
+    , PWD_RESET_FAIL(23113, "重置密碼失敗")
+    , USER_STATE_ERROR(23114, "會員狀態異常")
 
     , SET_FOLDER_ACCESS_FAIL(23210, "目錄權限變更失敗")
     , FOLDER_RENAME_FAIL(23211, "目錄名稱變更失敗")
