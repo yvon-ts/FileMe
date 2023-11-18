@@ -14,6 +14,8 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 
@@ -40,7 +42,11 @@ public class LoginServiceImpl implements LoginService {
         String jwt = JwtUtil.createJWT(userId);
         redisCache.setObj("login:" + userId, myUserDetails, timeout, timeUnit);
 
-        return Result.success(jwt);
+        Map<String, String> loginData = new HashMap<>();
+        loginData.put("userId", userId);
+        loginData.put("token", jwt);
+
+        return Result.success(loginData);
     }
     @Override
     public Result logout(){

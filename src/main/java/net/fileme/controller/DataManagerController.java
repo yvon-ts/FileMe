@@ -97,11 +97,11 @@ public class DataManagerController {
 
     @PostMapping("/drive/my-drive")
     @Operation(summary = "[Read] 瀏覽根目錄", description = "[version 1.0]")
-    @PreAuthorize("hasAuthority('admin') OR authentication.principal.user.getId().equals(#dto.getUserId())")
+    @PreAuthorize("hasAuthority('admin') OR authentication.principal.user.getId().equals(#dto.getId())")
     public Result<List<DriveDto>> getMyDrive(@io.swagger.v3.oas.annotations.parameters.RequestBody(description = "使用者ID",
             content = @Content(schema = @Schema(type = "string", example = "1710573934860890113")))
-                                                 @org.springframework.web.bind.annotation.RequestBody @NotNull Long userId) {
-        return driveDtoService.getSub(userId, rootId);
+                                                 @org.springframework.web.bind.annotation.RequestBody @NotNull IdDto dto) {
+        return driveDtoService.getSub(dto.getId(), rootId);
     }
 
     @GetMapping("/pub/drive/{folderId}")

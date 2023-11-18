@@ -39,7 +39,7 @@ public class OpenApiConfig {
     public GroupedOpenApi publicApi(){
         return GroupedOpenApi.builder()
                 .group("public API")
-                .pathsToMatch("/pub/**", "/support/**")
+                .pathsToMatch("/pub/**", "/support/**", "/user/login")
                 .build();
     }
     @Bean
