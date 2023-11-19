@@ -53,15 +53,13 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             log.error(ex.getClass().toString());
             log.error("token: " + token);
             log.error(ex.getMessage());
-            request.setAttribute("errMsg", ExceptionEnum.TOKEN_SIGNATURE_ERROR.getDesc());
-            request.getRequestDispatcher("/access-denied").forward(request, response);
+            request.getRequestDispatcher("/token-sign-error").forward(request, response);
             return;
         }catch(ExpiredJwtException ex) {
             log.error(ex.getClass().toString());
             log.error("token: " + token);
             log.error(ex.getMessage());
-            request.setAttribute("errMsg", ExceptionEnum.EXPIRED_TOKEN.getDesc());
-            request.getRequestDispatcher("/access-denied").forward(request, response);
+            request.getRequestDispatcher("/token-expired").forward(request, response);
             return;
         }
 
@@ -69,8 +67,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         MyUserDetails myUserDetails = redisCache.getRedisValue("login:" + userId);
         if(Objects.isNull(myUserDetails)){
             log.error(ExceptionEnum.GUEST_NOT_ALLOWED.toStringDetails());
-            request.setAttribute("errMsg", ExceptionEnum.GUEST_NOT_ALLOWED.getDesc());
-            request.getRequestDispatcher("/access-denied").forward(request, response);
+            request.getRequestDispatcher("/guest-not-allowed").forward(request, response);
         }
 
         // encapsulate authorities

@@ -95,13 +95,13 @@ public class DataManagerController {
     }
     // ----------------------------------Read & Preview---------------------------------- //
 
-    @PostMapping("/drive/my-drive")
+    @GetMapping("/drive/my-drive")
     @Operation(summary = "[Read] 瀏覽根目錄", description = "[version 1.0]")
-    @PreAuthorize("hasAuthority('admin') OR authentication.principal.user.getId().equals(#dto.getId())")
-    public Result<List<DriveDto>> getMyDrive(@io.swagger.v3.oas.annotations.parameters.RequestBody(description = "使用者ID",
-            content = @Content(schema = @Schema(type = "string", example = "1710573934860890113")))
-                                                 @org.springframework.web.bind.annotation.RequestBody @NotNull IdDto dto) {
-        return driveDtoService.getSub(dto.getId(), rootId);
+    public Result<List<DriveDto>> getMyDrive(@AuthenticationPrincipal MyUserDetails myUserDetails) {
+        if(Objects.isNull(myUserDetails)) throw new UnauthorizedException(ExceptionEnum.GUEST_NOT_ALLOWED);
+        Long userId = myUserDetails.getUser().getId();
+
+        return driveDtoService.getSub(userId, rootId);
     }
 
     @GetMapping("/pub/drive/{folderId}")
@@ -120,12 +120,11 @@ public class DataManagerController {
 
         return driveDtoService.getSub(dto.getUserId(), dto.getDataId());
     }
-    @PostMapping("/drive/my-trash")
+    @GetMapping("/drive/my-trash")
     @Operation(summary = "[Read] 瀏覽垃圾桶資料", description = "[version 1.0]")
-    @PreAuthorize("hasAuthority('admin') OR authentication.principal.user.getId().equals(#dto.getUserId())")
-    public Result<List<DriveDto>> getMyTrash(@io.swagger.v3.oas.annotations.parameters.RequestBody(description = "使用者ID",
-            content = @Content(schema = @Schema(type = "string", example = "1710573934860890113")))
-                                 @org.springframework.web.bind.annotation.RequestBody @NotNull Long userId) {
+    public Result<List<DriveDto>> getMyTrash(@AuthenticationPrincipal MyUserDetails myUserDetails) {
+        if(Objects.isNull(myUserDetails)) throw new UnauthorizedException(ExceptionEnum.GUEST_NOT_ALLOWED);
+        Long userId = myUserDetails.getUser().getId();
 
         return driveDtoService.getSub(userId, trashId);
     }
