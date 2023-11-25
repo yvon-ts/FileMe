@@ -76,7 +76,7 @@
         from v_user_drive v
         join cte on cte.parent_id = v.data_id
         )
-        select id, data_name from cte where user_id = #{userId} order by sort desc
+        select id, data_name from cte where user_id = #{userId}
     </select>
 
     <!--  get One  -->

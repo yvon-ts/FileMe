@@ -56,8 +56,9 @@ public enum ExceptionEnum {
     , EXPIRED_TOKEN(11411, "金鑰過期，請重新登入")
     
     , WRONG_TOKEN_VERSION(11510, "驗證失敗，請查看最新信件或聯繫客服")
-    
-    , NO_SUCH_DATA(13010, "查無資料")
+
+    , EMPTY_FOLDER(13010, "暫無資料")
+    , NO_SUCH_DATA(13020, "查無資料")
     , NO_SUCH_USER(13110, "查無此使用者")
 
     , NO_SUCH_TOKEN(15410, "驗證失敗，請查看最新信件或聯繫客服")

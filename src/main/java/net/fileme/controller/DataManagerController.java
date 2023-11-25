@@ -96,7 +96,11 @@ public class DataManagerController {
     // ----------------------------------Read & Preview---------------------------------- //
 
     @GetMapping("/drive/my-drive")
-    @Operation(summary = "[Read] 瀏覽根目錄", description = "[version 1.0]")
+    @Operation(summary = "[Read] 瀏覽根目錄", description = "[version 1.0]", responses = {
+            @ApiResponse(responseCode = "200", content = @Content),
+            @ApiResponse(responseCode = "404", description = "Empty folder", content = @Content(
+                    schema = @Schema(implementation = Result.class),
+                    examples = @ExampleObject("{\"code\": 13010, \"msg\": \"暫無資料\", \"data\": null}")))})
     public Result<List<DriveDto>> getMyDrive(@AuthenticationPrincipal MyUserDetails myUserDetails) {
         if(Objects.isNull(myUserDetails)) throw new UnauthorizedException(ExceptionEnum.GUEST_NOT_ALLOWED);
         Long userId = myUserDetails.getUser().getId();
@@ -105,23 +109,37 @@ public class DataManagerController {
     }
 
     @GetMapping("/pub/drive/{folderId}")
-    @Operation(summary = "[Read] 瀏覽單個公開目錄", description = "[version 1.0] <br> 僅顯示該目錄內的公開資料")
+    @Operation(summary = "[Read] 瀏覽單個公開目錄", description = "[version 1.0] <br> 僅顯示該目錄內的公開資料", responses = {
+            @ApiResponse(responseCode = "200", content = @Content),
+            @ApiResponse(responseCode = "404", description = "Empty folder", content = @Content(
+                    schema = @Schema(implementation = Result.class),
+                    examples = @ExampleObject("{\"code\": 13010, \"msg\": \"暫無資料\", \"data\": null}")))})
     public Result<List<DriveDto>> getPublicSub(@Parameter(description = "目錄ID，範例：1698350322036805633", schema = @Schema(type = "string"))
                                                    @PathVariable @NotNull Long folderId){
         validateService.checkPublicFolder(folderId);
         return driveDtoService.getPublicSub(folderId);
     }
 
-    @PostMapping("/drive/data")
-    @Operation(summary = "[Read] 瀏覽單個目錄所有資料", description = "[version 1.0]")
-    @PreAuthorize("hasAuthority('admin') OR authentication.principal.user.getId().equals(#dto.getUserId())")
-    public Result<List<DriveDto>> getSub(@io.swagger.v3.oas.annotations.parameters.RequestBody(description = "使用者及目錄ID")
-                             @org.springframework.web.bind.annotation.RequestBody @NotNull DataOwnerDto dto){
-
-        return driveDtoService.getSub(dto.getUserId(), dto.getDataId());
+    @GetMapping("/drive/{folderId}")
+    @Operation(summary = "[Read] 瀏覽單個目錄所有資料", description = "[version 1.0]", responses = {
+            @ApiResponse(responseCode = "200", content = @Content),
+            @ApiResponse(responseCode = "404", description = "Empty folder", content = @Content(
+                    schema = @Schema(implementation = Result.class),
+                    examples = @ExampleObject("{\"code\": 13010, \"msg\": \"暫無資料\", \"data\": null}")))})
+    public Result<List<DriveDto>> getSub(@Parameter(description = "目錄ID，範例：1698350322036805633", schema = @Schema(type = "string"))
+                                             @PathVariable @NotNull Long folderId,
+                                         @AuthenticationPrincipal MyUserDetails myUserDetails){
+        if(Objects.isNull(myUserDetails)) throw new UnauthorizedException(ExceptionEnum.GUEST_NOT_ALLOWED);
+        if(rootId.equals(folderId) || trashId.equals(folderId)) throw new BadRequestException(ExceptionEnum.PARAM_ERROR);
+        Long userId = myUserDetails.getUser().getId();
+        return driveDtoService.getSub(userId, folderId);
     }
     @GetMapping("/drive/my-trash")
-    @Operation(summary = "[Read] 瀏覽垃圾桶資料", description = "[version 1.0]")
+    @Operation(summary = "[Read] 瀏覽垃圾桶資料", description = "[version 1.0]", responses = {
+            @ApiResponse(responseCode = "200", content = @Content),
+            @ApiResponse(responseCode = "404", description = "Empty folder", content = @Content(
+                    schema = @Schema(implementation = Result.class),
+                    examples = @ExampleObject("{\"code\": 13010, \"msg\": \"暫無資料\", \"data\": null}")))})
     public Result<List<DriveDto>> getMyTrash(@AuthenticationPrincipal MyUserDetails myUserDetails) {
         if(Objects.isNull(myUserDetails)) throw new UnauthorizedException(ExceptionEnum.GUEST_NOT_ALLOWED);
         Long userId = myUserDetails.getUser().getId();
@@ -216,13 +234,17 @@ public class DataManagerController {
     @Operation(summary = "[Read] 取得所有子目錄 (self excluded)", description = "[version 1.0] <br><ul><li>列出有相同父目錄(=同一層)的所有目錄</li><li>配合relocate使用時，需傳入欲移動資料的「父目錄」ID</li></ul>",
             responses = {
             @ApiResponse(responseCode = "200", content = @Content),
-            @ApiResponse(responseCode = "400", description = "System folders not accepted", content = @Content)})
+            @ApiResponse(responseCode = "400", description = "System folders not accepted", content = @Content)
+//            ,@ApiResponse(responseCode = "404", description = "Empty folder", content = @Content(
+//                    schema = @Schema(implementation = Result.class),
+//                    examples = @ExampleObject("{\"code\": 13010, \"msg\": \"暫無資料\", \"data\": null}")))
+    })
     public Result<List<DriveDto>> getRelocateSub(@Parameter(description = "目錄ID", content = @Content(
             schema = @Schema(type = "string", example = "1698350322036805633"))) @RequestParam @NotNull Long folderId,
                                                  @AuthenticationPrincipal MyUserDetails myUserDetails){
 
         if(Objects.isNull(myUserDetails)) throw new UnauthorizedException(ExceptionEnum.GUEST_NOT_ALLOWED);
-        if(rootId.equals(folderId) || trashId.equals(folderId)) throw new BadRequestException(ExceptionEnum.PARAM_ERROR);
+        if(trashId.equals(folderId)) throw new BadRequestException(ExceptionEnum.PARAM_ERROR);
 
         Long userId = myUserDetails.getUser().getId();
         List<DriveDto> subFolders = driveDtoService.getSubFolders(userId, folderId);
