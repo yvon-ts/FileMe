@@ -20,7 +20,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.PropertySource;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -156,14 +155,17 @@ public class DataManagerController {
 
         return driveDtoService.previewPublic(fileId);
     }
-    @PostMapping("/drive/preview")
+    @GetMapping("/drive/preview/{fileId}")
     @Operation(summary = "[Read] 預覽單個檔案", description = "[version 1.0] <br> 僅能預覽圖檔 (JPG/GIF/PNG)",
             responses = {@ApiResponse(responseCode = "200", content = @Content),
                     @ApiResponse(responseCode = "403", description = "Preview not Allowed", content = @Content)})
-    @PreAuthorize("hasAuthority('admin') OR authentication.principal.user.getId().equals(#dto.getUserId())")
-    public ResponseEntity previewPersonal(@NotNull @RequestBody DataOwnerDto dto){
+    public ResponseEntity previewPersonal(@Parameter(description = "檔案ID，範例：1698350322036805633", schema = @Schema(type = "string"))
+                                              @NotNull @PathVariable Long fileId,
+                                          @AuthenticationPrincipal MyUserDetails myUserDetails){
+        if(Objects.isNull(myUserDetails)) throw new UnauthorizedException(ExceptionEnum.GUEST_NOT_ALLOWED);
+        Long userId = myUserDetails.getUser().getId();
 
-        return driveDtoService.previewPersonal(dto.getUserId(), dto.getDataId());
+        return driveDtoService.previewPersonal(userId, fileId);
     }
     // ----------------------------------Download---------------------------------- //
     @GetMapping("/pub/drive/download/{fileId}")
@@ -175,16 +177,18 @@ public class DataManagerController {
 
         return driveDtoService.downloadPublic(fileId, response);
     }
-    @PostMapping("/drive/download")
+    @GetMapping("/drive/download/{fileId}")
     @Operation(summary = "[Read] 下載單個檔案", description = "[version 1.0]", responses = {
             @ApiResponse(responseCode = "200", content = @Content)})
-    @PreAuthorize("hasAuthority('admin') OR authentication.principal.user.getId().equals(#dto.getUserId())")
     public ResponseEntity<ByteArrayResource> downloadPersonal(
-            @io.swagger.v3.oas.annotations.parameters.RequestBody(description = "使用者及檔案ID")
-            @org.springframework.web.bind.annotation.RequestBody @NotNull DataOwnerDto dto
-            , HttpServletResponse response){
+            @Parameter(description = "檔案ID，範例：1698350322036805633", schema = @Schema(type = "string"))
+            @NotNull @PathVariable Long fileId,
+            @AuthenticationPrincipal MyUserDetails myUserDetails,
+            HttpServletResponse response){
+        if(Objects.isNull(myUserDetails)) throw new UnauthorizedException(ExceptionEnum.GUEST_NOT_ALLOWED);
+        Long userId = myUserDetails.getUser().getId();
 
-        return driveDtoService.downloadPersonal(dto.getUserId(), dto.getDataId(), response);
+        return driveDtoService.downloadPersonal(userId, fileId, response);
     }
     // ----------------------------------Update: access level & shared link---------------------------------- //
     @PostMapping("/drive/access-control")
@@ -224,6 +228,7 @@ public class DataManagerController {
                                    @AuthenticationPrincipal MyUserDetails myUserDetails){
 
         if(Objects.isNull(myUserDetails)) throw new UnauthorizedException(ExceptionEnum.GUEST_NOT_ALLOWED);
+        if(rootId.equals(folderId) || trashId.equals(folderId)) throw new BadRequestException(ExceptionEnum.PARAM_ERROR);
         Long userId = myUserDetails.getUser().getId();
 
         List<DriveDto> superFolders = driveDtoService.getSuperFolderTree(userId, folderId);

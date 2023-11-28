@@ -18,6 +18,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.ByteArrayResource;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -78,14 +79,14 @@ public class DriveDtoServiceImpl implements DriveDtoService {
     @Override
     public Result getPublicSub(Long folderId){
         List<DriveDto> publicData = driveDtoMapper.getPublicSub(folderId);
-        if(CollectionUtils.isEmpty(publicData)) throw new NotFoundException(ExceptionEnum.NO_SUCH_DATA);
+//        if(CollectionUtils.isEmpty(publicData)) throw new NotFoundException(ExceptionEnum.EMPTY_FOLDER);
 
         return Result.success(publicData);
     }
     @Override
     public Result getSub(Long userId, Long folderId){
         List<DriveDto> privateData = driveDtoMapper.getSub(userId, folderId);
-        if(CollectionUtils.isEmpty(privateData)) throw new NotFoundException(ExceptionEnum.NO_SUCH_DATA);
+//        if(CollectionUtils.isEmpty(privateData)) throw new NotFoundException(ExceptionEnum.EMPTY_FOLDER);
 
         return Result.success(privateData);
     }
@@ -155,6 +156,10 @@ public class DriveDtoServiceImpl implements DriveDtoService {
         if(!StringUtils.hasText(path)) throw new NotFoundException(ExceptionEnum.NO_SUCH_DATA);
         java.io.File file = new java.io.File(path);
         ByteArrayResource resource = null;
+        HttpHeaders headers = new HttpHeaders();
+        headers.add("Content-Disposition", "attachment;filename=" + new String(fileName.getBytes(StandardCharsets.UTF_8), StandardCharsets.ISO_8859_1));
+        // for front-end axios to get filename
+        headers.add("Access-Control-Expose-Headers","Content-Disposition");
         try{
             byte[] bytes = FileCopyUtils.copyToByteArray(file);
             resource = new ByteArrayResource(bytes);
@@ -162,7 +167,8 @@ public class DriveDtoServiceImpl implements DriveDtoService {
             throw new InternalErrorException(ExceptionEnum.FILE_IO_ERROR);
         }
         return ResponseEntity.ok()
-                .header("Content-Disposition","attachment;filename=" + new String(fileName.getBytes(StandardCharsets.UTF_8), StandardCharsets.ISO_8859_1))
+//                .header("Content-Disposition","attachment;filename=" + new String(fileName.getBytes(StandardCharsets.UTF_8), StandardCharsets.ISO_8859_1))
+                .headers(headers)
                 .contentLength(file.length())
                 .contentType(MediaType.APPLICATION_OCTET_STREAM)
                 .body(resource);
@@ -231,7 +237,7 @@ public class DriveDtoServiceImpl implements DriveDtoService {
     @Override
     public List<DriveDto> getSubFolders(Long userId, Long folderId){
         List<DriveDto> list = driveDtoMapper.getSubFolders(userId, folderId);
-        if(CollectionUtils.isEmpty(list)) throw new NotFoundException(ExceptionEnum.NO_SUCH_DATA);
+//        if(CollectionUtils.isEmpty(list)) throw new NotFoundException(ExceptionEnum.NO_SUCH_DATA);
         return list;
     }
     // ----------------------------------Delete: clean & recover---------------------------------- //
