@@ -19,5 +19,7 @@ public interface FileService extends IService<File>, DataManagerService {
 
     void rename(Long dataId, String newName, Long userId);
 
+    void softDeleteByFileName(Long userId, String fileName);
+
     void hardDelete(List<Long> fileIds);
 }

@@ -150,6 +150,11 @@ public class FileServiceImpl extends ServiceImpl<FileMapper, File>
         File file = handlePartFile(part);
         file.setUserId(userId);
         file.setFolderId(folderId);
+//        try{
+//            save(file); //TODO:
+//        }catch(DuplicateKeyException ex){
+//            System.out.println("檔名衝突，替換");
+//        }
         save(file);
         upload(part, file);
     }
@@ -186,10 +191,14 @@ public class FileServiceImpl extends ServiceImpl<FileMapper, File>
             throw new NotFoundException(ExceptionEnum.FILE_RELOCATE_FAIL);
         }
     }
-
     @Override
     @Transactional
     public void gotoTrash(Long userId, List<Long> dataIds) {
+//        try{
+//
+//        }catch(DuplicateKeyException ex) {
+//
+//        }
         int successCreate = fileTrashMapper.create(userId, dataIds);
         if(successCreate == 0) throw new InternalErrorException(ExceptionEnum.CREATE_FILE_TRASH_FAIL);
         relocate(trashId, dataIds, userId);
@@ -206,18 +215,40 @@ public class FileServiceImpl extends ServiceImpl<FileMapper, File>
 
     @Override
     @Transactional
-    public void softDelete(Long userId, List<Long> dataIds){
-        int successCreate = removeListMapper.create(dataIds);
+    public void softDelete(Long userId, List<Long> fileIds){
+        int successCreate = removeListMapper.create(fileIds);
         if(successCreate == 0) throw new InternalErrorException(ExceptionEnum.CREATE_REMOVE_LIST_FAIL);
-        fileTrashMapper.deleteBatchIds(dataIds);
+        fileTrashMapper.deleteBatchIds(fileIds);
         LambdaUpdateWrapper<File> luw = new LambdaUpdateWrapper<>();
         luw.eq(File::getUserId, userId)
-                .in(File::getId, dataIds);
+                .in(File::getId, fileIds);
         boolean success = remove(luw);
         if(!success) throw new InternalErrorException(ExceptionEnum.DELETE_REMOVE_LIST_FAIL);
     }
+    @Override
+    public void softDeleteByFileName(Long userId, String fileName){
+        int dotIndex = fileName.indexOf(".");
+        if(dotIndex == -1) throw new BadRequestException(ExceptionEnum.PARAM_ERROR);
 
+        String prefix = fileName.substring(0, dotIndex);
+        String suffix = fileName.substring(dotIndex + 1);
 
+        LambdaQueryWrapper<File> lqw = new LambdaQueryWrapper<>();
+        lqw.select(File::getId)
+                .eq(File::getUserId, userId)
+                .eq(File::getFolderId, trashId)
+                .eq(File::getFileName, prefix)
+                .eq(File::getExt, suffix);
+
+        List<Long> fileIds = list(lqw)
+                .stream()
+                .map(file -> {
+                    return file.getId();
+                })
+                .collect(Collectors.toList());
+
+        softDelete(userId, fileIds);
+    }
 
     @Override // 可以再評估一下PK要流水號 or FileID, 以下尚未考慮location
     @Transactional // 尚未測試

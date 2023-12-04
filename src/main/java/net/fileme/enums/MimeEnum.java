@@ -6,36 +6,37 @@ import lombok.Getter;
 @Getter
 @AllArgsConstructor
 public enum MimeEnum {
-
     // image
-    JPG(true)
-    ,GIF(true)
-    ,PNG(true)
+    JPG(true, "image/jpeg"),
+    GIF(true, "image/gif"),
+    PNG(true, "image/png"),
 
     // archive
-    ,ZIP(false)
+    ZIP(false, "application/zip"),
 
     // programming
-    ,JSON(false)
-    ,XML(false)
-    ,HTML(false)
-    ,JS(false)
-    ,CSS(false)
-    ,SQL(false)
-    ,LOG(false)
+    JSON(false, "application/json"),
+    XML(false, "application/xml"),
+    HTML(false, "text/html"),
+    JS(false, "application/javascript"),
+    CSS(false, "text/css"),
+    SQL(false, "application/sql"),
+    LOG(false, "text/plain"),
 
     // common type
-    ,PDF(false)
-    ,TXT(false)
-    ,CSV(false)
+    PDF(false, "application/pdf"),
+    TXT(false, "text/plain"),
+    CSV(false, "text/csv"),
 
     // Microsoft Office
-    ,DOC(false)
-    ,XLS(false)
-    ,DOCX(false)
-    ,XLSX(false)
-    ,PPT(false)
-    ,PPTX(false);
+    DOC(false, "application/msword"),
+    XLS(false, "application/vnd.ms-excel"),
+    DOCX(false, "application/vnd.openxmlformats-officedocument.wordprocessingml.document"),
+    XLSX(false, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"),
+    PPT(false, "application/vnd.ms-powerpoint"),
+    PPTX(false, "application/vnd.openxmlformats-officedocument.presentationml.presentation");
 
     public final boolean allowPreview;
+    public final String mimeType;
+
 }

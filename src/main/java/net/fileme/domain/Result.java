@@ -14,7 +14,7 @@ public class Result<T> implements Serializable {
     private Integer code;
 
     @Schema(description = "回應訊息",
-            example = "範例訊息")
+            example = "Success")
     private String msg;
 
     @Schema(description = "回傳資料")

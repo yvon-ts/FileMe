@@ -2,6 +2,7 @@ package net.fileme.service.impl;
 
 import net.fileme.domain.dto.DriveDto;
 import net.fileme.domain.Result;
+import net.fileme.domain.dto.ListDriveDto;
 import net.fileme.domain.mapper.DriveDtoMapper;
 import net.fileme.domain.pojo.File;
 import net.fileme.exception.BadRequestException;
@@ -26,10 +27,13 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.FileCopyUtils;
+import org.springframework.util.ObjectUtils;
 import org.springframework.util.StringUtils;
 
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
+import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -75,7 +79,19 @@ public class DriveDtoServiceImpl implements DriveDtoService {
     }
 
     // ----------------------------------Read---------------------------------- //
+    @Override
+    public Result getPublicFolder(Long folderId){
+        DriveDto folder = driveDtoMapper.getPublicFolder(folderId);
+        if(ObjectUtils.isEmpty(folder)) throw new NotFoundException(ExceptionEnum.NO_SUCH_DATA);
+        List<DriveDto> publicData = driveDtoMapper.getPublicSub(folderId);
+//        if(CollectionUtils.isEmpty(publicData)) throw new NotFoundException(ExceptionEnum.EMPTY_FOLDER);
+        ListDriveDto listDriveDto = new ListDriveDto();
+        listDriveDto.setId(folder.getId());
+        listDriveDto.setName(folder.getDataName());
+        listDriveDto.setList(publicData);
 
+        return Result.success(listDriveDto);
+    }
     @Override
     public Result getPublicSub(Long folderId){
         List<DriveDto> publicData = driveDtoMapper.getPublicSub(folderId);
@@ -157,17 +173,25 @@ public class DriveDtoServiceImpl implements DriveDtoService {
         java.io.File file = new java.io.File(path);
         ByteArrayResource resource = null;
         HttpHeaders headers = new HttpHeaders();
-        headers.add("Content-Disposition", "attachment;filename=" + new String(fileName.getBytes(StandardCharsets.UTF_8), StandardCharsets.ISO_8859_1));
-        // for front-end axios to get filename
-        headers.add("Access-Control-Expose-Headers","Content-Disposition");
-        try{
+        String encodedFileName = null;
+
+        try {
+            // file name encoding
+            encodedFileName = URLEncoder.encode(fileName, StandardCharsets.UTF_8.toString());
+            headers.add("Content-Disposition", "attachment;filename=\"" + encodedFileName + "\"; filename*=UTF-8''" + encodedFileName);
+
+            // for front-end axios to get filename
+            headers.add("Access-Control-Expose-Headers","Content-Disposition");
+
             byte[] bytes = FileCopyUtils.copyToByteArray(file);
             resource = new ByteArrayResource(bytes);
+
+        } catch (UnsupportedEncodingException e) {
+            throw new InternalErrorException(ExceptionEnum.FILE_NAME_ERROR);
         }catch (IOException ex){
             throw new InternalErrorException(ExceptionEnum.FILE_IO_ERROR);
         }
         return ResponseEntity.ok()
-//                .header("Content-Disposition","attachment;filename=" + new String(fileName.getBytes(StandardCharsets.UTF_8), StandardCharsets.ISO_8859_1))
                 .headers(headers)
                 .contentLength(file.length())
                 .contentType(MediaType.APPLICATION_OCTET_STREAM)
@@ -307,5 +331,12 @@ public class DriveDtoServiceImpl implements DriveDtoService {
         if(!CollectionUtils.isEmpty(fileIds)){
             fileService.softDelete(userId, new ArrayList<>(fileIds)); // workaround casting
         }
+    }
+
+    @Override
+    @Transactional
+    public void conflictTrash(Long userId, DriveDto dto) {
+        fileService.softDeleteByFileName(userId, dto.getDataName());
+        fileService.gotoTrash(userId, new ArrayList<Long>(Arrays.asList(dto.getId())));
     }
 }

@@ -12,6 +12,9 @@ public class ListDriveDto {
     @NotNull
     private Long id;
 
+    @Schema(description = "名稱 (詳見個別API用途)", example = "範例名稱")
+    private String name;
+
     @Schema(description = "資料清單",
             example = "[{\"id\": \"1698350322036805633\", \"dataType\": \"0\"}, {\"id\": \"1716111892070346754\", \"dataType\": \"1\"}]")
     @NotNull

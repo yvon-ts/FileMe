@@ -4,6 +4,7 @@ import net.fileme.domain.Result;
 import net.fileme.domain.dto.DriveDto;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.http.ResponseEntity;
+import org.springframework.transaction.annotation.Transactional;
 
 import javax.servlet.http.HttpServletResponse;
 import java.util.List;
@@ -11,6 +12,7 @@ import java.util.List;
 public interface DriveDtoService {
 
     // ----------------------------------Read---------------------------------- //
+    Result getPublicFolder(Long folderId);
     Result getPublicSub(Long folderId);
     Result getSub(Long userId, Long folderId);
     ResponseEntity previewPublic(Long fileId);
@@ -35,4 +37,6 @@ public interface DriveDtoService {
 
     // ----------------------------------specific handling---------------------------------- //
     boolean sameParentCheck(Long userId, List<DriveDto> list);
+    @Transactional
+    void conflictTrash(Long userId, DriveDto dto);
 }
