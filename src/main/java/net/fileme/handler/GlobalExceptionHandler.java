@@ -31,7 +31,7 @@ public class GlobalExceptionHandler {
 
     private static Logger log = LoggerFactory.getLogger(GlobalExceptionHandler.class);
 
-    private void logError(Exception ex, ExceptionEnum exceptionEnum){
+    public static void logError(Exception ex, ExceptionEnum exceptionEnum){
         ServletRequestAttributes attributes = (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
         String uri = attributes.getRequest().getRequestURI();
         StringBuilder builder = new StringBuilder();

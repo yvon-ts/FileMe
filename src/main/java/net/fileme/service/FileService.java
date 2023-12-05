@@ -15,8 +15,6 @@ public interface FileService extends IService<File>, DataManagerService {
 
     File handlePartFile(MultipartFile multipartFile);
     void upload(MultipartFile multipartFile, File file);
-    void createFile(MultipartFile multipartFile, Long userId, Long folderId);
-
     void rename(Long dataId, String newName, Long userId);
 
     void softDeleteByFileName(Long userId, String fileName);

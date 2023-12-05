@@ -10,6 +10,7 @@ import net.fileme.exception.InternalErrorException;
 import net.fileme.exception.NotFoundException;
 import net.fileme.enums.ExceptionEnum;
 import net.fileme.enums.MimeEnum;
+import net.fileme.handler.GlobalExceptionHandler;
 import net.fileme.service.DriveDtoService;
 import net.fileme.service.FileService;
 import net.fileme.service.FolderService;
@@ -19,6 +20,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.ByteArrayResource;
+import org.springframework.dao.DuplicateKeyException;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -29,6 +31,7 @@ import org.springframework.util.CollectionUtils;
 import org.springframework.util.FileCopyUtils;
 import org.springframework.util.ObjectUtils;
 import org.springframework.util.StringUtils;
+import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
@@ -66,6 +69,12 @@ public class DriveDtoServiceImpl implements DriveDtoService {
                 .map(DriveDto::getId)
                 .collect(Collectors.toSet());
     }
+    public List<String> filterNameByType(List<DriveDto> list, int type){
+        return list.stream()
+                .filter(dto -> dto.getDataType() == type)
+                .map(DriveDto::getDataName)
+                .collect(Collectors.toList());
+    }
     @Override
     public boolean sameParentCheck(Long userId, List<DriveDto> list){
         List<Long> dataIds = list.stream()
@@ -78,6 +87,53 @@ public class DriveDtoServiceImpl implements DriveDtoService {
         return true;
     }
 
+    // ----------------------------------Create---------------------------------- //
+    @Override
+    @Transactional
+    public void createFile(MultipartFile part, Long userId, Long folderId){
+        File file = fileService.handlePartFile(part);
+        file.setUserId(userId);
+        file.setFolderId(folderId);
+        try{
+            fileService.save(file);
+            fileService.upload(part, file);
+        }catch(DuplicateKeyException ex){
+            GlobalExceptionHandler.logError(ex, ExceptionEnum.UNIQUE_CONFLICT);
+            log.info("Start handling conflicted file...");
+            handleConflictedFile(part, file, userId, folderId);
+        }
+    }
+    public void reTryCreateFile(MultipartFile part, File file, Long userId, Long folderId){
+        try{
+            fileService.save(file);
+            fileService.upload(part, file);
+            log.info("Successful handle of conflicted file...");
+        }catch(DuplicateKeyException ex){
+            throw new InternalErrorException(ExceptionEnum.HANDLE_DUPLICATED_NEW_FILE_FAIL);
+        }
+    }
+    public void handleConflictedFile(MultipartFile part, File file, Long userId, Long folderId){
+        List<String> fileNames = driveDtoMapper.getSubFiles(userId, folderId)
+                .stream()
+                .map(data -> {
+                    return data.getDataName();
+                })
+                .collect(Collectors.toList());
+
+        String newName = generateNewFileName(fileNames, file);
+        file.setFileName(newName);
+
+        reTryCreateFile(part, file, userId, folderId);
+    }
+    public String generateNewFileName(List<String> fileNames, File file){
+        System.out.println(fileNames);
+        String ext = "." + file.getExt();
+        String tmpName = file.getFileName() + "-複製";
+        while(fileNames.contains(tmpName + ext)){
+            tmpName += "-複製";
+        }
+        return tmpName;
+    }
     // ----------------------------------Read---------------------------------- //
     @Override
     public Result getPublicFolder(Long folderId){
@@ -335,8 +391,16 @@ public class DriveDtoServiceImpl implements DriveDtoService {
 
     @Override
     @Transactional
-    public void conflictTrash(Long userId, DriveDto dto) {
-        fileService.softDeleteByFileName(userId, dto.getDataName());
-        fileService.gotoTrash(userId, new ArrayList<Long>(Arrays.asList(dto.getId())));
+    public void conflictTrash(Long userId, List<DriveDto> listDto) {
+        // find conflicted data in trashcan
+        List<String> folders = filterNameByType(listDto, 0);
+        List<String> files = filterNameByType(listDto, 1);
+        List<DriveDto> conflictedData = driveDtoMapper.getConflictedTrash(userId, folders, files);
+
+        // handle conflicts
+        softDelete(userId, conflictedData);
+
+        // move new data into trashcan
+        gotoTrash(userId, listDto);
     }
 }

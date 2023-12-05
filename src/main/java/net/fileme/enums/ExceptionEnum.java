@@ -75,6 +75,7 @@ public enum ExceptionEnum {
 
     , UNIQUE_CONFLICT(23010, "DB已有資料")
     , VIOLATE_KEY(23011, "DB鍵值衝突")
+    , HANDLE_DUPLICATED_NEW_FILE_FAIL(23012, "衝突檔名處理失敗(新增檔案)")
     
     , SIGN_UP_FAIL(23110, "註冊失敗")
     , CHANGE_PWD_FAIL(23111, "變更信箱失敗")

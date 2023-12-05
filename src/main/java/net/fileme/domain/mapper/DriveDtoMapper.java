@@ -18,6 +18,7 @@ public interface DriveDtoMapper extends BaseMapper<DriveDto> {
     List<DriveDto> getSub(Long userId, Long folderId);
     List<DriveDto> getSubIds(Long userId, Long folderId);
     List<DriveDto> getSubFolders(Long userId, Long folderId);
+    List<DriveDto> getSubFiles(Long userId, Long folderId);
     List<DriveDto> getSubTree(Long userId, Long folderId);
 
     // -------------------------get Super------------------------- //
@@ -35,5 +36,6 @@ public interface DriveDtoMapper extends BaseMapper<DriveDto> {
 
     // -------------------------specific handling------------------------- //
     List<Long> getDistinctParent(Long userId, List<Long> dataIds);
+    List<DriveDto> getConflictedTrash(Long userId, List<String> folders, List<String> files);
 
 }

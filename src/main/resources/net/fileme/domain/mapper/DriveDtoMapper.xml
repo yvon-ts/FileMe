@@ -53,6 +53,11 @@
         where user_id = #{userId} and parent_id = #{folderId} and data_type = 0
     </select>
 
+    <select id="getSubFiles" resultMap="driveDto">
+        select data_id id, data_name, data_type, access_level from v_user_drive
+        where user_id = #{userId} and parent_id = #{folderId} and data_type = 1
+    </select>
+
     <select id="getSubTree" resultMap="driveDto">
         with recursive cte as(
         select data_type, data_id id, data_name, parent_id, 0 as sort from v_user_drive
@@ -122,5 +127,24 @@
         <foreach collection="dataIds" item="dataId" open="(" separator="," close=")">
             #{dataId}
         </foreach>
+    </select>
+
+    <select id="getConflictedTrash" resultMap="driveDto">
+        select data_id id, data_name, data_type, parent_id from v_user_drive
+        where user_id = #{userId}
+        and parent_id = 999
+        and(
+            (data_type = 0 and data_name in
+            <foreach collection="folders" item="folder" open="(" separator="," close=")">
+                #{folder}
+            </foreach>
+            )
+            or
+            (data_type = 1 and data_name in
+            <foreach collection="files" item="file" open="(" separator="," close=")">
+                #{file}
+            </foreach>
+            )
+        )
     </select>
 </mapper>

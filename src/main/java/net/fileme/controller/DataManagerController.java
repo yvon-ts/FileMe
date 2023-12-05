@@ -66,15 +66,13 @@ public class DataManagerController {
                     @SchemaProperty(name = "folderId", schema = @Schema(type = "string", example = "1698350322036805633"))}))
             @RequestPart("file") @NotNull MultipartFile part,
                              @RequestPart @NotNull Long folderId,
-//                             @RequestParam("file") @NotNull MultipartFile part,
-//                             @RequestParam @NotNull Long folderId,
                              @AuthenticationPrincipal MyUserDetails myUserDetails) {
 
         if(Objects.isNull(myUserDetails)) throw new UnauthorizedException(ExceptionEnum.GUEST_NOT_ALLOWED);
         Long userId = myUserDetails.getUser().getId();
 
         validateService.checkFolder(userId, folderId);
-        fileService.createFile(part, userId, folderId);
+        driveDtoService.createFile(part, userId, folderId);
         return Result.success();
     }
     @PostMapping("/drive/folder")
@@ -305,19 +303,19 @@ public class DataManagerController {
         driveDtoService.clean(userId);
         return Result.success();
     }
-    @PostMapping("/drive/conflict/trash")
-    @Operation(summary = "[Delete] 處理垃圾桶衝突", description = "[version 1.0]",
-            responses = {@ApiResponse(responseCode = "200", content = @Content),
-            @ApiResponse(responseCode = "400", description = "File name error", content = @Content)})
-    public Result conflictTrash(@io.swagger.v3.oas.annotations.parameters.RequestBody(description = "傳入欲刪除的檔案ID及檔名", content = @Content(
-            examples = {@ExampleObject(value = "{\"id\": \"1710573934860890113\", \"dataName\": \"範例名稱\"}")}))
-                                    @org.springframework.web.bind.annotation.RequestBody @Validated(DriveDto.Update.class) DriveDto dto
-            , @AuthenticationPrincipal MyUserDetails myUserDetails){
-        if(Objects.isNull(myUserDetails)) throw new UnauthorizedException(ExceptionEnum.GUEST_NOT_ALLOWED);
-        Long userId = myUserDetails.getUser().getId();
-        driveDtoService.conflictTrash(userId, dto);
-        return Result.success();
-    }
+//    @PostMapping("/drive/conflict/trash")
+//    @Operation(summary = "[Delete] 處理垃圾桶衝突", description = "[version 1.0]",
+//            responses = {@ApiResponse(responseCode = "200", content = @Content),
+//            @ApiResponse(responseCode = "400", description = "File name error", content = @Content)})
+//    public Result conflictTrash(@io.swagger.v3.oas.annotations.parameters.RequestBody(description = "以List傳入檔案或目錄ID，並註明資料種類", content = @Content(
+//            examples = {@ExampleObject(value = "[{\"id\": \"1698350322036805633\",\"dataName\": \"範例名稱\", \"dataType\": \"0\"}, {\"id\": \"1716111892070346754\",\"dataName\": \"範例名稱\", \"dataType\": \"1\"}]")}))
+//                                    @org.springframework.web.bind.annotation.RequestBody @NotNull List<DriveDto> listDto,
+//                                @AuthenticationPrincipal MyUserDetails myUserDetails){
+//        if(Objects.isNull(myUserDetails)) throw new UnauthorizedException(ExceptionEnum.GUEST_NOT_ALLOWED);
+//        Long userId = myUserDetails.getUser().getId();
+//        driveDtoService.conflictTrash(userId, listDto);
+//        return Result.success();
+//    }
     @PostMapping("/drive/softDelete")
     @Operation(summary = "[Delete] 批次立即刪除", description = "[version 1.0]")
     public Result softDelete(@io.swagger.v3.oas.annotations.parameters.RequestBody(description = "以List傳入檔案或目錄ID，並註明資料種類", content = @Content(

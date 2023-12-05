@@ -5,11 +5,15 @@ import net.fileme.domain.dto.DriveDto;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.http.ResponseEntity;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletResponse;
 import java.util.List;
 
 public interface DriveDtoService {
+
+    // ----------------------------------Create---------------------------------- //
+    void createFile(MultipartFile part, Long userId, Long folderId);
 
     // ----------------------------------Read---------------------------------- //
     Result getPublicFolder(Long folderId);
@@ -38,5 +42,5 @@ public interface DriveDtoService {
     // ----------------------------------specific handling---------------------------------- //
     boolean sameParentCheck(Long userId, List<DriveDto> list);
     @Transactional
-    void conflictTrash(Long userId, DriveDto dto);
+    void conflictTrash(Long userId, List<DriveDto> listDto);
 }

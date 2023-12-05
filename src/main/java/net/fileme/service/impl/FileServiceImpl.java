@@ -145,20 +145,6 @@ public class FileServiceImpl extends ServiceImpl<FileMapper, File>
     }
 
     @Override
-    @Transactional
-    public void createFile(MultipartFile part, Long userId, Long folderId){
-        File file = handlePartFile(part);
-        file.setUserId(userId);
-        file.setFolderId(folderId);
-//        try{
-//            save(file); //TODO:
-//        }catch(DuplicateKeyException ex){
-//            System.out.println("檔名衝突，替換");
-//        }
-        save(file);
-        upload(part, file);
-    }
-    @Override
     public void accessControl(Long dataId, int newAccess){
         LambdaUpdateWrapper<File> luw = new LambdaUpdateWrapper<>();
         luw.set(File::getAccessLevel, newAccess)
