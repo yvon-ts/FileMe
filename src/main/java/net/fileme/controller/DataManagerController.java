@@ -303,19 +303,19 @@ public class DataManagerController {
         driveDtoService.clean(userId);
         return Result.success();
     }
-//    @PostMapping("/drive/conflict/trash")
-//    @Operation(summary = "[Delete] 處理垃圾桶衝突", description = "[version 1.0]",
-//            responses = {@ApiResponse(responseCode = "200", content = @Content),
-//            @ApiResponse(responseCode = "400", description = "File name error", content = @Content)})
-//    public Result conflictTrash(@io.swagger.v3.oas.annotations.parameters.RequestBody(description = "以List傳入檔案或目錄ID，並註明資料種類", content = @Content(
-//            examples = {@ExampleObject(value = "[{\"id\": \"1698350322036805633\",\"dataName\": \"範例名稱\", \"dataType\": \"0\"}, {\"id\": \"1716111892070346754\",\"dataName\": \"範例名稱\", \"dataType\": \"1\"}]")}))
-//                                    @org.springframework.web.bind.annotation.RequestBody @NotNull List<DriveDto> listDto,
-//                                @AuthenticationPrincipal MyUserDetails myUserDetails){
-//        if(Objects.isNull(myUserDetails)) throw new UnauthorizedException(ExceptionEnum.GUEST_NOT_ALLOWED);
-//        Long userId = myUserDetails.getUser().getId();
-//        driveDtoService.conflictTrash(userId, listDto);
-//        return Result.success();
-//    }
+    @PostMapping("/drive/conflict/trash")
+    @Operation(summary = "[Delete] 處理垃圾桶衝突", description = "[version 1.0]",
+            responses = {@ApiResponse(responseCode = "200", content = @Content),
+            @ApiResponse(responseCode = "400", description = "File name error", content = @Content)})
+    public Result conflictTrash(@io.swagger.v3.oas.annotations.parameters.RequestBody(description = "以List傳入檔案或目錄ID，並註明資料種類", content = @Content(
+            examples = {@ExampleObject(value = "[{\"id\": \"1698350322036805633\",\"dataName\": \"範例名稱\", \"dataType\": \"0\"}, {\"id\": \"1716111892070346754\",\"dataName\": \"範例名稱\", \"dataType\": \"1\"}]")}))
+                                    @org.springframework.web.bind.annotation.RequestBody @NotNull List<DriveDto> listDto,
+                                @AuthenticationPrincipal MyUserDetails myUserDetails){
+        if(Objects.isNull(myUserDetails)) throw new UnauthorizedException(ExceptionEnum.GUEST_NOT_ALLOWED);
+        Long userId = myUserDetails.getUser().getId();
+        driveDtoService.conflictTrash(userId, listDto);
+        return Result.success();
+    }
     @PostMapping("/drive/softDelete")
     @Operation(summary = "[Delete] 批次立即刪除", description = "[version 1.0]")
     public Result softDelete(@io.swagger.v3.oas.annotations.parameters.RequestBody(description = "以List傳入檔案或目錄ID，並註明資料種類", content = @Content(

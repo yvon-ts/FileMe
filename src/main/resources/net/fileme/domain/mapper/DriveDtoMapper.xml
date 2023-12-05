@@ -134,17 +134,23 @@
         where user_id = #{userId}
         and parent_id = 999
         and(
+        <if test="folders != null and !folders.isEmpty()">
             (data_type = 0 and data_name in
             <foreach collection="folders" item="folder" open="(" separator="," close=")">
                 #{folder}
             </foreach>
             )
+        </if>
+        <if test="folders != null and !folders.isEmpty() and files != null and !files.isEmpty()">
             or
+        </if>
+        <if test="files != null and !files.isEmpty()">
             (data_type = 1 and data_name in
             <foreach collection="files" item="file" open="(" separator="," close=")">
                 #{file}
             </foreach>
             )
+        </if>
         )
     </select>
 </mapper>
