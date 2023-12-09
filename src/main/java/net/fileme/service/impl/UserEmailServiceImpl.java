@@ -141,9 +141,11 @@ public class UserEmailServiceImpl extends ServiceImpl<UserMapper, User>
         LambdaUpdateWrapper<User> luw = new LambdaUpdateWrapper<>();
         luw.set(User::getState, mapping)
                 .eq(User::getEmail, email)
-                .eq(User::getState, 0)
-                .or()
-                .eq(User::getState, mapping);
+                .and(i -> i
+                        .eq(User::getState, 0)
+                        .or()
+                        .eq(User::getState, mapping)
+                );
         boolean success = update(luw);
         if(!success){
             throw new InternalErrorException(ExceptionEnum.USER_STATE_ERROR);

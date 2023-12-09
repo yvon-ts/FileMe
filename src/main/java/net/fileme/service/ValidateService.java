@@ -22,4 +22,6 @@ public interface ValidateService {
     DriveDto checkPublicFolder(Long folderId);
 
     Long checkUserAndListDto(MyUserDetails myUserDetails, List<DriveDto> listDto);
+
+    void checkUserByEmail(String email);
 }

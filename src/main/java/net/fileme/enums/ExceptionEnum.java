@@ -40,6 +40,7 @@ public enum ExceptionEnum {
     , USERNAME_REGEX_ERROR(10110, "帳號格式不符合規定")
     , PWD_REGEX_ERROR(10111, "密碼格式不符合規定")
     , USER_EMAIL_REGEX_ERROR(10112, "信箱格式不符合規定")
+    , NOT_VALID_EMAIL(10113, "信箱地址異常，請提供正確信箱")
 
     , FOLDER_NAME_REGEX_ERROR(10210, "目錄名稱不符合規定")
     

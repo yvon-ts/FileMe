@@ -2,13 +2,13 @@ package net.fileme.controller;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
-import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import net.fileme.domain.Result;
 import net.fileme.service.ValidateService;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import javax.validation.constraints.NotNull;
@@ -19,25 +19,21 @@ public class GuestController {
     @Autowired
     private ValidateService validateService;
 
-    @PostMapping("/pub/valid/user")
+    @GetMapping("/pub/valid/user")
     @Operation(summary = "[Read] 檢查帳號", description = "[version 1.0]", responses = {
             @ApiResponse(responseCode = "200", content = @Content),
             @ApiResponse(responseCode = "400", description = "Regex not matched", content = @Content),
             @ApiResponse(responseCode = "409", description = "Username has been used", content = @Content)})
-    public Result validateUsername(@io.swagger.v3.oas.annotations.parameters.RequestBody(description = "帳號",
-            content = @Content(schema = @Schema(example = "example")))
-                                       @org.springframework.web.bind.annotation.RequestBody @NotNull String username){
+    public Result validateUsername(@RequestParam @NotNull String username){
         validateService.checkUserName(username);
         return Result.success();
     }
-    @PostMapping("/pub/valid/mail")
+    @GetMapping("/pub/valid/email")
     @Operation(summary = "[Read] 檢查信箱", description = "[version 1.0]", responses = {
             @ApiResponse(responseCode = "200", content = @Content),
             @ApiResponse(responseCode = "400", description = "Regex not matched", content = @Content),
             @ApiResponse(responseCode = "409", description = "Email has been used", content = @Content)})
-    public Result validateEmail(@io.swagger.v3.oas.annotations.parameters.RequestBody(description = "信箱",
-            content = @Content(schema = @Schema(example = "example@email.com")))
-                                    @org.springframework.web.bind.annotation.RequestBody @NotNull String email){
+    public Result validateEmail(@RequestParam @NotNull String email){
         validateService.checkEmail(email);
         return Result.success();
     }

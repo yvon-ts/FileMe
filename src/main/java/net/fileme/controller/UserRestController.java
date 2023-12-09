@@ -52,7 +52,20 @@ public class UserRestController {
 
         return Result.success();
     }
+    @PostMapping("/support/sign-up/resend")
+    @Operation(summary = "[Read] 重寄註冊驗證信", description = "[version 1.0] <br><ul><li>以非同步方式寄出註冊驗證信</li></ul>", responses = {
+            @ApiResponse(responseCode = "200", content = @Content),
+            @ApiResponse(responseCode = "404", description = "user not found", content = @Content)})
+    public Result signUpResend(@io.swagger.v3.oas.annotations.parameters.RequestBody(description = "註冊信箱", content = @Content(schema = @Schema(
+            example = "{\"email\": \"example@email.com\"}")))
+                                   @org.springframework.web.bind.annotation.RequestBody
+                                   @Validated(UserDto.CheckEmail.class) @NotNull UserDto dto){
+        EmailTemplateEnum templateEnum = EmailTemplateEnum.SIGN_UP;
+        validateService.checkUserByEmail(dto.getEmail());
+        userEmailService.sendTokenEmail(templateEnum, dto.getEmail(), null);
 
+        return Result.success();
+    }
     // ----------------------------Change Pwd----------------------------- //
     @PostMapping("/user/setting/password")
     @Operation(summary = "[Update] 變更密碼", description = "[version 1.0]<br><ul><li>登入狀態操作，變更後會強制登出</li><li>以非同步方式寄出變更通知信</li></ul>", responses = {
@@ -123,30 +136,4 @@ public class UserRestController {
 
         return Result.success();
     }
-    @PostMapping("/support/hi")
-    public String hi(@io.swagger.v3.oas.annotations.parameters.RequestBody(description = "會員信箱", content = @Content(schema = @Schema(
-            example = "{\"email\": \"example@email.com\"}")))
-                         @org.springframework.web.bind.annotation.RequestBody
-                         @Validated(UserDto.CheckEmail.class) @NotNull UserDto dto){
-        System.out.println(dto.getEmail());
-        return "hello";
-    }
-//    @PostMapping("/support/reset")
-//    @Operation(summary = "[Update] 密碼重置", description = "[version 1.0] <br> 以非同步方式寄出變更通知信", responses = {
-//            @ApiResponse(responseCode = "200", content = @Content),
-//            @ApiResponse(responseCode = "400", description = "Regex not matched", content = @Content),
-//            @ApiResponse(responseCode = "401", description = "No such token", content = @Content),
-//            @ApiResponse(responseCode = "409", description = "Token version conflict", content = @Content)})
-//    public String reset(@NotNull @RequestParam String password, @NotNull @RequestParam String token, Model model){
-//        EmailTemplateEnum templateEnum = EmailTemplateEnum.RESET;
-//
-//        validateService.regexPwd(password); // workaround: @Pattern validation not working
-//        TokenDto dto = userEmailService.processResetPassword(password, token);
-//        String email = new String(dto.getReqEmail()); // for async method after deleting token
-//        userEmailService.createBasicEmail(EmailTemplateEnum.RESET_NOTICE, email);
-//        userEmailService.deleteToken(token);
-//
-//        model.addAttribute("viewText", templateEnum.getViewText());
-//        return templateEnum.getView();
-//    }
 }
