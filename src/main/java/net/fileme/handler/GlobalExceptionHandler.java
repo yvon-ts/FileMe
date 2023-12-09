@@ -157,16 +157,13 @@ public class GlobalExceptionHandler {
     // when violate Spring Validation
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity handleArgsNotValid(MethodArgumentNotValidException ex){
-        //之後看看如何加上UserID，目前只有路由
         logError(ex, ExceptionEnum.PARAM_ERROR);
 
         if(ex.getBindingResult().hasErrors()){
             ex.getBindingResult().getFieldErrors()
                     .forEach(error -> {
-                        log.debug("Invalid {} value submitted for {}",
-                                error.getRejectedValue(), error.getField());
-                        // TODO: 避免pwd明碼顯示於log須移除getRejectedValue
-                        log.debug(error.toString());
+                        log.debug("Invalid value submitted for {}", error.getField());
+//                        log.debug("Invalid {} value submitted for {}", error.getRejectedValue(), error.getField()); // will log out password
                     });
         }
         return ResponseEntity
@@ -177,7 +174,6 @@ public class GlobalExceptionHandler {
     // when missing RequestParam
     @ExceptionHandler(MissingServletRequestParameterException.class)
     public ResponseEntity handleMissingRequestParam(MissingServletRequestParameterException ex){
-        //之後看看如何加上UserID，目前只有路由
         logError(ex, ExceptionEnum.PARAM_ERROR);
         return ResponseEntity
                 .status(HttpStatus.BAD_REQUEST)

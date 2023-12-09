@@ -4,7 +4,7 @@ import lombok.Data;
 
 @Data
 public class RequestLog {
-    private Long userId = 0L; // 之後再改
+    private Long userId = 0L;
     private String route;
     private Object param;
 //    private Object ret;
@@ -15,7 +15,7 @@ public class RequestLog {
     public String toString() {
         StringBuilder builder = new StringBuilder();
         builder.append("USER: ")
-                .append(userId)
+                .append(userId == 0 ? "anonymous" : userId)
                 .append(" | REQUEST: ")
                 .append(route)
                 .append(" | PARAM: ")

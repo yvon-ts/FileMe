@@ -68,7 +68,8 @@ public class ValidateServiceImpl implements ValidateService {
     @Override
     public void checkUserName(String username){
         if(StringUtils.isBlank(username)) throw new BadRequestException(ExceptionEnum.PARAM_ERROR);
-        regexUsername(username);
+        username = username.toLowerCase();
+//        regexUsername(username);
         LambdaQueryWrapper<User> lqw = new LambdaQueryWrapper<>();
         lqw.eq(User::getUsername, username).ne(User::getState, 99); // invalid user
         Integer count = userMapper.selectCount(lqw);
@@ -77,7 +78,7 @@ public class ValidateServiceImpl implements ValidateService {
     @Override
     public void checkEmail(String email){
         if(StringUtils.isBlank(email)) throw new BadRequestException(ExceptionEnum.PARAM_ERROR);
-        regexEmail(email);
+//        regexEmail(email); // can be validated by @Email tag
         LambdaQueryWrapper<User> lqw = new LambdaQueryWrapper<>();
         lqw.eq(User::getEmail, email).ne(User::getState, 99); // invalid user
         Integer count = userMapper.selectCount(lqw);

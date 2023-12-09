@@ -3,17 +3,86 @@
 <head>
     <meta charset="UTF-8">
     <title>FileMe - 設定新密碼</title>
+    <style>
+  html, body {
+    height: 100%;
+    margin: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background-color: #f7f7f7;
+  }
+
+  .box {
+    width: 300px;
+    padding: 2em;
+    background: #ffffff;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    text-align: center;
+    border-radius: 5px;
+  }
+
+  .box input[type="text"],
+  .box input[type="password"] {
+    width: 90%;
+    padding: 10px;
+    margin: 10px 0;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+  }
+
+ #btn {
+    width: 95%;
+    padding: 10px;
+    margin-top: 20px;
+    border: none;
+    border-radius: 4px;
+    background-color: #5c6bc0;
+    color: white;
+    cursor: pointer;
+  }
+
+ #btn:hover {
+    background-color: #3949ab;
+  }
+</style>
 </head>
 <body>
-<form th:action="@{/support/reset}" method="post">
-    <ul>
-        <li><span>設定新密碼</span></li>
-        <li><input type="password" name="password" required></li>
-        <li><span>確認新密碼</span></li>
-        <li><input type="password" name="validation" required></li>
-        <li><input type="submit" value="送出"></li>
-    </ul>
-  <input type="hidden" name="token" th:value="${token}">
+<form id="form" th:action="@{/support/reset}" method="post">
+    <input type="hidden" name="token" th:value="${token}">
+    <div class="box">
+        <h2>FileMe 密碼重置</h2>
+        <span>設定新密碼</span>
+        <input id="password" type="password" name="password" required><br>
+        <span>確認新密碼</span>
+        <input id="validation" type="password" name="validation" required><br>
+        <button id="btn" type="button">送出</button>
+    </div>
 </form>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script th:inline="javascript">
+const REGEX_PASSWORD = /^(?=.*[A-Z])(?=.*[a-z])(?=.*[0-9])(?=.*[!@#$%^&*()_+|~=?<>{}\[\]:;/.,-])[A-Za-z0-9!@#$%^&*()_+|~=?<>{}\[\]:;/.,-]{8,50}$/u
+const REGEX_WARN_PASSWORD = '不符合密碼規定(包括大小寫英數字及特殊符號，且不得小於8字)';
+const DIFFERENT_PASSWORD_ERROR = '您輸入的兩次密碼不相同，請重試';
+$('#btn').click(() => {
+    if (!REGEX_PASSWORD.test($('#password').val())) {
+        Swal.fire({
+            icon: 'error',
+            text: REGEX_WARN_PASSWORD
+        });
+        return;
+    }
+    if ($('#password').val() !== $('#validation').val()) {
+        Swal.fire({
+            icon: 'error',
+            text: DIFFERENT_PASSWORD_ERROR
+        });
+        return;
+    }
+    $('#form').submit();
+})
+
+</script>
 </body>
 </html>

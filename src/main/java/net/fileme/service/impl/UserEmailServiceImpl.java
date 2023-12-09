@@ -165,6 +165,14 @@ public class UserEmailServiceImpl extends ServiceImpl<UserMapper, User>
         EmailTemplate template = emailTemplateService.findTemplate(templateEnum);
         createTokenEmail(template, newEmail, token);
     }
+
+    /**
+     *
+     * @param mapping: mapping with EmailTemplateEnum and user state
+     * @param reqEmail: request from which email
+     * @param pending: data to be handled later
+     * @return: above attribute with latest token issue no.
+     */
     public<T> TokenDto createTokenDto(Integer mapping, String reqEmail, T pending){
         Integer issueNo = nextIssueNo(reqEmail);
         return new TokenDto(mapping, reqEmail, pending, issueNo);

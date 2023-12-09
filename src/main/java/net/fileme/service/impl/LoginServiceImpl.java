@@ -43,7 +43,8 @@ public class LoginServiceImpl implements LoginService {
         redisCache.setObj("login:" + userId, myUserDetails, timeout, timeUnit);
 
         Map<String, String> loginData = new HashMap<>();
-        loginData.put("userId", userId);
+//        loginData.put("userId", userId);
+        loginData.put("username", myUserDetails.getUsername());
         loginData.put("token", jwt);
 
         return Result.success(loginData);
