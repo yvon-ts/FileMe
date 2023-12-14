@@ -5,7 +5,7 @@
 </head>
 <body style="display: flex; justify-content: center; align-items: center;">
 <div class="box">
-  <img alt="FileMe logo" src="http://localhost:8080/logo.png" title="Logo" style="display:block" width="200" height="200">
+  <img alt="FileMe logo" src="https://file-me-front-end.vercel.app/img/logo.png" title="Logo" style="display:block" width="200" height="200">
   <div th:utext="${text}"></div>
   <div class="btn" style="margin-top: 20px;">
     <a th:href="@{http://localhost:8080/support/{endpoint}/{token}(endpoint=${endpoint},token=${token})}" style="text-decoration: none; color: inherit;">
