@@ -14,6 +14,7 @@ import net.fileme.handler.GlobalExceptionHandler;
 import net.fileme.service.DriveDtoService;
 import net.fileme.service.FileService;
 import net.fileme.service.FolderService;
+import net.fileme.service.RemoteDataService;
 import org.apache.tika.Tika;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -49,6 +50,8 @@ public class DriveDtoServiceImpl implements DriveDtoService {
     private FileService fileService;
     @Autowired
     private DriveDtoMapper driveDtoMapper;
+    @Autowired
+    private RemoteDataService remoteDataService;
 
     @Value("${file.root.folderId}")
     private Long rootId;
@@ -90,29 +93,32 @@ public class DriveDtoServiceImpl implements DriveDtoService {
     // ----------------------------------Create---------------------------------- //
     @Override
     @Transactional
-    public void createFile(MultipartFile part, Long userId, Long folderId){
+    public void createFile(MultipartFile part, Long userId, Long folderId, Integer location){
         File file = fileService.handlePartFile(part);
         file.setUserId(userId);
         file.setFolderId(folderId);
+        file.setLocation(location);
         try{
             fileService.save(file);
-            fileService.upload(part, file);
+            if(location == 0) fileService.upload(part, file);
+            if(location == 1) remoteDataService.upload(part, file);
         }catch(DuplicateKeyException ex){
             GlobalExceptionHandler.logError(ex, ExceptionEnum.UNIQUE_CONFLICT);
             log.info("Start handling conflicted file...");
-            handleConflictedFile(part, file, userId, folderId);
+            handleConflictedFile(part, file, userId, folderId, location);
         }
     }
-    public void reTryCreateFile(MultipartFile part, File file, Long userId, Long folderId){
+    public void retryCreateFile(MultipartFile part, File file, Long userId, Long folderId, Integer location){
         try{
             fileService.save(file);
-            fileService.upload(part, file);
+            if(location == 0) fileService.upload(part, file);
+            if(location == 1) remoteDataService.upload(part, file);
             log.info("Successful handle of conflicted file...");
         }catch(DuplicateKeyException ex){
             throw new InternalErrorException(ExceptionEnum.HANDLE_DUPLICATED_NEW_FILE_FAIL);
         }
     }
-    public void handleConflictedFile(MultipartFile part, File file, Long userId, Long folderId){
+    public void handleConflictedFile(MultipartFile part, File file, Long userId, Long folderId, Integer location){
         List<String> fileNames = driveDtoMapper.getSubFiles(userId, folderId)
                 .stream()
                 .map(data -> {
@@ -123,7 +129,7 @@ public class DriveDtoServiceImpl implements DriveDtoService {
         String newName = generateNewFileName(fileNames, file);
         file.setFileName(newName);
 
-        reTryCreateFile(part, file, userId, folderId);
+        retryCreateFile(part, file, userId, folderId, location);
     }
     public String generateNewFileName(List<String> fileNames, File file){
         System.out.println(fileNames);
@@ -162,48 +168,79 @@ public class DriveDtoServiceImpl implements DriveDtoService {
 
         return Result.success(privateData);
     }
+
     @Override
     public ResponseEntity previewPublic(Long fileId){
         File file = fileService.findPublicFile(fileId);
-        String path = fileService.findFilePath(file);
-        return preview(path);
+        return preview(file);
     }
     @Override
     public ResponseEntity previewPersonal(Long userId, Long fileId){
         File file = fileService.findPersonalFile(userId, fileId);
-        String path = fileService.findFilePath(file);
-        return preview(path);
+        return preview(file);
     }
-    public ResponseEntity preview(String path){
+
+    public ResponseEntity preview(File file){
+        // preview not allowed
+        if(!isPreviewAllowed(file))
+            return ResponseEntity
+                .status(HttpStatus.FORBIDDEN)
+                .body(Result.error(ExceptionEnum.PREVIEW_NOT_ALLOWED));
+
+        Integer location = file.getLocation();
+
+        if(location == 0){
+            String path = fileService.findFilePath(file);
+            return previewLocal(path);
+        }
+        if(location == 1) return previewRemote(file);
+
+        return null;
+    }
+    public boolean isPreviewAllowed(File file){
+        String ext = file.getExt().toUpperCase();
+        return MimeEnum.valueOf(ext).allowPreview;
+    }
+    public ResponseEntity previewRemote(File file){
+        String remoteFileName = fileService.findRemoteFileName(file);
+
+        if(!StringUtils.hasText(remoteFileName)) return ResponseEntity
+                .status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(Result.error(ExceptionEnum.FILE_NAME_ERROR));
+
+        String mimeType = MimeEnum.getMimeType(file.getExt()); // workaround
+        Long size = file.getSize();
+        byte[] bytes = remoteDataService.getRemoteByteArray(remoteFileName);
+
+        return ResponseEntity
+                    .ok()
+                    .contentType(MediaType.valueOf(mimeType))
+                    .contentLength(size)
+                    .body(bytes);
+    }
+    public ResponseEntity previewLocal(String path){
         if(!StringUtils.hasText(path)) return ResponseEntity
                                         .status(HttpStatus.NOT_FOUND)
                                         .body(Result.error(ExceptionEnum.NO_SUCH_DATA));
 
         String ext = path.substring(path.lastIndexOf(".") + 1);
 
-        // check mime type if allowed to preview
-        if(MimeEnum.valueOf(ext.toUpperCase()).allowPreview){
-            java.io.File ioFile = new java.io.File(path);
-            try{
-                Tika tika = new Tika(); // mimeType library
-                String mimeType = tika.detect(ioFile);
+        java.io.File ioFile = new java.io.File(path);
+        try{
+            Tika tika = new Tika(); // mimeType library
+            String mimeType = tika.detect(ioFile);
 
-                byte[] bytes = FileCopyUtils.copyToByteArray(ioFile);
+            byte[] bytes = FileCopyUtils.copyToByteArray(ioFile);
 
-                return ResponseEntity
-                        .ok()
-                        .contentType(MediaType.valueOf(mimeType))
-                        .contentLength((int)ioFile.length())
-                        .body(bytes);
+            return ResponseEntity
+                    .ok()
+                    .contentType(MediaType.valueOf(mimeType))
+                    .contentLength((int)ioFile.length())
+                    .body(bytes);
 
-            }catch (IOException e){
-                throw new InternalErrorException(ExceptionEnum.FILE_IO_ERROR);
-            }
+        }catch (IOException e){
+            throw new InternalErrorException(ExceptionEnum.FILE_IO_ERROR);
         }
-        // preview not allowed
-        return ResponseEntity
-                .status(HttpStatus.FORBIDDEN)
-                .body(Result.error(ExceptionEnum.PREVIEW_NOT_ALLOWED));
     }
 
     @Override

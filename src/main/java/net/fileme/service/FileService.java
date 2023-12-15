@@ -13,6 +13,7 @@ public interface FileService extends IService<File>, DataManagerService {
     File findPublicFile(Long fileId);
     File findPersonalFile(Long userId, Long fileId);
 
+    String findRemoteFileName(File file);
     File handlePartFile(MultipartFile multipartFile);
     void upload(MultipartFile multipartFile, File file);
     void rename(Long dataId, String newName, Long userId);

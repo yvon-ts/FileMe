@@ -6,7 +6,7 @@ import org.springframework.web.multipart.MultipartFile;
 public interface RemoteDataService {
     void upload(MultipartFile part, File file);
 
-    byte[] download(String fileName);
+    byte[] getRemoteByteArray(String fileName);
 
     void delete(String fileName);
 }

@@ -39,4 +39,7 @@ public enum MimeEnum {
     public final boolean allowPreview;
     public final String mimeType;
 
+    public static String getMimeType(String ext){
+        return MimeEnum.valueOf(ext.toUpperCase()).getMimeType();
+    }
 }

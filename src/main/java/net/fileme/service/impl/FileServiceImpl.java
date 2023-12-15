@@ -67,6 +67,13 @@ public class FileServiceImpl extends ServiceImpl<FileMapper, File>
     }
 
     @Override
+    public String findRemoteFileName(File file){
+        StringBuilder builder = new StringBuilder();
+        builder.append(file.getUserId()).append("/").append(file.getId()).append(".").append(file.getExt());
+        return builder.toString();
+    }
+
+    @Override
     public File findPersonalFile(Long userId, Long fileId){
         LambdaQueryWrapper<File> lqw = new LambdaQueryWrapper<>();
         lqw.eq(File::getId, fileId).eq(File::getUserId, userId);

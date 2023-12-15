@@ -13,7 +13,7 @@ import java.util.List;
 public interface DriveDtoService {
 
     // ----------------------------------Create---------------------------------- //
-    void createFile(MultipartFile part, Long userId, Long folderId);
+    void createFile(MultipartFile part, Long userId, Long folderId, Integer location);
 
     // ----------------------------------Read---------------------------------- //
     Result getPublicFolder(Long folderId);

@@ -54,7 +54,7 @@ public class DataManagerController {
 
     // ----------------------------------Create---------------------------------- //
     @PostMapping("/drive/file")
-    @Operation(summary = "[Create] 新增檔案", description = "[version 1.0] <br> 可接受的檔案類型：<ul><li>JPG/GIF/PNG</li><li>ZIP</li><li>JSON/XML/HTML/JS/CSS/SQL/LOG</li><li>PDF/TXT/CSV</li><li>DOC/XLS/DOCX/XLSX/PPT/PPTX</li></ul>",
+    @Operation(summary = "[Create] 新增檔案", description = "[version 1.0] <br> location: 0本地, 1雲端 <br> 可接受的檔案類型：<ul><li>JPG/GIF/PNG</li><li>ZIP</li><li>JSON/XML/HTML/JS/CSS/SQL/LOG</li><li>PDF/TXT/CSV</li><li>DOC/XLS/DOCX/XLSX/PPT/PPTX</li></ul>",
             responses = {@ApiResponse(responseCode = "200", content = @Content),
                     @ApiResponse(responseCode = "400", description = "Regex not matched or File type not Allowed", content = @Content),
                     @ApiResponse(responseCode = "404", description = "Parent folder not found", content = @Content)})
@@ -63,16 +63,18 @@ public class DataManagerController {
             schema = @Schema(type = "object"),
                     schemaProperties = {
                     @SchemaProperty(name = "file", schema = @Schema(type = "string", format = "binary")),
-                    @SchemaProperty(name = "folderId", schema = @Schema(type = "string", example = "1698350322036805633"))}))
+                    @SchemaProperty(name = "folderId", schema = @Schema(type = "string", example = "1698350322036805633")),
+                    @SchemaProperty(name = "location", schema = @Schema(type = "string", example = "0"))}))
             @RequestPart("file") @NotNull MultipartFile part,
                              @RequestPart @NotNull Long folderId,
+                             @RequestPart @NotNull Integer location,
                              @AuthenticationPrincipal MyUserDetails myUserDetails) {
 
         if(Objects.isNull(myUserDetails)) throw new UnauthorizedException(ExceptionEnum.GUEST_NOT_ALLOWED);
         Long userId = myUserDetails.getUser().getId();
 
         validateService.checkFolder(userId, folderId);
-        driveDtoService.createFile(part, userId, folderId);
+        driveDtoService.createFile(part, userId, folderId, location);
         return Result.success();
     }
     @PostMapping("/drive/folder")

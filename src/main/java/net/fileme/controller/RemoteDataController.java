@@ -31,7 +31,7 @@ public class RemoteDataController {
     }
     @GetMapping("/pub/drive/remote/download")
     public ResponseEntity<ByteArrayResource> download(@RequestParam String fileName){
-        byte[] data = remoteDataService.download(fileName);
+        byte[] data = remoteDataService.getRemoteByteArray(fileName);
         ByteArrayResource byteArrayResource = new ByteArrayResource(data);
         return ResponseEntity.ok().contentLength(data.length)
                 .header("Content-type", "application/octet-stream")
