@@ -34,7 +34,6 @@ import org.springframework.util.ObjectUtils;
 import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
 
-import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
@@ -244,26 +243,51 @@ public class DriveDtoServiceImpl implements DriveDtoService {
     }
 
     @Override
-    public ResponseEntity<ByteArrayResource> downloadPublic(Long fileId, HttpServletResponse response){
+    public ResponseEntity<ByteArrayResource> downloadPublic(Long fileId){
         File file = fileService.findPublicFile(fileId);
-        String fileName = file.getFullName();
-        if(!StringUtils.hasText(fileName)) throw new InternalErrorException(ExceptionEnum.FILE_NAME_ERROR);
-
-        String path = fileService.findFilePath(file);
-        return download(fileName, path, response);
+        return download(file);
     }
     @Override
-    public ResponseEntity<ByteArrayResource> downloadPersonal(Long userId, Long fileId, HttpServletResponse response){
+    public ResponseEntity<ByteArrayResource> downloadPersonal(Long userId, Long fileId){
         File file = fileService.findPersonalFile(userId, fileId);
-        String fileName = file.getFullName();
-        if(!StringUtils.hasText(fileName)) throw new InternalErrorException(ExceptionEnum.FILE_NAME_ERROR);
-
-        String path = fileService.findFilePath(file);
-        return download(fileName, path, response);
+        return download(file);
     }
-    public ResponseEntity<ByteArrayResource> download(String fileName, String path, HttpServletResponse response){
-        if(!StringUtils.hasText(path)) throw new NotFoundException(ExceptionEnum.NO_SUCH_DATA);
-        java.io.File file = new java.io.File(path);
+    public ResponseEntity<ByteArrayResource> download(File file){
+        Integer location = file.getLocation();
+        if(location == 0) return downloadLocal(file);
+        if(location == 1) return downloadRemote(file);
+
+        return null;
+    }
+    public ResponseEntity<ByteArrayResource> downloadRemote(File file){
+        String fileName = file.getFullName();
+        String remoteFileName = fileService.findRemoteFileName(file);
+
+        if(!StringUtils.hasText(fileName) || !StringUtils.hasText(remoteFileName)) throw new InternalErrorException(ExceptionEnum.FILE_NAME_ERROR);
+
+        String encodedFileName = "";
+        try {
+            encodedFileName = URLEncoder.encode(fileName, StandardCharsets.UTF_8.toString());
+        } catch (UnsupportedEncodingException e) {
+            throw new InternalErrorException(ExceptionEnum.FILE_NAME_ERROR);
+        }
+
+        byte[] data = remoteDataService.getRemoteByteArray(remoteFileName);
+        ByteArrayResource byteArrayResource = new ByteArrayResource(data);
+
+        return ResponseEntity.ok().contentLength(data.length)
+                .header("Content-type", "application/octet-stream")
+                .header("Content-disposition", "attachment;filename=\"" + encodedFileName + "\"; filename*=UTF-8''" + encodedFileName)
+                // for front-end axios to get filename
+                .header("Access-Control-Expose-Headers","Content-Disposition")
+                .body(byteArrayResource);
+    }
+    public ResponseEntity<ByteArrayResource> downloadLocal(File file){
+        String fileName = file.getFullName();
+        String path = fileService.findFilePath(file);
+        if(!StringUtils.hasText(fileName) || !StringUtils.hasText(path)) throw new InternalErrorException(ExceptionEnum.FILE_NAME_ERROR);
+
+        java.io.File ioFile = new java.io.File(path);
         ByteArrayResource resource = null;
         HttpHeaders headers = new HttpHeaders();
         String encodedFileName = null;
@@ -276,7 +300,7 @@ public class DriveDtoServiceImpl implements DriveDtoService {
             // for front-end axios to get filename
             headers.add("Access-Control-Expose-Headers","Content-Disposition");
 
-            byte[] bytes = FileCopyUtils.copyToByteArray(file);
+            byte[] bytes = FileCopyUtils.copyToByteArray(ioFile);
             resource = new ByteArrayResource(bytes);
 
         } catch (UnsupportedEncodingException e) {
@@ -286,7 +310,7 @@ public class DriveDtoServiceImpl implements DriveDtoService {
         }
         return ResponseEntity.ok()
                 .headers(headers)
-                .contentLength(file.length())
+                .contentLength(ioFile.length())
                 .contentType(MediaType.APPLICATION_OCTET_STREAM)
                 .body(resource);
     }

@@ -7,7 +7,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
-import javax.servlet.http.HttpServletResponse;
 import java.util.List;
 
 public interface DriveDtoService {
@@ -21,8 +20,8 @@ public interface DriveDtoService {
     Result getSub(Long userId, Long folderId);
     ResponseEntity previewPublic(Long fileId);
     ResponseEntity previewPersonal(Long userId, Long fileId);
-    ResponseEntity<ByteArrayResource> downloadPublic(Long fileId, HttpServletResponse response);
-    ResponseEntity<ByteArrayResource> downloadPersonal(Long userId, Long fileId, HttpServletResponse response);
+    ResponseEntity<ByteArrayResource> downloadPublic(Long fileId);
+    ResponseEntity<ByteArrayResource> downloadPersonal(Long userId, Long fileId);
 
     // ----------------------------------Update---------------------------------- //
     void accessControl(DriveDto dto, Long userId);

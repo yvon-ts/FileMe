@@ -25,8 +25,6 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
-import javax.servlet.http.HttpServletResponse;
-
 import javax.validation.constraints.NotNull;
 import java.util.*;
 
@@ -174,9 +172,9 @@ public class DataManagerController {
             @ApiResponse(responseCode = "200", content = @Content)})
     public ResponseEntity<ByteArrayResource> downloadPublic(
             @Parameter(description = "欲下載檔案ID，範例：1698350322036805633", schema = @Schema(type = "string"))
-            @PathVariable @NotNull Long fileId, HttpServletResponse response){
+            @PathVariable @NotNull Long fileId){
 
-        return driveDtoService.downloadPublic(fileId, response);
+        return driveDtoService.downloadPublic(fileId);
     }
     @GetMapping("/drive/download/{fileId}")
     @Operation(summary = "[Read] 下載單個檔案", description = "[version 1.0]", responses = {
@@ -184,12 +182,11 @@ public class DataManagerController {
     public ResponseEntity<ByteArrayResource> downloadPersonal(
             @Parameter(description = "檔案ID，範例：1698350322036805633", schema = @Schema(type = "string"))
             @NotNull @PathVariable Long fileId,
-            @AuthenticationPrincipal MyUserDetails myUserDetails,
-            HttpServletResponse response){
+            @AuthenticationPrincipal MyUserDetails myUserDetails){
         if(Objects.isNull(myUserDetails)) throw new UnauthorizedException(ExceptionEnum.GUEST_NOT_ALLOWED);
         Long userId = myUserDetails.getUser().getId();
 
-        return driveDtoService.downloadPersonal(userId, fileId, response);
+        return driveDtoService.downloadPersonal(userId, fileId);
     }
     // ----------------------------------Update: access level & shared link---------------------------------- //
     @PostMapping("/drive/access-control/{dataId}")
