@@ -3,10 +3,12 @@ package net.fileme.service;
 import net.fileme.domain.pojo.File;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.util.List;
+
 public interface RemoteDataService {
-    void upload(MultipartFile part, File file);
+    void uploadRemote(MultipartFile part, File file);
 
     byte[] getRemoteByteArray(String fileName);
 
-    void delete(String fileName);
+    void handleRemoteDelete(Long userId, List<Long> fileIds);
 }

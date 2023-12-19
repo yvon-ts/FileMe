@@ -130,8 +130,8 @@ public class FileServiceImpl extends ServiceImpl<FileMapper, File>
         return file;
     }
 
-    @Override // 未來可能overloading增加toRemote的flag
-    public void upload(MultipartFile part, File file){
+    @Override
+    public void uploadLocal(MultipartFile part, File file){
         StringBuilder builder = new StringBuilder();
         builder.append(remotePathPrefix).append("/").append(file.getUserId()).append("/").append(file.getId()).append(".").append(file.getExt());
         String path = builder.toString();

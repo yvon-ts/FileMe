@@ -15,7 +15,7 @@ public interface FileService extends IService<File>, DataManagerService {
 
     String findRemoteFileName(File file);
     File handlePartFile(MultipartFile multipartFile);
-    void upload(MultipartFile multipartFile, File file);
+    void uploadLocal(MultipartFile multipartFile, File file);
     void rename(Long dataId, String newName, Long userId);
 
     void softDeleteByFileName(Long userId, String fileName);

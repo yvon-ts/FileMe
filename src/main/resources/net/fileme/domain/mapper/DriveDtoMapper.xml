@@ -153,4 +153,23 @@
         </if>
         )
     </select>
+
+    <select id="search" resultMap="driveDto">
+        select data_id id, data_name, data_type, access_level, parent_id from v_user_drive
+        where user_id = #{userId}
+        and(
+        data_name like concat('%', #{param2}, '%') or
+        data_name like concat('%', #{param3}, '%')
+        )
+        order by
+            case
+                when data_name like concat('%', #{param2}, '%') and data_name like concat('%', #{param3}, '%') then 1
+                when data_name like concat('%', #{param2}, '%') then 2
+                when data_name like concat('%', #{param3}, '%') then 3
+                else 4
+            end,
+            locate(#{param2}, data_name),
+            locate(#{param3}, data_name),
+            data_name;
+    </select>
 </mapper>

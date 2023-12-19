@@ -22,6 +22,7 @@ import org.springframework.util.CollectionUtils;
 import java.util.List;
 import java.util.Objects;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 @Service
 public class ValidateServiceImpl implements ValidateService {
@@ -137,5 +138,11 @@ public class ValidateServiceImpl implements ValidateService {
         if (!parentCheck) throw new BadRequestException(ExceptionEnum.NOT_SAME_PARENT);
 
         return userId;
+    }
+    @Override
+    public List<String> filterKeyword(List<String> keywords){
+        return keywords.stream().map(keyword -> {
+            return keyword.replaceAll("[^\\w\\s]", ""); // only a-z, A-Z, 0-9, and underscore remains
+        }).collect(Collectors.toList());
     }
 }

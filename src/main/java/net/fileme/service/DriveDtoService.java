@@ -14,6 +14,8 @@ public interface DriveDtoService {
     // ----------------------------------Create---------------------------------- //
     void createFile(MultipartFile part, Long userId, Long folderId, Integer location);
 
+    // ----------------------------------Read: Search---------------------------------- //
+    Result search(Long userId, List<String> keywords);
     // ----------------------------------Read---------------------------------- //
     Result getPublicFolder(Long folderId);
     Result getPublicSub(Long folderId);

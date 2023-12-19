@@ -12,4 +12,13 @@
         </foreach>
     </insert>
 
+    <select id="getRemoteKeys" resultType="java.lang.String">
+        select substring(file_path, 2) from remove_list
+        where user_id = #{userId}
+        and location = 1
+        and file_id in
+        <foreach collection="fileIds" item="fileId" open="(" separator="," close=")">
+            #{fileId}
+        </foreach>
+    </select>
 </mapper>

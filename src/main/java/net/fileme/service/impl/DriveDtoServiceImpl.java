@@ -99,8 +99,8 @@ public class DriveDtoServiceImpl implements DriveDtoService {
         file.setLocation(location);
         try{
             fileService.save(file);
-            if(location == 0) fileService.upload(part, file);
-            if(location == 1) remoteDataService.upload(part, file);
+            if(location == 0) fileService.uploadLocal(part, file);
+            if(location == 1) remoteDataService.uploadRemote(part, file);
         }catch(DuplicateKeyException ex){
             GlobalExceptionHandler.logError(ex, ExceptionEnum.UNIQUE_CONFLICT);
             log.info("Start handling conflicted file...");
@@ -110,8 +110,8 @@ public class DriveDtoServiceImpl implements DriveDtoService {
     public void retryCreateFile(MultipartFile part, File file, Long userId, Long folderId, Integer location){
         try{
             fileService.save(file);
-            if(location == 0) fileService.upload(part, file);
-            if(location == 1) remoteDataService.upload(part, file);
+            if(location == 0) fileService.uploadLocal(part, file);
+            if(location == 1) remoteDataService.uploadRemote(part, file);
             log.info("Successful handle of conflicted file...");
         }catch(DuplicateKeyException ex){
             throw new InternalErrorException(ExceptionEnum.HANDLE_DUPLICATED_NEW_FILE_FAIL);
@@ -138,6 +138,26 @@ public class DriveDtoServiceImpl implements DriveDtoService {
             tmpName += "-複製";
         }
         return tmpName;
+    }
+    // ----------------------------------Read: Search---------------------------------- //
+    @Override
+    public Result search(Long userId, List<String> keywords){
+        String param1 = null;
+        String param2 = null;
+        List<DriveDto> result = null;
+
+        for (String key : keywords) {
+            if(!StringUtils.hasText(param1)) param1 = key;
+            if(!param1.equals(key)){
+                param2 = key;
+                break;
+            }
+        }
+        if (StringUtils.hasText(param1) && StringUtils.hasText(param2)){
+            result = driveDtoMapper.search(userId, param1, param2);
+//            if(result.isEmpty()) throw new NotFoundException(ExceptionEnum.NO_SUCH_DATA);
+        }
+        return Result.success(result);
     }
     // ----------------------------------Read---------------------------------- //
     @Override
@@ -446,14 +466,16 @@ public class DriveDtoServiceImpl implements DriveDtoService {
         }
 
         if(!CollectionUtils.isEmpty(fileIds)){
-            fileService.softDelete(userId, new ArrayList<>(fileIds)); // workaround casting
+            ArrayList<Long> list = new ArrayList<>(fileIds); // workaround casting
+            fileService.softDelete(userId, list);
+            remoteDataService.handleRemoteDelete(userId, list); // workaround
         }
     }
 
     @Override
     @Transactional
     public void conflictTrash(Long userId, List<DriveDto> listDto) {
-        // find conflicted data in trashcan
+        // find conflicted data in trashcan by names
         List<String> folders = filterNameByType(listDto, 0);
         List<String> files = filterNameByType(listDto, 1);
         List<DriveDto> conflictedData = driveDtoMapper.getConflictedTrash(userId, folders, files);

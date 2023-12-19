@@ -92,6 +92,21 @@ public class DataManagerController {
         folderService.createFolder(userId, dto.getParentId(), dto.getDataName());
         return Result.success();
     }
+    // ----------------------------------Read: Search---------------------------------- //
+    @PostMapping("/drive/search")
+    @Operation(summary = "[Read] 查詢", description = "[version 1.0] <br><ul><li>目前僅使用前兩個關鍵字查詢</li><li>第三個以後的關鍵字會暫時被系統排除</li><li>回傳結果依相關度排序</li></ul>",
+        responses = {@ApiResponse(responseCode = "200", content = @Content),
+                @ApiResponse(responseCode = "404", description = "No such file or folder", content = @Content)})
+    public Result<List<DriveDto>> search(@io.swagger.v3.oas.annotations.parameters.RequestBody(description = "關鍵字",
+            content = @Content(schema = @Schema(implementation = SearchDto.class)))
+                                             @org.springframework.web.bind.annotation.RequestBody @NotNull SearchDto dto,
+            @AuthenticationPrincipal MyUserDetails myUserDetails){
+        if(Objects.isNull(myUserDetails)) throw new UnauthorizedException(ExceptionEnum.GUEST_NOT_ALLOWED);
+
+        Long userId = myUserDetails.getUser().getId();
+        List<String> keywords = validateService.filterKeyword(dto.getKeywords());
+        return driveDtoService.search(userId, keywords);
+    }
     // ----------------------------------Read & Preview---------------------------------- //
 
     @GetMapping("/drive/my-drive")
@@ -303,7 +318,7 @@ public class DataManagerController {
         return Result.success();
     }
     @PostMapping("/drive/conflict/trash")
-    @Operation(summary = "[Delete] 處理垃圾桶衝突", description = "[version 1.0]",
+    @Operation(summary = "[Delete] 處理垃圾桶衝突", description = "[version 1.0] <br> 遇到垃圾桶已有同名檔案時，以新檔案取代舊檔，並刪除舊檔",
             responses = {@ApiResponse(responseCode = "200", content = @Content),
             @ApiResponse(responseCode = "400", description = "File name error", content = @Content)})
     public Result conflictTrash(@io.swagger.v3.oas.annotations.parameters.RequestBody(description = "以List傳入檔案或目錄ID，並註明資料種類", content = @Content(

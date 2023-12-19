@@ -37,5 +37,6 @@ public interface DriveDtoMapper extends BaseMapper<DriveDto> {
     // -------------------------specific handling------------------------- //
     List<Long> getDistinctParent(Long userId, List<Long> dataIds);
     List<DriveDto> getConflictedTrash(Long userId, List<String> folders, List<String> files);
+    List<DriveDto> search(Long userId, String keyword1, String keyword2);
 
 }

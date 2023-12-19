@@ -24,6 +24,12 @@ mybatis-plus:
 # 將MyBatis sql command輸出至log
 #    log-impl: org.apache.ibatis.logging.slf4j.Slf4jImpl
 
+pagehelper:
+  helperDialect: mysql
+  reasonable: true
+  supportMethodsArguments: true
+  params: count=countSql
+
 springdoc:
   api-docs:
     enabled: true

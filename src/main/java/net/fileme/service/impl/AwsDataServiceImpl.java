@@ -1,9 +1,10 @@
 package net.fileme.service.impl;
 
+import com.amazonaws.AmazonServiceException;
+import com.amazonaws.SdkClientException;
 import com.amazonaws.services.s3.AmazonS3;
-import com.amazonaws.services.s3.model.ObjectMetadata;
-import com.amazonaws.services.s3.model.S3Object;
-import com.amazonaws.services.s3.model.S3ObjectInputStream;
+import com.amazonaws.services.s3.model.*;
+import net.fileme.domain.mapper.RemoveListMapper;
 import net.fileme.domain.pojo.File;
 import net.fileme.enums.ExceptionEnum;
 import net.fileme.enums.MimeEnum;
@@ -15,8 +16,9 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.io.FileOutputStream;
 import java.io.IOException;
+import java.util.Arrays;
+import java.util.List;
 
 
 @Service
@@ -25,9 +27,11 @@ public class AwsDataServiceImpl implements RemoteDataService {
     private String bucketName;
     @Autowired
     private AmazonS3 s3;
+    @Autowired
+    private RemoveListMapper removeListMapper;
 
     @Override
-    public void upload(MultipartFile part, File file) {
+    public void uploadRemote(MultipartFile part, File file) {
         StringBuilder builder = new StringBuilder();
         builder.append(file.getUserId()).append("/").append(file.getId()).append(".").append(file.getExt());
         String fileName = builder.toString();
@@ -36,8 +40,12 @@ public class AwsDataServiceImpl implements RemoteDataService {
         objectMetadata.setContentLength(file.getSize());
         try{
             s3.putObject(bucketName, fileName, part.getInputStream(), objectMetadata);
-        }catch(IOException e){
-            e.printStackTrace();
+        }catch (IOException e){
+            throw new InternalErrorException(ExceptionEnum.FILE_IO_ERROR);
+        }catch (AmazonServiceException e){
+            throw new InternalErrorException(ExceptionEnum.REMOTE_ERROR);
+        }catch (SdkClientException e){
+            throw new InternalErrorException(ExceptionEnum.REMOTE_ERROR);
         }
         // 需要加setObjectAcl public read?
 //        s3.putObject(new PutObjectRequest(bucketName, fileName, fileObj));
@@ -56,17 +64,20 @@ public class AwsDataServiceImpl implements RemoteDataService {
         }
     }
     @Override
-    public void delete(String fileName){
-        s3.deleteObject(bucketName, fileName);
-        System.out.println("deleted!!!!!!");
-    }
-    private java.io.File convertToFile(MultipartFile part){
-        java.io.File convertedFile = new java.io.File(part.getOriginalFilename());
-        try(FileOutputStream fos = new FileOutputStream(convertedFile)){
-            fos.write(part.getBytes());
-        }catch (IOException e){
-            e.printStackTrace();
+    public void handleRemoteDelete(Long userId, List<Long> fileIds){
+        List<String> remoteKeys = removeListMapper.getRemoteKeys(userId, fileIds);
+        ObjectTagging tag = new ObjectTagging(Arrays.asList(new Tag("Delete", "")));
+
+        try{
+
+            for(String key : remoteKeys){
+                s3.setObjectTagging(new SetObjectTaggingRequest(bucketName, key, tag));
+            }
+
+        }catch (AmazonServiceException e){
+            throw new InternalErrorException(ExceptionEnum.REMOTE_ERROR);
+        }catch (SdkClientException e){
+            throw new InternalErrorException(ExceptionEnum.REMOTE_ERROR);
         }
-        return convertedFile;
     }
 }

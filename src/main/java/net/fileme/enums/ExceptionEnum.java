@@ -106,6 +106,7 @@ public enum ExceptionEnum {
     , UPLOAD_SVR_FAIL(24310, "檔案寫入Server異常")
     , FILE_IO_ERROR(24311, "檔案I/O異常")
     , FILE_EXISTS_ON_SERVER(24320, "Server已有重複檔案")
+    , REMOTE_ERROR(24330, "遠端Server異常")
 
     , REDIS_DEL_ERROR(25410, "Redis刪除異常")
 

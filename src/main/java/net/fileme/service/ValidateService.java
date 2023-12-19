@@ -24,4 +24,5 @@ public interface ValidateService {
     Long checkUserAndListDto(MyUserDetails myUserDetails, List<DriveDto> listDto);
 
     void checkUserByEmail(String email);
+    List<String> filterKeyword(List<String> keywords);
 }
