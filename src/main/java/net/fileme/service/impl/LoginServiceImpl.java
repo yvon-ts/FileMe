@@ -11,7 +11,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import java.util.HashMap;
@@ -50,10 +49,7 @@ public class LoginServiceImpl implements LoginService {
         return Result.success(loginData);
     }
     @Override
-    public Result logout(){
-        UsernamePasswordAuthenticationToken authentication = (UsernamePasswordAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
-        MyUserDetails myUserDetails = (MyUserDetails) authentication.getPrincipal();
-        Long userId = myUserDetails.getUser().getId();
+    public Result logout(Long userId){
         redisCache.deleteObj("login:" + userId);
         return Result.success();
     }

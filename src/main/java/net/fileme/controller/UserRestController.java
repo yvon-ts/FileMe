@@ -91,7 +91,7 @@ public class UserRestController {
         userEmailService.processChangePwd(userId, dto.getNewPassword());
         userEmailService.createBasicEmail(EmailTemplateEnum.RESET_NOTICE, email);
 
-        loginService.logout();
+        loginService.logout(userId);
 
         return Result.success();
     }
@@ -108,13 +108,14 @@ public class UserRestController {
                               @AuthenticationPrincipal MyUserDetails myUserDetails) {
         EmailTemplateEnum templateEnum = EmailTemplateEnum.SET_EMAIL;
         if(Objects.isNull(myUserDetails)) throw new UnauthorizedException(ExceptionEnum.GUEST_NOT_ALLOWED);
+        Long userId = myUserDetails.getUser().getId();
         String oldEmail = new String(myUserDetails.getUser().getEmail()); // for async method after log out
 
         validateService.checkEmail(dto.getEmail());
         userEmailService.setUserState(templateEnum, oldEmail);
         userEmailService.sendTokenEmailForEmailChange(templateEnum, oldEmail, dto.getEmail());
 
-        loginService.logout();
+        loginService.logout(userId);
 
         return Result.success();
     }
