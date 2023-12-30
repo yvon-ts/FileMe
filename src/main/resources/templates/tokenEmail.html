@@ -8,7 +8,7 @@
   <img alt="FileMe logo" src="https://file-me-front-end.vercel.app/img/logo.png" title="Logo" style="display:block" width="200" height="200">
   <div th:utext="${text}"></div>
   <div class="btn" style="margin-top: 20px;">
-    <a th:href="@{http://localhost:8080/support/{endpoint}/{token}(endpoint=${endpoint},token=${token})}" style="text-decoration: none; color: inherit;">
+    <a th:href="@{http://service.filesme.net/support/{endpoint}/{token}(endpoint=${endpoint},token=${token})}" style="text-decoration: none; color: inherit;">
       <span th:text="${btn}" style="display: inline-block; width: 95%; padding: 10px; border: none; border-radius: 4px; background-color: #5c6bc0; color: white; cursor: pointer; text-align: center;"></span>
     </a>
   </div>

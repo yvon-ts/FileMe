@@ -24,10 +24,10 @@ import java.util.Arrays;
 @Configuration
 @EnableGlobalMethodSecurity(prePostEnabled = true)
 public class SecurityConfig {
-    @Value("${server.port}")
-    private int httpsPort;
-    @Value("${http.port}")
-    private int httpPort;
+//    @Value("${server.port}")
+//    private int httpsPort;
+//    @Value("${http.port}")
+//    private int httpPort;
 
     @Autowired
     private JwtAuthenticationFilter jwtAuthenticationFilter;
@@ -47,7 +47,8 @@ public class SecurityConfig {
     public CorsConfigurationSource configurationSource(){
         CorsConfiguration configuration = new CorsConfiguration();
         // 允許跨域的domain
-        configuration.setAllowedOrigins(Arrays.asList("http://localhost:3000"));
+        // Arrays.asList("放網址"), for local可設定null, 注意格式, load-balancer domain不可單獨存在
+        configuration.setAllowedOrigins(Arrays.asList("https://www.filesme.net","https://filesme.net","https://service.filesme.net"));
         // 允許的請求方法
         configuration.setAllowedMethods(Arrays.asList("GET", "POST"));
         // 是否可帶憑證
@@ -69,17 +70,19 @@ public class SecurityConfig {
                 .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 .and()
                 // allow HTTPS
-                .requiresChannel().anyRequest().requiresSecure()
-                .and()
+//                .requiresChannel().anyRequest().requiresSecure()
+//                .and()
                 .authorizeRequests()
                  // 感覺會有一個("/**").hasAuthority("admin")
                 .antMatchers("/user/login").anonymous()
                 .antMatchers("/support/**").anonymous()
+                .antMatchers("/health-check").permitAll() // for AWS checking
                 .antMatchers("/pub/**").permitAll()
                 .antMatchers("/**/*.html").permitAll()
                 .antMatchers("/**/*.css").permitAll()
                 .antMatchers("/**/*.js").permitAll()
                 .antMatchers("/**/api-docs/**").permitAll()
+                .antMatchers("/logo.png").permitAll()
                 .anyRequest().authenticated()
                 .and().formLogin()
                         .loginPage("/index.html") // TODO: change to real login page
@@ -91,7 +94,7 @@ public class SecurityConfig {
 //                .accessDeniedPage("/access-denied")
 
         // allow HTTP redirect to HTTPS
-        http.portMapper().http(httpPort).mapsTo(httpsPort);
+//        http.portMapper().http(httpPort).mapsTo(httpsPort);
 
         // 加入自定義JWT過濾器
         http.addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
