@@ -68,6 +68,7 @@ public enum ExceptionEnum {
 
     , METHOD_NOT_ALLOWED(20010, "請求方式異常")
     , PARAM_ERROR(20011, "請求參數異常")
+    , RECOVERY_LOGIC_CONFLICT(20020, "目的地已有同名檔案或目錄")
     
     , NOT_SAME_PARENT(21210, "操作非同層參數異常")
 

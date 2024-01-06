@@ -9,10 +9,7 @@ import net.fileme.domain.mapper.FileTrashMapper;
 import net.fileme.domain.mapper.RemoveListMapper;
 import net.fileme.domain.pojo.File;
 import net.fileme.domain.pojo.RemoveList;
-import net.fileme.exception.BadRequestException;
-import net.fileme.exception.BizException;
-import net.fileme.exception.InternalErrorException;
-import net.fileme.exception.NotFoundException;
+import net.fileme.exception.*;
 import net.fileme.enums.ExceptionEnum;
 import net.fileme.service.FileService;
 import net.fileme.enums.MimeEnum;
@@ -84,7 +81,7 @@ public class FileServiceImpl extends ServiceImpl<FileMapper, File>
     @Override
     public File findPublicFile(Long fileId){
         LambdaQueryWrapper<File> lqw = new LambdaQueryWrapper<>();
-        lqw.eq(File::getId, fileId).eq(File::getAccessLevel, 1);
+        lqw.eq(File::getId, fileId).eq(File::getAccessLevel, 1).ne(File::getFolderId, trashId);
         File file = getOne(lqw);
         if(Objects.isNull(file)) throw new NotFoundException(ExceptionEnum.NO_SUCH_DATA);
         return file;
@@ -200,6 +197,12 @@ public class FileServiceImpl extends ServiceImpl<FileMapper, File>
     @Override
     @Transactional
     public void recover(Long userId, List<Long> dataIds) {
+
+        dataIds.forEach(dataId -> {
+            int count = fileTrashMapper.conflictCheckBeforeRecover(userId, dataId);
+            if(count > 0) throw new ConflictException(ExceptionEnum.RECOVERY_LOGIC_CONFLICT);
+        });
+
         int successRecover = fileTrashMapper.recover(userId, dataIds);
         if(successRecover == 0) throw new InternalErrorException(ExceptionEnum.FILE_RECOVER_FAIL);
         int successDelete = fileTrashMapper.deleteBatchIds(dataIds);

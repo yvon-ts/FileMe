@@ -23,4 +23,13 @@
         </foreach>
     </update>
 
+    <select id="conflictCheckBeforeRecover" resultType="java.lang.Integer">
+        select count(1) from folder f
+        left join folder_trash t on f.parent_id = t.origin
+        where f.user_id = #{userId}
+        and folder_id != 999
+        and f.folder_id = #{folderId}
+        and f.folder_name = (select folder_name from folder where folder_id = #{folderId})
+    </select>
+
 </mapper>

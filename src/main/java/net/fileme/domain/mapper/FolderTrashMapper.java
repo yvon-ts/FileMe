@@ -10,4 +10,5 @@ import java.util.List;
 public interface FolderTrashMapper extends BaseMapper<FolderTrash> {
     int create(Long userId, List<Long> folderIds);
     int recover(Long userId, List<Long> folderIds);
+    int conflictCheckBeforeRecover(Long userId, Long folderId);
 }

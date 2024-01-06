@@ -5,6 +5,7 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import net.fileme.domain.mapper.FolderMapper;
 import net.fileme.domain.mapper.FolderTrashMapper;
 import net.fileme.domain.pojo.Folder;
+import net.fileme.exception.ConflictException;
 import net.fileme.exception.InternalErrorException;
 import net.fileme.exception.NotFoundException;
 import net.fileme.service.FileService;
@@ -91,6 +92,12 @@ public class FolderServiceImpl extends ServiceImpl<FolderMapper, Folder>
     @Override
     @Transactional
     public void recover(Long userId, List<Long> dataIds) {
+
+        dataIds.forEach(dataId -> {
+            int count = folderTrashMapper.conflictCheckBeforeRecover(userId, dataId);
+            if(count > 0) throw new ConflictException(ExceptionEnum.RECOVERY_LOGIC_CONFLICT);
+        });
+
         int successRecover = folderTrashMapper.recover(userId, dataIds);
         if(successRecover == 0) throw new InternalErrorException(ExceptionEnum.FOLDER_RECOVER_FAIL);
         int successDelete = folderTrashMapper.deleteBatchIds(dataIds);

@@ -157,6 +157,7 @@
     <select id="search" resultMap="driveDto">
         select data_id id, data_name, data_type, access_level, parent_id from v_user_drive
         where user_id = #{userId}
+        and parent_id != 999
         and(
         data_name like concat('%', #{param2}, '%') or
         data_name like concat('%', #{param3}, '%')
