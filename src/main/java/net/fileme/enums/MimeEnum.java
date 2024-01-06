@@ -24,7 +24,7 @@ public enum MimeEnum {
     LOG(false, "text/plain"),
 
     // common type
-    PDF(false, "application/pdf"),
+    PDF(true, "application/pdf"),
     TXT(false, "text/plain"),
     CSV(false, "text/csv"),
 

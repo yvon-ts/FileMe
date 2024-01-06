@@ -153,10 +153,10 @@ public class DriveDtoServiceImpl implements DriveDtoService {
                 break;
             }
         }
-        if (StringUtils.hasText(param1) && StringUtils.hasText(param2)){
-            result = driveDtoMapper.search(userId, param1, param2);
+//        if (StringUtils.hasText(param1) && StringUtils.hasText(param2)){
+        result = driveDtoMapper.search(userId, param1, param2);
 //            if(result.isEmpty()) throw new NotFoundException(ExceptionEnum.NO_SUCH_DATA);
-        }
+//        }
         return Result.success(result);
     }
     // ----------------------------------Read---------------------------------- //
