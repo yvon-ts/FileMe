@@ -27,7 +27,7 @@
         select count(1) from file_data f
         left join file_trash t on f.folder_id = t.origin
         where f.user_id = #{userId}
-        and folder_id != 999
+        and f.folder_id != 999
         and f.file_id = #{fileId}
         and f.file_name = (select file_name from file_data where file_id = #{fileId})
     </select>
