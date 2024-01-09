@@ -1,27 +1,54 @@
 # FileMe雲端硬碟
-(Readme建構中...)
 
-## 技術
-### 後端及資料庫
-> Java / Spring Boot / Spring Security / MyBatis / Thymeleaf / Redis / MySQL
-- 使用Spring Boot作為後端應用程式框架，持久層則使用MyBatis介接MySQL資料庫。
-- 以Spring Security搭配JWT進行身份驗證及授權管理。
-- 透過Redis實作Stateless backend及Session管理，並且用於暫存email token。
-- 使用Thymeleaf建立系統通知email模板。
+FileMe 是一個支援本地端和雲端儲存的檔案管理系統，採用前後端分離架構設計。
 
-> Logback / Maven / Git / OpenAPI(Swagger) / Postman
-- 使用Logback搭配Spring AOP機制記錄系統日誌(log)。
-- 透過Maven進行套件管理，使用Git協助系統版本控制。
-- 以OpenAPI產生RESTful API文件，使用Postman測試API。
+![fileme-1](https://hackmd.io/_uploads/B1k0oSqda.png =480x337)
 
-### 雲端
-> AWS EC2 / RDS / ElastiCache
-> S3 / CloudFront / Route53
-> VPC / NAT 
-### 前端
-> JavaScript / AJAX / jQuery / CSS(SASS) / HTML5
-- 使用SASS進行樣式管理
-- 使用jQuery UI建立右鍵選單、dialog元件
+## 專案 Repo
+- **後端 Repo**: [FileMe 後端 Repo](https://github.com/yvon-ts/FileMe)
+- **前端 Repo**: [FileMe 前端 Repo](https://github.com/yvon-ts/FileMe-front-end)
+
+## 系統環境
+- JDK 8
+- Spring Boot 2.7.5
+- MySQL 8
+- Redis 7
+
+## 開發環境
+- **後端**：IntelliJ IDEA 2022
+- **前端**：VS Code 2023
+
+## 第三方服務
+- Google SMTP
+
+## 雲端部署
+> 使用以下AWS服務並建置於有內外網設定的VPC環境
+- 後端主機：EC2
+- 資料庫：RDS (MySQL), ElastiCache (Redis)
+- 前端網站託管 & DNS：S3, Route53
+
+## 套件說明
+### 後端套件
+> 套件皆使用Maven統一管理，詳細套件清單及版本請參閱 `pom.xml`
+- 資料庫持久層：MyBatis Plus
+- 安全性：Spring Security + JJWT
+- 日誌：Logback
+- API文件：OpenAPI (Swagger)
+
+### 前端套件
+- jQuery 3.3.1
+- jQuery contextMenu
+- jQuery UI 1.13.2
+- Axios
+- SweetAlert2
+
+## 組態檔設定
+> 請參考 `mock.properties` 設定
+- 資料庫連線資訊
+- S3連線資訊
+- Redis連線資訊
+- Google SMTP連線資訊
+- 本地端檔案上傳位址
 
 ## 功能概述
 ### 會員中心
