@@ -2,7 +2,7 @@
 
 FileMe 是一個支援本地端和雲端儲存的檔案管理系統，採用前後端分離架構設計。
 
-![fileme-1](https://hackmd.io/_uploads/B1k0oSqda.png =480x337)
+<img src="README.png" width="480">
 
 ## 專案 Repo
 - **後端 Repo**: [FileMe 後端 Repo](https://github.com/yvon-ts/FileMe)
