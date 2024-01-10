@@ -2,7 +2,7 @@
 
 FileMe 是一個支援本地端和雲端儲存的檔案管理系統，採用前後端分離架構設計。
 
-<img src="README.png" width="480">
+<img src="readme-img/UI_Demo.png" width="480">
 
 ## 專案 Repo
 - **後端 Repo**: [FileMe 後端 Repo](https://github.com/yvon-ts/FileMe)
@@ -26,6 +26,7 @@ FileMe 是一個支援本地端和雲端儲存的檔案管理系統，採用前�
 - 後端主機：EC2
 - 資料庫：RDS (MySQL), ElastiCache (Redis)
 - 前端網站託管 & DNS：S3, Route53
+<img src="readme-img/AWS_VPC_networking.png" width="360">
 
 ## 套件說明
 ### 後端套件
